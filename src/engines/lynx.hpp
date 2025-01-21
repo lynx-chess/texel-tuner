@@ -607,9 +607,9 @@ int KnightAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     IncrementCoefficients(coefficients, CheckBonus.index + noColorPieceIndex - CheckBonus.start, color, checksCount);
 
     // Major threats
-    const auto threatsCount = (board.pieces(chess::PieceType::ROOK, ~color) | board.pieces(chess::PieceType::QUEEN, ~color)).count();
-    packedBonus += MinorMajorThreatsBonus.packed * threatsCount;
-    IncrementCoefficients(coefficients, MinorMajorThreatsBonus.index, color, threatsCount);
+    // const auto threatsCount = (board.pieces(chess::PieceType::ROOK, ~color) | board.pieces(chess::PieceType::QUEEN, ~color)).count();
+    // packedBonus += MinorMajorThreatsBonus.packed * threatsCount;
+    // IncrementCoefficients(coefficients, MinorMajorThreatsBonus.index, color, threatsCount);
 
     return packedBonus;
 }
