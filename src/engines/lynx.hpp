@@ -606,11 +606,6 @@ int KnightAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     packedBonus += CheckBonus.packed[noColorPieceIndex] * checksCount;
     IncrementCoefficients(coefficients, CheckBonus.index + noColorPieceIndex - CheckBonus.start, color, checksCount);
 
-    // Major threats
-    const auto threatsCount = (board.pieces(chess::PieceType::ROOK, ~color) | board.pieces(chess::PieceType::QUEEN, ~color)).count();
-    packedBonus += MinorMajorThreatsBonus.packed * threatsCount;
-    IncrementCoefficients(coefficients, MinorMajorThreatsBonus.index, color, threatsCount);
-
     return packedBonus;
 }
 
@@ -726,6 +721,33 @@ int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawn
     IncrementCoefficients(coefficients, KingShieldBonus.index, kingSide, ownPawnsAroundCount);
 
     return packedBonus + KingShieldBonus.packed * ownPawnsAroundCount;
+}
+
+int Threats(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+{
+    int packedBonus = 0;
+    u64 knightAttacks = 0;
+
+    // Bitboard copy that we 'empty'
+    auto knights = GetPieceSwappingEndianness(board, chess::PieceType::KNIGHT, color);
+    while (knights != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(knights).index();
+        ResetLS1B(knights);
+
+        const auto attacks = chess::attacks::knight(static_cast<chess::Square>(pieceSquareIndex)).getBits();
+        knightAttacks |= attacks;
+    }
+
+    // Major threats
+    const auto majorPieces = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, ~color) |
+        GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, ~color);
+    const auto knightThreatsCount = chess::builtin::popcount(majorPieces & knightAttacks);
+
+    packedBonus += knightThreatsCount * MinorMajorThreatsBonus.packed;
+    IncrementCoefficients(coefficients, MinorMajorThreatsBonus.index, color, knightThreatsCount);
+
+    return packedBonus;
 }
 
 int AdditionalPieceEvaluation(int pieceSquareIndex, int pieceIndex, int bucket, int oppositeSideBucket, int sameSideKingSquare, int oppositeSideKingSquare, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
@@ -941,6 +963,9 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
 
     packedScore += (PieceAttackedByPawnPenalty.packed * attackedPiecesByBlackPawns) -
                    (PieceAttackedByPawnPenalty.packed * attackedPiecesByWhitePawns);
+
+    packedScore += Threats(board, chess::Color::WHITE, coefficients) -
+                   Threats(board, chess::Color::BLACK, coefficients);
 
     // Debugging eval
     // return EvalResult{
