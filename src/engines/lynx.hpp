@@ -24,7 +24,7 @@ const static int numParameters = psqtIndexCount +
                                  OpenFileKingPenalty.size +
                                  KingShieldBonus.size +
                                  BishopPairBonus.size +
-                                 MinorMajorThreatsBonus.size +
+                                 BishopThreatsBonus.size +
                                  PieceAttackedByPawnPenalty.size +
 
                                  // Arrays
@@ -113,7 +113,7 @@ public:
         OpenFileKingPenalty.add(result);
         KingShieldBonus.add(result);
         BishopPairBonus.add(result);
-        MinorMajorThreatsBonus.add(result);
+        BishopThreatsBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
 
         // Arrays
@@ -268,8 +268,8 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
-        name = NAME(MinorMajorThreatsBonus);
-        MinorMajorThreatsBonus.to_csharp(parameters, ss, name);
+        name = NAME(BishopThreatsBonus);
+        BishopThreatsBonus.to_csharp(parameters, ss, name);
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
@@ -372,8 +372,8 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
 
-        name = NAME(MinorMajorThreatsBonus);
-        MinorMajorThreatsBonus.to_cpp(parameters, ss, name);
+        name = NAME(BishopThreatsBonus);
+        BishopThreatsBonus.to_cpp(parameters, ss, name);
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
@@ -727,25 +727,26 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 {
     int packedBonus = 0;
     u64 knightAttacks = 0;
+    const auto occupancy = __builtin_bswap64(board.occ().getBits());
 
     // Bitboard copy that we 'empty'
-    auto knights = GetPieceSwappingEndianness(board, chess::PieceType::KNIGHT, color);
-    while (knights != 0)
+    auto bishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, color);
+    while (bishops != 0)
     {
-        const auto pieceSquareIndex = chess::builtin::lsb(knights).index();
-        ResetLS1B(knights);
+        const auto pieceSquareIndex = chess::builtin::lsb(bishops).index();
+        ResetLS1B(bishops);
 
-        const auto attacks = chess::attacks::knight(static_cast<chess::Square>(pieceSquareIndex)).getBits();
+        const auto attacks = chess::attacks::bishop(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
         knightAttacks |= attacks;
     }
 
     // Major threats
     const auto majorPieces = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, ~color) |
-        GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, ~color);
-    const auto knightThreatsCount = chess::builtin::popcount(majorPieces & knightAttacks);
+                             GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, ~color);
+    const auto bishopThreatsCount = chess::builtin::popcount(majorPieces & knightAttacks);
 
-    packedBonus += knightThreatsCount * MinorMajorThreatsBonus.packed;
-    IncrementCoefficients(coefficients, MinorMajorThreatsBonus.index, color, knightThreatsCount);
+    packedBonus += bishopThreatsCount * BishopThreatsBonus.packed;
+    IncrementCoefficients(coefficients, BishopThreatsBonus.index, color, bishopThreatsCount);
 
     return packedBonus;
 }
