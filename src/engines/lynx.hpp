@@ -607,9 +607,12 @@ int KnightAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     IncrementCoefficients(coefficients, CheckBonus.index + noColorPieceIndex - CheckBonus.start, color, checksCount);
 
     // Major threats
-    const auto threatsCount = (board.pieces(chess::PieceType::ROOK, ~color) | board.pieces(chess::PieceType::QUEEN, ~color)).count();
-    packedBonus += MinorMajorThreatsBonus.packed * threatsCount;
-    IncrementCoefficients(coefficients, MinorMajorThreatsBonus.index, color, threatsCount);
+    const auto majorPieces = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, ~color) |
+                             GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, ~color);
+    const auto majorPiecesThreatsCount = chess::builtin::popcount(attacks & majorPieces);
+
+    packedBonus += MinorMajorThreatsBonus.packed * majorPiecesThreatsCount;
+    IncrementCoefficients(coefficients, MinorMajorThreatsBonus.index, color, majorPiecesThreatsCount);
 
     return packedBonus;
 }
