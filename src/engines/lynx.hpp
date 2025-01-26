@@ -24,7 +24,8 @@ const static int numParameters = psqtIndexCount +
                                  OpenFileKingPenalty.size +
                                  KingShieldBonus.size +
                                  BishopPairBonus.size +
-                                 MinorMajorThreatsBonus.size +
+                                 KnightMajorThreatsBonus.size +
+                                 BishopMajorThreatsBonus.size +
                                  PieceAttackedByPawnPenalty.size +
 
                                  // Arrays
@@ -113,7 +114,8 @@ public:
         OpenFileKingPenalty.add(result);
         KingShieldBonus.add(result);
         BishopPairBonus.add(result);
-        MinorMajorThreatsBonus.add(result);
+        KnightMajorThreatsBonus.add(result);
+        BishopMajorThreatsBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
 
         // Arrays
@@ -268,8 +270,11 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
-        name = NAME(MinorMajorThreatsBonus);
-        MinorMajorThreatsBonus.to_csharp(parameters, ss, name);
+        name = NAME(KnightMajorThreatsBonus);
+        KnightMajorThreatsBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(BishopMajorThreatsBonus);
+        BishopMajorThreatsBonus.to_csharp(parameters, ss, name);
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
@@ -372,8 +377,11 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
 
-        name = NAME(MinorMajorThreatsBonus);
-        MinorMajorThreatsBonus.to_cpp(parameters, ss, name);
+        name = NAME(KnightMajorThreatsBonus);
+        KnightMajorThreatsBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(BishopMajorThreatsBonus);
+        BishopMajorThreatsBonus.to_cpp(parameters, ss, name);
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
@@ -726,8 +734,12 @@ int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawn
 int Threats(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     int packedBonus = 0;
-    u64 knightAttacks = 0;
+    const auto occupancy = __builtin_bswap64(board.occ().getBits());
+    const auto majorPieces = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, ~color) |
+                             GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, ~color);
 
+    // Major threats - knight
+    u64 knightAttacks = 0;
     // Bitboard copy that we 'empty'
     auto knights = GetPieceSwappingEndianness(board, chess::PieceType::KNIGHT, color);
     while (knights != 0)
@@ -739,13 +751,28 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         knightAttacks |= attacks;
     }
 
-    // Major threats
-    const auto majorPieces = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, ~color) |
-        GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, ~color);
     const auto knightThreatsCount = chess::builtin::popcount(majorPieces & knightAttacks);
 
-    packedBonus += knightThreatsCount * MinorMajorThreatsBonus.packed;
-    IncrementCoefficients(coefficients, MinorMajorThreatsBonus.index, color, knightThreatsCount);
+    packedBonus += knightThreatsCount * KnightMajorThreatsBonus.packed;
+    IncrementCoefficients(coefficients, KnightMajorThreatsBonus.index, color, knightThreatsCount);
+
+    // Major threats - bishop
+    u64 bishopAttacks = 0;
+    // Bitboard copy that we 'empty'
+    auto bishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, color);
+    while (bishops != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(bishops).index();
+        ResetLS1B(bishops);
+
+        const auto attacks = chess::attacks::bishop(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
+        bishopAttacks |= attacks;
+    }
+
+    const auto bishopThreatsCount = chess::builtin::popcount(majorPieces & bishopAttacks);
+
+    packedBonus += bishopThreatsCount * BishopMajorThreatsBonus.packed;
+    IncrementCoefficients(coefficients, BishopMajorThreatsBonus.index, color, bishopThreatsCount);
 
     return packedBonus;
 }
