@@ -660,10 +660,38 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     // Major threats
     const auto majorPieces = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, ~color) |
                              GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, ~color);
-    const auto majorPiecesThreatsCount = chess::builtin::popcount(attacks & majorPieces);
 
-    packedBonus += MinorMajorThreatsBonus.packed * majorPiecesThreatsCount;
-    IncrementCoefficients(coefficients, MinorMajorThreatsBonus.index, color, majorPiecesThreatsCount);
+    auto threats = attacks & majorPieces;
+
+    const auto defendedThreats = threats & opponentPawnAttacks;
+    const auto defendedThreatsCount = chess::builtin::popcount(defendedThreats);
+    packedBonus += MinorMajorThreatsBonus.packed[1] * defendedThreatsCount;
+    IncrementCoefficients(coefficients, MinorMajorThreatsBonus.index + 1, color, defendedThreatsCount);
+
+    // const auto undefendedThreats = threats ^ defendedThreats;
+    const auto undefendedThreatsCount = chess::builtin::popcount(threats) - defendedThreatsCount;
+    packedBonus += MinorMajorThreatsBonus.packed[0] * undefendedThreatsCount;
+    IncrementCoefficients(coefficients, MinorMajorThreatsBonus.index + 0, color, undefendedThreatsCount);
+
+    // while (threats != 0)
+    // {
+    //     const auto pieceSquareIndex = chess::builtin::lsb(threats).index();
+    //     ResetLS1B(threats);
+
+    //     // Defended threat
+    //     if (GetBit(opponentPawnAttacks, pieceSquareIndex))
+    //     {
+    //         packedBonus += MinorMajorThreatsBonus.packed[1];
+    //         IncrementCoefficients(coefficients, MinorMajorThreatsBonus.index + 1, color);
+    //     }
+
+    //     // Undefended threat
+    //     else
+    //     {
+    //         packedBonus += MinorMajorThreatsBonus.packed[0];
+    //         IncrementCoefficients(coefficients, MinorMajorThreatsBonus.index + 0, color);
+    //     }
+    // }
 
     return packedBonus;
 }
