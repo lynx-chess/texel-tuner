@@ -22,6 +22,8 @@ const static int numParameters = psqtIndexCount +
                                  SemiOpenFileRookBonus.size +
                                  SemiOpenFileKingPenalty.size +
                                  OpenFileKingPenalty.size +
+                                 SemiOpenFileKingPenaltyNoMajors.size +
+                                 OpenFileKingPenaltyNoMajors.size +
                                  KingShieldBonus.size +
                                  BishopPairBonus.size +
                                  PieceAttackedByPawnPenalty.size +
@@ -40,11 +42,11 @@ const static int numParameters = psqtIndexCount +
                                  QueenMobilityBonus.tunableSize +
 
                                  // Bucketed arrays
-                                 PassedPawnBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
-                                 PassedPawnEnemyBonus.size +               // PSQTBucketCount * 6, removing 1 rank values
-                                 PassedPawnBonusNoEnemiesAheadBonus.size + // PSQTBucketCount * 6, removing 1 rank values
+                                 PassedPawnBonus.size +                         // PSQTBucketCount * 6, removing 1 rank values
+                                 PassedPawnEnemyBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
+                                 PassedPawnBonusNoEnemiesAheadBonus.size +      // PSQTBucketCount * 6, removing 1 rank values
                                  PassedPawnBonusNoEnemiesAheadEnemyBonus.size + // PSQTBucketCount * 6, removing 1 rank values
-                                 PieceProtectedByPawnBonus.size;           // PSQTBucketCount * 6, removing 1 rank values
+                                 PieceProtectedByPawnBonus.size;                // PSQTBucketCount * 6, removing 1 rank values
 
 class Lynx
 {
@@ -110,6 +112,8 @@ public:
         SemiOpenFileRookBonus.add(result);
         SemiOpenFileKingPenalty.add(result);
         OpenFileKingPenalty.add(result);
+        SemiOpenFileKingPenaltyNoMajors.add(result);
+        OpenFileKingPenaltyNoMajors.add(result);
         KingShieldBonus.add(result);
         BishopPairBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
@@ -260,6 +264,12 @@ public:
         name = NAME(OpenFileKingPenalty);
         OpenFileKingPenalty.to_csharp(parameters, ss, name);
 
+        name = NAME(SemiOpenFileKingPenaltyNoMajors);
+        SemiOpenFileKingPenaltyNoMajors.to_csharp(parameters, ss, name);
+
+        name = NAME(OpenFileKingPenaltyNoMajors);
+        OpenFileKingPenaltyNoMajors.to_csharp(parameters, ss, name);
+
         name = NAME(KingShieldBonus);
         KingShieldBonus.to_csharp(parameters, ss, name);
 
@@ -361,6 +371,12 @@ public:
         name = NAME(OpenFileKingPenalty);
         OpenFileKingPenalty.to_cpp(parameters, ss, name);
 
+        name = NAME(SemiOpenFileKingPenaltyNoMajors);
+        SemiOpenFileKingPenaltyNoMajors.to_cpp(parameters, ss, name);
+
+        name = NAME(OpenFileKingPenaltyNoMajors);
+        OpenFileKingPenaltyNoMajors.to_cpp(parameters, ss, name);
+
         name = NAME(KingShieldBonus);
         KingShieldBonus.to_cpp(parameters, ss, name);
 
@@ -459,7 +475,7 @@ void ResetLS1B(std::uint64_t &board)
     board &= (board - 1);
 }
 
-int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int oppositeSideBucket,  int sameSideKingSquare, int oppositeSideKingSquare, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int oppositeSideBucket, int sameSideKingSquare, int oppositeSideKingSquare, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     int packedBonus = 0;
     // auto doublePawnsCount = chess::builtin::popcount(GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color) & (FileMasks[squareIndex]));
@@ -687,19 +703,32 @@ int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawn
     const auto kingSideOffset = kingSide == chess::Color::WHITE ? 0 : 6;
 
     // Opposite side rooks or queens on the board
-    if (pieceCount[9 - kingSideOffset] + pieceCount[10 - kingSideOffset] != 0)
+    if (pieceCount[9 - kingSideOffset] + pieceCount[10 - kingSideOffset] == 0)
     {
         // King on open file
         if (((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) & FileMasks[squareIndex]) == 0) // isOpenFile
         {
-            // std::cout << "Open: " << (kingSide == chess::Color::WHITE ? "White" : "Black") << std::endl;
+            packedBonus += OpenFileKingPenaltyNoMajors.packed;
+            IncrementCoefficients(coefficients, OpenFileKingPenaltyNoMajors.index, kingSide);
+        }
+        // King on semi-open file
+        else if ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide) & FileMasks[squareIndex]) == 0) // isSemiOpenFile
+        {
+            packedBonus += SemiOpenFileKingPenaltyNoMajors.packed;
+            IncrementCoefficients(coefficients, SemiOpenFileKingPenaltyNoMajors.index, kingSide);
+        }
+    }
+    else
+    {
+        // King on open file
+        if (((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) & FileMasks[squareIndex]) == 0) // isOpenFile
+        {
             packedBonus += OpenFileKingPenalty.packed;
             IncrementCoefficients(coefficients, OpenFileKingPenalty.index, kingSide);
         }
         // King on semi-open file
         else if ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide) & FileMasks[squareIndex]) == 0) // isSemiOpenFile
         {
-            // std::cout << "Semiopen: " << (kingSide == chess::Color::WHITE ? "White" : "Black") << std::endl;
             packedBonus += SemiOpenFileKingPenalty.packed;
             IncrementCoefficients(coefficients, SemiOpenFileKingPenalty.index, kingSide);
         }
@@ -801,7 +830,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
             ++pieceCount[pieceIndex];
 
             packedScore += AdditionalPieceEvaluation(pieceSquareIndex, pieceIndex, whiteBucket, blackBucket, whiteKing, blackKing, blackPawnAttacks, board, chess::Color::WHITE, coefficients);
- 
+
             if (pieceIndex == 0)
             {
                 IncrementCoefficients(coefficients,
