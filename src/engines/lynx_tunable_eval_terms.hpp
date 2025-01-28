@@ -5911,7 +5911,7 @@ TunableSingle SemiOpenFileKingPenalty(-23, 5);
 TunableSingle OpenFileKingPenalty(-65, 3);
 TunableSingle KingShieldBonus(24, -3);
 TunableSingle BishopPairBonus(30, 72);
-TunableSingle MinorMajorThreatsBonus(43, 8);
+TunableSingle BishopMajorThreatsBonus(43, 8);
 TunableSingle PieceAttackedByPawnPenalty(-48, -33);
 TunableArray PawnPhalanxBonus(
 	chess::PieceType::PAWN,
