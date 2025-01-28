@@ -662,9 +662,9 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     {
         const auto piece = chess::PieceType(static_cast<chess::PieceType::underlying>(pieceIndex));
         const auto threatsCount = chess::builtin::popcount(attacks & GetPieceSwappingEndianness(board, piece, ~color));
-        
+
         packedBonus += BishopThreatsBonus.packed[pieceIndex] * threatsCount;
-        IncrementCoefficients(coefficients, BishopThreatsBonus.index + pieceIndex - BishopThreatsBonus.start, color, pieceIndex);
+        IncrementCoefficients(coefficients, BishopThreatsBonus.index + pieceIndex - BishopThreatsBonus.start, color, threatsCount);
     }
 
     return packedBonus;
