@@ -24,6 +24,7 @@ const static int numParameters = psqtIndexCount +
                                  OpenFileKingPenalty.size +
                                  KingShieldBonus.size +
                                  BishopPairBonus.size +
+                                 BishopMajorThreatsBonus.size +
                                  PieceAttackedByPawnPenalty.size +
 
                                  // Arrays
@@ -40,11 +41,11 @@ const static int numParameters = psqtIndexCount +
                                  QueenMobilityBonus.tunableSize +
 
                                  // Bucketed arrays
-                                 PassedPawnBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
-                                 PassedPawnEnemyBonus.size +               // PSQTBucketCount * 6, removing 1 rank values
-                                 PassedPawnBonusNoEnemiesAheadBonus.size + // PSQTBucketCount * 6, removing 1 rank values
+                                 PassedPawnBonus.size +                         // PSQTBucketCount * 6, removing 1 rank values
+                                 PassedPawnEnemyBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
+                                 PassedPawnBonusNoEnemiesAheadBonus.size +      // PSQTBucketCount * 6, removing 1 rank values
                                  PassedPawnBonusNoEnemiesAheadEnemyBonus.size + // PSQTBucketCount * 6, removing 1 rank values
-                                 PieceProtectedByPawnBonus.size;           // PSQTBucketCount * 6, removing 1 rank values
+                                 PieceProtectedByPawnBonus.size;                // PSQTBucketCount * 6, removing 1 rank values
 
 class Lynx
 {
@@ -112,6 +113,7 @@ public:
         OpenFileKingPenalty.add(result);
         KingShieldBonus.add(result);
         BishopPairBonus.add(result);
+        BishopMajorThreatsBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
 
         // Arrays
@@ -266,6 +268,9 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(BishopMajorThreatsBonus);
+        BishopMajorThreatsBonus.to_csharp(parameters, ss, name);
+
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
@@ -367,6 +372,9 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
 
+        name = NAME(BishopMajorThreatsBonus);
+        BishopMajorThreatsBonus.to_cpp(parameters, ss, name);
+
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
 
@@ -459,7 +467,7 @@ void ResetLS1B(std::uint64_t &board)
     board &= (board - 1);
 }
 
-int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int oppositeSideBucket,  int sameSideKingSquare, int oppositeSideKingSquare, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int oppositeSideBucket, int sameSideKingSquare, int oppositeSideKingSquare, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     int packedBonus = 0;
     // auto doublePawnsCount = chess::builtin::popcount(GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color) & (FileMasks[squareIndex]));
@@ -598,6 +606,11 @@ int KnightAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     packedBonus += CheckBonus.packed[noColorPieceIndex] * checksCount;
     IncrementCoefficients(coefficients, CheckBonus.index + noColorPieceIndex - CheckBonus.start, color, checksCount);
 
+    // Major threats
+    // const auto threatsCount = (board.pieces(chess::PieceType::ROOK, ~color) | board.pieces(chess::PieceType::QUEEN, ~color)).count();
+    // packedBonus += BishopMajorThreatsBonus.packed * threatsCount;
+    // IncrementCoefficients(coefficients, BishopMajorThreatsBonus.index, color, threatsCount);
+
     return packedBonus;
 }
 
@@ -643,6 +656,14 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
 
     packedBonus += CheckBonus.packed[noColorPieceIndex] * checksCount;
     IncrementCoefficients(coefficients, CheckBonus.index + noColorPieceIndex - CheckBonus.start, color, checksCount);
+
+    // Major threats
+    const auto majorPieces = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, ~color) |
+                             GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, ~color);
+    const auto majorPiecesThreatsCount = chess::builtin::popcount(attacks & majorPieces);
+
+    packedBonus += BishopMajorThreatsBonus.packed * majorPiecesThreatsCount;
+    IncrementCoefficients(coefficients, BishopMajorThreatsBonus.index, color, majorPiecesThreatsCount);
 
     return packedBonus;
 }
@@ -801,7 +822,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
             ++pieceCount[pieceIndex];
 
             packedScore += AdditionalPieceEvaluation(pieceSquareIndex, pieceIndex, whiteBucket, blackBucket, whiteKing, blackKing, blackPawnAttacks, board, chess::Color::WHITE, coefficients);
- 
+
             if (pieceIndex == 0)
             {
                 IncrementCoefficients(coefficients,
