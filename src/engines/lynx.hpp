@@ -29,6 +29,7 @@ const static int numParameters = psqtIndexCount +
 
                                  // Arrays
                                  PawnPhalanxBonus.tunableSize +
+                                 PawnIslandsBonus.tunableSize +
                                  BadBishop_SameColorPawnsPenalty.tunableSize +
                                  BadBishop_BlockedCentralPawnsPenalty.tunableSize +
                                  CheckBonus.tunableSize +
@@ -118,6 +119,7 @@ public:
 
         // Arrays
         PawnPhalanxBonus.add(result);
+        PawnIslandsBonus.add(result);
         BadBishop_SameColorPawnsPenalty.add(result);
         BadBishop_BlockedCentralPawnsPenalty.add(result);
         CheckBonus.add(result);
@@ -278,6 +280,9 @@ public:
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(PawnIslandsBonus);
+        PawnIslandsBonus.to_csharp(parameters, ss, name);
+
         name = NAME(BadBishop_SameColorPawnsPenalty);
         BadBishop_SameColorPawnsPenalty.to_csharp(parameters, ss, name);
 
@@ -381,6 +386,10 @@ public:
         // Arrays
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_cpp(parameters, ss, name);
+        ss << "\n";
+
+        name = NAME(PawnIslandsBonus);
+        PawnIslandsBonus.to_cpp(parameters, ss, name);
         ss << "\n";
 
         name = NAME(BadBishop_SameColorPawnsPenalty);
@@ -736,6 +745,42 @@ int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawn
     return packedBonus + KingShieldBonus.packed * ownPawnsAroundCount;
 }
 
+int PawnIslands(const u64 bitboard)
+{
+    auto islandCount = 0;
+    auto isIsland = false;
+
+    for (int file = 0; file < 8; ++file)
+    {
+        auto pawnInRank = false;
+
+        for (int rank = 1; rank < 7; ++rank)
+        {
+            auto squareIndex = rank * 8 + file;
+
+            if (GetBit(bitboard, squareIndex))
+            {
+                pawnInRank = true;
+
+                if (!isIsland)
+                {
+                    isIsland = true;
+                    ++islandCount;
+                }
+
+                break;
+            }
+        }
+
+        if (!pawnInRank)
+        {
+            isIsland = false;
+        }
+    }
+
+    return islandCount;
+}
+
 int AdditionalPieceEvaluation(int pieceSquareIndex, int pieceIndex, int bucket, int oppositeSideBucket, int sameSideKingSquare, int oppositeSideKingSquare, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     switch (pieceIndex)
@@ -949,6 +994,14 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
 
     packedScore += (PieceAttackedByPawnPenalty.packed * attackedPiecesByBlackPawns) -
                    (PieceAttackedByPawnPenalty.packed * attackedPiecesByWhitePawns);
+
+    // Pawn islands
+    const auto whitePawnIslands = PawnIslands(whitePawns);
+    const auto blackPawnIslands = PawnIslands(blackPawns);
+
+    packedScore += PawnIslandsBonus.packed[whitePawnIslands] - PawnIslandsBonus.packed[blackPawnIslands];
+    IncrementCoefficients(coefficients, PawnIslandsBonus.index + whitePawnIslands - PawnIslandsBonus.start, chess::Color::WHITE);
+    IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
 
     // Debugging eval
     // return EvalResult{
