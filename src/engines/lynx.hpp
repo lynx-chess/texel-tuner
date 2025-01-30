@@ -999,9 +999,11 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     const auto whitePawnIslands = PawnIslands(whitePawns);
     const auto blackPawnIslands = PawnIslands(blackPawns);
 
-    packedScore += PawnIslandsBonus.packed[whitePawnIslands] - PawnIslandsBonus.packed[blackPawnIslands];
-    IncrementCoefficients(coefficients, PawnIslandsBonus.index + whitePawnIslands - PawnIslandsBonus.start, chess::Color::WHITE);
-    IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
+    const auto offset = PawnIslandsBonus.size / 2;
+    const auto pawnIslandsDifference = -blackPawnIslands + whitePawnIslands;
+
+    packedScore += PawnIslandsBonus.packed[pawnIslandsDifference + offset];
+    IncrementCoefficients(coefficients, PawnIslandsBonus.index + offset + pawnIslandsDifference - PawnIslandsBonus.start, chess::Color::WHITE);
 
     // Debugging eval
     // return EvalResult{
