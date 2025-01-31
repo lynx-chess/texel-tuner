@@ -5913,6 +5913,8 @@ TunableSingle KingShieldBonus(24, -4);
 TunableSingle BishopPairBonus(30, 71);
 TunableSingle BishopRookThreatsBonus(44, 5);
 TunableSingle BishopQueenThreatsBonus(36, 50);
+TunableSingle KnightRookThreatsBonus(44, 5);
+TunableSingle KnightQueenThreatsBonus(36, 50);
 TunableSingle PieceAttackedByPawnPenalty(-48, -33);
 TunableArray PawnPhalanxBonus(
 	chess::PieceType::PAWN,

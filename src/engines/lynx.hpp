@@ -26,6 +26,8 @@ const static int numParameters = psqtIndexCount +
                                  BishopPairBonus.size +
                                  BishopRookThreatsBonus.size +
                                  BishopQueenThreatsBonus.size +
+                                 KnightRookThreatsBonus.size +
+                                 KnightQueenThreatsBonus.size +
                                  PieceAttackedByPawnPenalty.size +
 
                                  // Arrays
@@ -117,6 +119,8 @@ public:
         BishopPairBonus.add(result);
         BishopRookThreatsBonus.add(result);
         BishopQueenThreatsBonus.add(result);
+        KnightRookThreatsBonus.add(result);
+        KnightQueenThreatsBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
 
         // Arrays
@@ -278,6 +282,12 @@ public:
         name = NAME(BishopQueenThreatsBonus);
         BishopQueenThreatsBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(KnightRookThreatsBonus);
+        KnightRookThreatsBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(KnightQueenThreatsBonus);
+        KnightQueenThreatsBonus.to_csharp(parameters, ss, name);
+
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
@@ -387,6 +397,12 @@ public:
 
         name = NAME(BishopQueenThreatsBonus);
         BishopQueenThreatsBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(KnightRookThreatsBonus);
+        KnightRookThreatsBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(KnightQueenThreatsBonus);
+        KnightQueenThreatsBonus.to_cpp(parameters, ss, name);
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
@@ -790,6 +806,33 @@ int PawnIslands(const u64 bitboard)
     return islandCount;
 }
 
+int Threats(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+{
+    int packedBonus = 0;
+    u64 knightAttacks = 0;
+
+    // Bitboard copy that we 'empty'
+    auto knights = GetPieceSwappingEndianness(board, chess::PieceType::KNIGHT, color);
+    while (knights != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(knights).index();
+        ResetLS1B(knights);
+        const auto attacks = chess::attacks::knight(static_cast<chess::Square>(pieceSquareIndex)).getBits();
+        knightAttacks |= attacks;
+    }
+
+    // Major threats
+    const auto rooksThreatsCount = chess::builtin::popcount(knightAttacks & GetPieceSwappingEndianness(board, chess::PieceType::ROOK, ~color));
+    packedBonus += KnightRookThreatsBonus.packed * rooksThreatsCount;
+    IncrementCoefficients(coefficients, KnightRookThreatsBonus.index, color, rooksThreatsCount);
+
+    const auto queenThreatsCount = chess::builtin::popcount(knightAttacks & GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, ~color));
+    packedBonus += KnightQueenThreatsBonus.packed * queenThreatsCount;
+    IncrementCoefficients(coefficients, KnightQueenThreatsBonus.index, color, queenThreatsCount);
+
+    return packedBonus;
+}
+
 int AdditionalPieceEvaluation(int pieceSquareIndex, int pieceIndex, int bucket, int oppositeSideBucket, int sameSideKingSquare, int oppositeSideKingSquare, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     switch (pieceIndex)
@@ -1011,6 +1054,9 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     packedScore += PawnIslandsBonus.packed[whitePawnIslands] - PawnIslandsBonus.packed[blackPawnIslands];
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + whitePawnIslands - PawnIslandsBonus.start, chess::Color::WHITE);
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
+
+    packedScore += Threats(board, chess::Color::WHITE, coefficients) -
+                   Threats(board, chess::Color::BLACK, coefficients);
 
     // Debugging eval
     // return EvalResult{
