@@ -685,7 +685,7 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     packedBonus += BishopRookThreatsBonus.packed[0] * undefendedRookThreatsCount;
     IncrementCoefficients(coefficients, BishopRookThreatsBonus.index, color, undefendedRookThreatsCount);
     packedBonus += BishopRookThreatsBonus.packed[1] * defendedRookThreatsCount;
-    IncrementCoefficients(coefficients, BishopRookThreatsBonus.index + 1, color, undefendedRookThreatsCount);
+    IncrementCoefficients(coefficients, BishopRookThreatsBonus.index + 1, color, defendedRookThreatsCount);
 
     const auto queenThreats = attacks & GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, ~color);
     const auto defendedQueenThreats = queenThreats & opponentPawnAttacks;
