@@ -609,7 +609,7 @@ int RookAdditonalEvaluation(int squareIndex, int pieceIndex, int bucket, int opp
     packedBonus += CheckBonus.packed[noColorPieceIndex] * checksCount;
     IncrementCoefficients(coefficients, CheckBonus.index + noColorPieceIndex - CheckBonus.start, color, checksCount);
 
-    if (chess::builtin::popcount(attacks & GetPieceSwappingEndianness(board, chess::PieceType::ROOK, color)) >= 2)
+    if (chess::builtin::popcount(attacks & GetPieceSwappingEndianness(board, chess::PieceType::ROOK, color)) >= 1)
     {
         auto rank = Rank[squareIndex];
         if (color == chess::Color::BLACK)
