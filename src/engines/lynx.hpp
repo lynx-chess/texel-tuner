@@ -24,6 +24,7 @@ const static int numParameters = psqtIndexCount +
                                  OpenFileKingPenalty.size +
                                  KingShieldBonus.size +
                                  BishopPairBonus.size +
+                                 KnightDefendingKnightBonus.size +
                                  BishopRookThreatsBonus.size +
                                  BishopQueenThreatsBonus.size +
                                  PieceAttackedByPawnPenalty.size +
@@ -115,6 +116,7 @@ public:
         OpenFileKingPenalty.add(result);
         KingShieldBonus.add(result);
         BishopPairBonus.add(result);
+        KnightDefendingKnightBonus.add(result);
         BishopRookThreatsBonus.add(result);
         BishopQueenThreatsBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
@@ -272,6 +274,9 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(KnightDefendingKnightBonus);
+        KnightDefendingKnightBonus.to_csharp(parameters, ss, name);
+
         name = NAME(BishopRookThreatsBonus);
         BishopRookThreatsBonus.to_csharp(parameters, ss, name);
 
@@ -381,6 +386,9 @@ public:
 
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(KnightDefendingKnightBonus);
+        KnightDefendingKnightBonus.to_cpp(parameters, ss, name);
 
         name = NAME(BishopRookThreatsBonus);
         BishopRookThreatsBonus.to_cpp(parameters, ss, name);
@@ -623,10 +631,12 @@ int KnightAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     packedBonus += CheckBonus.packed[noColorPieceIndex] * checksCount;
     IncrementCoefficients(coefficients, CheckBonus.index + noColorPieceIndex - CheckBonus.start, color, checksCount);
 
-    // Major threats
-    // const auto threatsCount = (board.pieces(chess::PieceType::ROOK, ~color) | board.pieces(chess::PieceType::QUEEN, ~color)).count();
-    // packedBonus += BishopMajorThreatsBonus.packed * threatsCount;
-    // IncrementCoefficients(coefficients, BishopMajorThreatsBonus.index, color, threatsCount);
+    // Knight defending knight
+    if(attacks & GetPieceSwappingEndianness(board, chess::PieceType::KNIGHT, color))
+    {
+        packedBonus += KnightDefendingKnightBonus.packed;
+        IncrementCoefficients(coefficients, KnightDefendingKnightBonus.index, color);
+    }
 
     return packedBonus;
 }

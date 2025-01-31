@@ -5911,6 +5911,7 @@ TunableSingle SemiOpenFileKingPenalty(-21, 4);
 TunableSingle OpenFileKingPenalty(-63, 2);
 TunableSingle KingShieldBonus(24, -4);
 TunableSingle BishopPairBonus(30, 71);
+TunableSingle KnightDefendingKnightBonus(30, 71);
 TunableSingle BishopRookThreatsBonus(44, 5);
 TunableSingle BishopQueenThreatsBonus(36, 50);
 TunableSingle PieceAttackedByPawnPenalty(-48, -33);
