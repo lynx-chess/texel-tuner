@@ -5924,8 +5924,8 @@ TunableArray PawnPhalanxBonus(
 
 TunableArray ConnectedRooksBonus(
 	chess::PieceType::PAWN,
-	std::vector<int>{0, 3, 19, 26, 59, 211, -47},
-	std::vector<int>{0, 5, 12, 27, 78, 196, 403},
+	std::vector<int>{0, 3, 19, 26, 59, 211, -47, 5},
+	std::vector<int>{0, 5, 12, 27, 78, 196, 403, 1},
 	0,
 	0);
 
