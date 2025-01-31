@@ -5911,9 +5911,22 @@ TunableSingle SemiOpenFileKingPenalty(-21, 4);
 TunableSingle OpenFileKingPenalty(-63, 2);
 TunableSingle KingShieldBonus(24, -4);
 TunableSingle BishopPairBonus(30, 71);
-TunableSingle BishopRookThreatsBonus(44, 5);
-TunableSingle BishopQueenThreatsBonus(36, 50);
 TunableSingle PieceAttackedByPawnPenalty(-48, -33);
+
+TunableArray BishopRookThreatsBonus(
+	chess::PieceType::PAWN,
+	std::vector<int>{44, 45},
+	std::vector<int>{5, 6},
+	0,
+	0);
+
+TunableArray BishopQueenThreatsBonus(
+	chess::PieceType::PAWN,
+	std::vector<int>{36, 37},
+	std::vector<int>{50, 51},
+	0,
+	0);
+
 TunableArray PawnPhalanxBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{0, 3, 19, 26, 59, 211, -47},

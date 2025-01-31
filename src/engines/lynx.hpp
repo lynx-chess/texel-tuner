@@ -24,11 +24,11 @@ const static int numParameters = psqtIndexCount +
                                  OpenFileKingPenalty.size +
                                  KingShieldBonus.size +
                                  BishopPairBonus.size +
-                                 BishopRookThreatsBonus.size +
-                                 BishopQueenThreatsBonus.size +
                                  PieceAttackedByPawnPenalty.size +
 
                                  // Arrays
+                                 BishopRookThreatsBonus.tunableSize +
+                                 BishopQueenThreatsBonus.tunableSize +
                                  PawnPhalanxBonus.tunableSize +
                                  PawnIslandsBonus.tunableSize +
                                  BadBishop_SameColorPawnsPenalty.tunableSize +
@@ -115,11 +115,11 @@ public:
         OpenFileKingPenalty.add(result);
         KingShieldBonus.add(result);
         BishopPairBonus.add(result);
-        BishopRookThreatsBonus.add(result);
-        BishopQueenThreatsBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
 
         // Arrays
+        BishopRookThreatsBonus.add(result);
+        BishopQueenThreatsBonus.add(result);
         PawnPhalanxBonus.add(result);
         PawnIslandsBonus.add(result);
         BadBishop_SameColorPawnsPenalty.add(result);
@@ -272,16 +272,16 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(PieceAttackedByPawnPenalty);
+        PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
+
+        // Arrays
         name = NAME(BishopRookThreatsBonus);
         BishopRookThreatsBonus.to_csharp(parameters, ss, name);
 
         name = NAME(BishopQueenThreatsBonus);
         BishopQueenThreatsBonus.to_csharp(parameters, ss, name);
 
-        name = NAME(PieceAttackedByPawnPenalty);
-        PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
-
-        // Arrays
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_csharp(parameters, ss, name);
 
@@ -382,16 +382,18 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
 
-        name = NAME(BishopRookThreatsBonus);
-        BishopRookThreatsBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(BishopQueenThreatsBonus);
-        BishopQueenThreatsBonus.to_cpp(parameters, ss, name);
-
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
 
         // Arrays
+        name = NAME(BishopRookThreatsBonus);
+        BishopRookThreatsBonus.to_cpp(parameters, ss, name);
+        ss << "\n";
+
+        name = NAME(BishopQueenThreatsBonus);
+        BishopQueenThreatsBonus.to_cpp(parameters, ss, name);
+        ss << "\n";
+
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_cpp(parameters, ss, name);
         ss << "\n";
@@ -675,13 +677,25 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     IncrementCoefficients(coefficients, CheckBonus.index + noColorPieceIndex - CheckBonus.start, color, checksCount);
 
     // Major threats
-    const auto rooksThreatsCount = chess::builtin::popcount(attacks & GetPieceSwappingEndianness(board, chess::PieceType::ROOK, ~color));
-    packedBonus += BishopRookThreatsBonus.packed * rooksThreatsCount;
-    IncrementCoefficients(coefficients, BishopRookThreatsBonus.index, color, rooksThreatsCount);
+    const auto rookTreats = attacks & GetPieceSwappingEndianness(board, chess::PieceType::ROOK, ~color);
+    const auto defendedRookThreats = rookTreats & opponentPawnAttacks;
+    const auto defendedRookThreatsCount = chess::builtin::popcount(defendedRookThreats);
+    const auto undefendedRookThreatsCount = chess::builtin::popcount(rookTreats) - defendedRookThreatsCount;
+ 
+    packedBonus += BishopRookThreatsBonus.packed[0] * undefendedRookThreatsCount;
+    IncrementCoefficients(coefficients, BishopRookThreatsBonus.index, color, undefendedRookThreatsCount);
+    packedBonus += BishopRookThreatsBonus.packed[1] * defendedRookThreatsCount;
+    IncrementCoefficients(coefficients, BishopRookThreatsBonus.index + 1, color, undefendedRookThreatsCount);
 
-    const auto queenThreatsCount = chess::builtin::popcount(attacks & GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, ~color));
-    packedBonus += BishopQueenThreatsBonus.packed * queenThreatsCount;
-    IncrementCoefficients(coefficients, BishopQueenThreatsBonus.index, color, queenThreatsCount);
+    const auto queenThreats = attacks & GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, ~color);
+    const auto defendedQueenThreats = queenThreats & opponentPawnAttacks;
+    const auto defendedQueenThreatsCount = chess::builtin::popcount(defendedQueenThreats);
+    const auto undefendedQueenThreatsCount = chess::builtin::popcount(queenThreats) - defendedQueenThreatsCount;
+
+    packedBonus += BishopQueenThreatsBonus.packed[0] * undefendedQueenThreatsCount;
+    IncrementCoefficients(coefficients, BishopQueenThreatsBonus.index, color, undefendedQueenThreatsCount);
+    packedBonus += BishopQueenThreatsBonus.packed[1] * defendedQueenThreatsCount;
+    IncrementCoefficients(coefficients, BishopQueenThreatsBonus.index + 1, color, defendedQueenThreatsCount);
 
     return packedBonus;
 }
