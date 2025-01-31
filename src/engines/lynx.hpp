@@ -23,6 +23,7 @@ const static int numParameters = psqtIndexCount +
                                  SemiOpenFileKingPenalty.size +
                                  OpenFileKingPenalty.size +
                                  KingShieldBonus.size +
+                                 RookOn7thRankBonus.size +
                                  BishopPairBonus.size +
                                  BishopRookThreatsBonus.size +
                                  BishopQueenThreatsBonus.size +
@@ -114,6 +115,7 @@ public:
         SemiOpenFileKingPenalty.add(result);
         OpenFileKingPenalty.add(result);
         KingShieldBonus.add(result);
+        RookOn7thRankBonus.add(result);
         BishopPairBonus.add(result);
         BishopRookThreatsBonus.add(result);
         BishopQueenThreatsBonus.add(result);
@@ -269,6 +271,9 @@ public:
         name = NAME(KingShieldBonus);
         KingShieldBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(RookOn7thRankBonus);
+        RookOn7thRankBonus.to_csharp(parameters, ss, name);
+
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
@@ -378,6 +383,9 @@ public:
 
         name = NAME(KingShieldBonus);
         KingShieldBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(RookOn7thRankBonus);
+        RookOn7thRankBonus.to_cpp(parameters, ss, name);
 
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
@@ -590,6 +598,19 @@ int RookAdditonalEvaluation(int squareIndex, int pieceIndex, int bucket, int opp
             packedBonus += SemiOpenFileRookBonus.packed;
             IncrementCoefficients(coefficients, SemiOpenFileRookBonus.index, color);
         }
+    }
+
+    // Rook on seventh rank
+    auto rank = Rank[squareIndex];
+    if (color == chess::Color::BLACK)
+    {
+        rank = 7 - rank;
+    }
+
+    if (rank == 6)
+    {
+        packedBonus += RookOn7thRankBonus.packed;
+        IncrementCoefficients(coefficients, RookOn7thRankBonus.index, color);
     }
 
     // Checks

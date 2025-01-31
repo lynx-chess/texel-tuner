@@ -5910,6 +5910,7 @@ TunableSingle SemiOpenFileRookBonus(15, 9);
 TunableSingle SemiOpenFileKingPenalty(-21, 4);
 TunableSingle OpenFileKingPenalty(-63, 2);
 TunableSingle KingShieldBonus(24, -4);
+TunableSingle RookOn7thRankBonus(30, 71);
 TunableSingle BishopPairBonus(30, 71);
 TunableSingle BishopRookThreatsBonus(44, 5);
 TunableSingle BishopQueenThreatsBonus(36, 50);
