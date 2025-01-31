@@ -1008,8 +1008,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     const auto whitePawnIslands = PawnIslands(whitePawns);
     const auto blackPawnIslands = PawnIslands(blackPawns);
 
-    packedScore += PawnIslandsBonus.packed[whitePawnIslands] * chess::builtin::popcount(whitePawns) / 8;
-    packedScore -= PawnIslandsBonus.packed[blackPawnIslands] * chess::builtin::popcount(blackPawns) / 8;
+    packedScore += PawnIslandsBonus.packed[whitePawnIslands] * (8 - chess::builtin::popcount(whitePawns) / 8);
+    packedScore -= PawnIslandsBonus.packed[blackPawnIslands] * (8 - chess::builtin::popcount(blackPawns) / 8);
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + whitePawnIslands - PawnIslandsBonus.start, chess::Color::WHITE);
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
 
