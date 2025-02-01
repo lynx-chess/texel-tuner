@@ -24,7 +24,7 @@ const static int numParameters = psqtIndexCount +
                                  OpenFileKingPenalty.size +
                                  KingShieldBonus.size +
                                  BishopPairBonus.size +
-                                 BishopInLongDiagonalBonus.size +
+                                 BishopInUnblockedLongDiagonalBonus.size +
                                  BishopRookThreatsBonus.size +
                                  BishopQueenThreatsBonus.size +
                                  PieceAttackedByPawnPenalty.size +
@@ -117,7 +117,7 @@ public:
         OpenFileKingPenalty.add(result);
         KingShieldBonus.add(result);
         BishopPairBonus.add(result);
-        BishopInLongDiagonalBonus.add(result);
+        BishopInUnblockedLongDiagonalBonus.add(result);
         BishopRookThreatsBonus.add(result);
         BishopQueenThreatsBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
@@ -277,8 +277,8 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
-        name = NAME(BishopInLongDiagonalBonus);
-        BishopInLongDiagonalBonus.to_csharp(parameters, ss, name);
+        name = NAME(BishopInUnblockedLongDiagonalBonus);
+        BishopInUnblockedLongDiagonalBonus.to_csharp(parameters, ss, name);
 
         name = NAME(BishopRookThreatsBonus);
         BishopRookThreatsBonus.to_csharp(parameters, ss, name);
@@ -393,8 +393,8 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
 
-        name = NAME(BishopInLongDiagonalBonus);
-        BishopInLongDiagonalBonus.to_cpp(parameters, ss, name);
+        name = NAME(BishopInUnblockedLongDiagonalBonus);
+        BishopInUnblockedLongDiagonalBonus.to_cpp(parameters, ss, name);
 
         name = NAME(BishopRookThreatsBonus);
         BishopRookThreatsBonus.to_cpp(parameters, ss, name);
@@ -687,6 +687,7 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     packedBonus += BadBishop_SameColorPawnsPenalty.packed[sameColorPawnsCount];
     IncrementCoefficients(coefficients, BadBishop_SameColorPawnsPenalty.index + sameColorPawnsCount, color);
 
+    // Blocked central pawns
     const auto sameSideCentralPawns = sameSidePawns & CentralFiles;
     const auto pawnBlockerSquares = pieceIndex == static_cast<int>(chess::Piece::WHITEBISHOP)
                                         ? ShiftUp(sameSideCentralPawns)
@@ -697,6 +698,13 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
 
     packedBonus += BadBishop_BlockedCentralPawnsPenalty.packed[pawnBlockersCount];
     IncrementCoefficients(coefficients, BadBishop_BlockedCentralPawnsPenalty.index - BadBishop_BlockedCentralPawnsPenalty.start + pawnBlockersCount, color);
+
+    // Bishop in unblocked long diagonals
+    if (chess::builtin::popcount(attacks & CentralSquares) == 2)
+    {
+        packedBonus += BishopInUnblockedLongDiagonalBonus.packed;
+        IncrementCoefficients(coefficients, BishopInUnblockedLongDiagonalBonus.index, color);
+    }
 
     // Checks
     const auto enemyKingCheckThreats = chess::attacks::bishop(static_cast<chess::Square>(oppositeSideKingSquare), occupancy).getBits();
@@ -1027,13 +1035,6 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
         packedScore -= BishopPairBonus.packed;
         IncrementCoefficients(coefficients, BishopPairBonus.index, chess::Color::BLACK);
     }
-
-    // Bishop in long diagonals
-    const auto bishopInLongDiagonalsDelta = chess::builtin::popcount(whiteBishops & LongDiagonals) -
-                                            chess::builtin::popcount(blackBishops & LongDiagonals);
-
-    packedScore += bishopInLongDiagonalsDelta * BishopInLongDiagonalBonus.packed;
-    IncrementCoefficients(coefficients, BishopInLongDiagonalBonus.index, chess::Color::WHITE, bishopInLongDiagonalsDelta);
 
     // Pieces attacked by pawns bonus
     const auto attackedPiecesByBlackPawns = chess::builtin::popcount(blackPawnAttacks & __builtin_bswap64(board.us(chess::Color::WHITE).getBits()) /*&(~GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE))*/);
