@@ -24,6 +24,7 @@ const static int numParameters = psqtIndexCount +
                                  OpenFileKingPenalty.size +
                                  KingShieldBonus.size +
                                  BishopPairBonus.size +
+                                 BishopInLongDiagonalBonus.size +
                                  BishopRookThreatsBonus.size +
                                  BishopQueenThreatsBonus.size +
                                  PieceAttackedByPawnPenalty.size +
@@ -116,6 +117,7 @@ public:
         OpenFileKingPenalty.add(result);
         KingShieldBonus.add(result);
         BishopPairBonus.add(result);
+        BishopInLongDiagonalBonus.add(result);
         BishopRookThreatsBonus.add(result);
         BishopQueenThreatsBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
@@ -275,6 +277,9 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(BishopInLongDiagonalBonus);
+        BishopInLongDiagonalBonus.to_csharp(parameters, ss, name);
+
         name = NAME(BishopRookThreatsBonus);
         BishopRookThreatsBonus.to_csharp(parameters, ss, name);
 
@@ -387,6 +392,9 @@ public:
 
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(BishopInLongDiagonalBonus);
+        BishopInLongDiagonalBonus.to_cpp(parameters, ss, name);
 
         name = NAME(BishopRookThreatsBonus);
         BishopRookThreatsBonus.to_cpp(parameters, ss, name);
@@ -1004,18 +1012,28 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
         enemyKingBaseIndex + (48 * PSQTBucketCount) + (64 * PSQTBucketCount * 4) + (64 * whiteBucket) + (blackKing ^ 56),
         chess::Color::BLACK);
 
+    const auto whiteBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::WHITE);
+    const auto blackBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::BLACK);
+
     // Bishop pair bonus
-    if (board.pieces(chess::PieceType::BISHOP, chess::Color::WHITE).count() >= 2)
+    if (chess::builtin::popcount(whiteBishops) >= 2)
     {
         packedScore += BishopPairBonus.packed;
         IncrementCoefficients(coefficients, BishopPairBonus.index, chess::Color::WHITE);
     }
 
-    if (board.pieces(chess::PieceType::BISHOP, chess::Color::BLACK).count() >= 2)
+    if (chess::builtin::popcount(blackBishops) >= 2)
     {
         packedScore -= BishopPairBonus.packed;
         IncrementCoefficients(coefficients, BishopPairBonus.index, chess::Color::BLACK);
     }
+
+    // Bishop in long diagonals
+    const auto bishopInLongDiagonalsDelta = chess::builtin::popcount(whiteBishops & LongDiagonals) -
+                                            chess::builtin::popcount(blackBishops & LongDiagonals);
+
+    packedScore += bishopInLongDiagonalsDelta * BishopInLongDiagonalBonus.packed;
+    IncrementCoefficients(coefficients, BishopInLongDiagonalBonus.index, chess::Color::WHITE, bishopInLongDiagonalsDelta);
 
     // Pieces attacked by pawns bonus
     const auto attackedPiecesByBlackPawns = chess::builtin::popcount(blackPawnAttacks & __builtin_bswap64(board.us(chess::Color::WHITE).getBits()) /*&(~GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE))*/);
