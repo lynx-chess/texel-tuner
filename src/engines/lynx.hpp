@@ -30,6 +30,7 @@ const static int numParameters = psqtIndexCount +
 
                                  // Arrays
                                  PawnPhalanxBonus.tunableSize +
+                                 ConnectedRooksBonus.tunableSize +
                                  PawnIslandsBonus.tunableSize +
                                  BadBishop_SameColorPawnsPenalty.tunableSize +
                                  BadBishop_BlockedCentralPawnsPenalty.tunableSize +
@@ -121,6 +122,7 @@ public:
 
         // Arrays
         PawnPhalanxBonus.add(result);
+        ConnectedRooksBonus.add(result);
         PawnIslandsBonus.add(result);
         BadBishop_SameColorPawnsPenalty.add(result);
         BadBishop_BlockedCentralPawnsPenalty.add(result);
@@ -146,6 +148,7 @@ public:
         assert(PassedPawnBonusNoEnemiesAheadBonus.bucketTunableSize == 6);
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
         assert(PieceProtectedByPawnBonus.bucketTunableSize == 5);
+        assert(ConnectedRooksBonus.tunableSize == 8);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
         assert(VirtualKingMobilityBonus.tunableSize == 28);
@@ -285,6 +288,9 @@ public:
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(ConnectedRooksBonus);
+        ConnectedRooksBonus.to_csharp(parameters, ss, name);
+
         name = NAME(PawnIslandsBonus);
         PawnIslandsBonus.to_csharp(parameters, ss, name);
 
@@ -394,6 +400,10 @@ public:
         // Arrays
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_cpp(parameters, ss, name);
+        ss << "\n";
+
+        name = NAME(ConnectedRooksBonus);
+        ConnectedRooksBonus.to_cpp(parameters, ss, name);
         ss << "\n";
 
         name = NAME(PawnIslandsBonus);
@@ -598,6 +608,19 @@ int RookAdditonalEvaluation(int squareIndex, int pieceIndex, int bucket, int opp
 
     packedBonus += CheckBonus.packed[noColorPieceIndex] * checksCount;
     IncrementCoefficients(coefficients, CheckBonus.index + noColorPieceIndex - CheckBonus.start, color, checksCount);
+
+    // Connected rooks
+    if (chess::builtin::popcount(attacks & GetPieceSwappingEndianness(board, chess::PieceType::ROOK, color)) >= 1)
+    {
+        auto rank = Rank[squareIndex];
+        if (color == chess::Color::BLACK)
+        {
+            rank = 7 - rank;
+        }
+
+        packedBonus += ConnectedRooksBonus.packed[rank];
+        IncrementCoefficients(coefficients, ConnectedRooksBonus.index - ConnectedRooksBonus.start + rank, color);
+    }
 
     return packedBonus;
 }
