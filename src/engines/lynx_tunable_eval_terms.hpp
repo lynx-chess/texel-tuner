@@ -5957,7 +5957,7 @@ TunableArray CheckBonus(
 	1,
 	0);
 
-	TunableArray FriendlyKingDistanceToKnightBonus(
+TunableArray FriendlyKingDistanceToKnightBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{0, 223, 216, 185, 171, 178, 174, 131},
 	std::vector<int>{0, 204, 202, 202, 202, 202, 202, 205},
@@ -5984,7 +5984,6 @@ TunableArray FriendlyKingDistanceToQueenBonus(
 	std::vector<int>{0, 641, 650, 658, 660, 665, 673, 696},
 	1,
 	0);
-
 
 TunableArray FriendlyKingDistanceToPassedPawnBonus(
 	chess::PieceType::PAWN,
