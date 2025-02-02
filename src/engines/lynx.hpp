@@ -601,13 +601,18 @@ int RookAdditonalEvaluation(int squareIndex, int pieceIndex, int bucket, int opp
     }
 
     // Rook on seventh rank
-    auto rank = Rank[squareIndex];
+    auto rookRank = Rank[squareIndex];
+    auto opponentKingRank = Rank[oppositeSideKingSquare];
+
+    auto lastRank = 7;
+    auto seventhRank = 6;
     if (color == chess::Color::BLACK)
     {
-        rank = 7 - rank;
+        lastRank = 0;
+        seventhRank = 1;
     }
 
-    if (rank == 6)
+    if (rookRank == seventhRank && opponentKingRank == lastRank)
     {
         packedBonus += RookOn7thRankBonus.packed;
         IncrementCoefficients(coefficients, RookOn7thRankBonus.index, color);
