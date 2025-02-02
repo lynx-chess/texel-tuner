@@ -27,6 +27,10 @@ const static int numParameters = psqtIndexCount +
                                  BishopInUnblockedLongDiagonalBonus.size +
                                  BishopRookThreatsBonus.size +
                                  BishopQueenThreatsBonus.size +
+                                 FriendlyKingDistanceToKnightPenalty.size +
+                                 FriendlyKingDistanceToBishopPenalty.size +
+                                 FriendlyKingDistanceToRookPenalty.size +
+                                 FriendlyKingDistanceToQueenPenalty.size +
                                  PieceAttackedByPawnPenalty.size +
 
                                  // Arrays
@@ -36,10 +40,6 @@ const static int numParameters = psqtIndexCount +
                                  BadBishop_SameColorPawnsPenalty.tunableSize +
                                  BadBishop_BlockedCentralPawnsPenalty.tunableSize +
                                  CheckBonus.tunableSize +
-                                 FriendlyKingDistanceToKnightBonus.tunableSize +     // 7, removing start
-                                 FriendlyKingDistanceToBishopBonus.tunableSize +     // 7, removing start
-                                 FriendlyKingDistanceToRookBonus.tunableSize +       // 7, removing start
-                                 FriendlyKingDistanceToQueenBonus.tunableSize +      // 7, removing start
                                  FriendlyKingDistanceToPassedPawnBonus.tunableSize + // 7, removing start
                                  EnemyKingDistanceToPassedPawnPenalty.tunableSize +  // 7, removing start
                                  VirtualKingMobilityBonus.tunableSize +              // 28
@@ -124,6 +124,10 @@ public:
         BishopInUnblockedLongDiagonalBonus.add(result);
         BishopRookThreatsBonus.add(result);
         BishopQueenThreatsBonus.add(result);
+        FriendlyKingDistanceToKnightPenalty.add(result);
+        FriendlyKingDistanceToBishopPenalty.add(result);
+        FriendlyKingDistanceToRookPenalty.add(result);
+        FriendlyKingDistanceToQueenPenalty.add(result);
         PieceAttackedByPawnPenalty.add(result);
 
         // Arrays
@@ -134,10 +138,6 @@ public:
         BadBishop_BlockedCentralPawnsPenalty.add(result);
         CheckBonus.add(result);
 
-        FriendlyKingDistanceToKnightBonus.add(result);
-        FriendlyKingDistanceToBishopBonus.add(result);
-        FriendlyKingDistanceToRookBonus.add(result);
-        FriendlyKingDistanceToQueenBonus.add(result);
         FriendlyKingDistanceToPassedPawnBonus.add(result);
         EnemyKingDistanceToPassedPawnPenalty.add(result);
         VirtualKingMobilityBonus.add(result);
@@ -159,10 +159,6 @@ public:
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
         assert(PieceProtectedByPawnBonus.bucketTunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
-        assert(FriendlyKingDistanceToKnightBonus.tunableSize == 4);
-        assert(FriendlyKingDistanceToBishopBonus.tunableSize == 4);
-        assert(FriendlyKingDistanceToRookBonus.tunableSize == 4);
-        assert(FriendlyKingDistanceToQueenBonus.tunableSize == 4);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
         assert(VirtualKingMobilityBonus.tunableSize == 28);
@@ -298,6 +294,18 @@ public:
         name = NAME(BishopQueenThreatsBonus);
         BishopQueenThreatsBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(FriendlyKingDistanceToKnightPenalty);
+        FriendlyKingDistanceToKnightPenalty.to_csharp(parameters, ss, name);
+
+        name = NAME(FriendlyKingDistanceToBishopPenalty);
+        FriendlyKingDistanceToBishopPenalty.to_csharp(parameters, ss, name);
+
+        name = NAME(FriendlyKingDistanceToRookPenalty);
+        FriendlyKingDistanceToRookPenalty.to_csharp(parameters, ss, name);
+
+        name = NAME(FriendlyKingDistanceToQueenPenalty);
+        FriendlyKingDistanceToQueenPenalty.to_csharp(parameters, ss, name);
+
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
@@ -319,18 +327,6 @@ public:
 
         name = NAME(CheckBonus);
         CheckBonus.to_csharp(parameters, ss, name);
-
-        name = NAME(FriendlyKingDistanceToKnightBonus);
-        FriendlyKingDistanceToKnightBonus.to_csharp(parameters, ss, name);
-
-        name = NAME(FriendlyKingDistanceToBishopBonus);
-        FriendlyKingDistanceToBishopBonus.to_csharp(parameters, ss, name);
-
-        name = NAME(FriendlyKingDistanceToRookBonus);
-        FriendlyKingDistanceToRookBonus.to_csharp(parameters, ss, name);
-
-        name = NAME(FriendlyKingDistanceToQueenBonus);
-        FriendlyKingDistanceToQueenBonus.to_csharp(parameters, ss, name);
 
         name = NAME(FriendlyKingDistanceToPassedPawnBonus);
         FriendlyKingDistanceToPassedPawnBonus.to_csharp(parameters, ss, name);
@@ -426,6 +422,18 @@ public:
         name = NAME(BishopQueenThreatsBonus);
         BishopQueenThreatsBonus.to_cpp(parameters, ss, name);
 
+        name = NAME(FriendlyKingDistanceToKnightPenalty);
+        FriendlyKingDistanceToKnightPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(FriendlyKingDistanceToBishopPenalty);
+        FriendlyKingDistanceToBishopPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(FriendlyKingDistanceToRookPenalty);
+        FriendlyKingDistanceToRookPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(FriendlyKingDistanceToQueenPenalty);
+        FriendlyKingDistanceToQueenPenalty.to_cpp(parameters, ss, name);
+
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
 
@@ -453,18 +461,6 @@ public:
         name = NAME(CheckBonus);
         CheckBonus.to_cpp(parameters, ss, name);
         ss << "\n";
-
-        name = NAME(FriendlyKingDistanceToKnightBonus);
-        FriendlyKingDistanceToKnightBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(FriendlyKingDistanceToBishopBonus);
-        FriendlyKingDistanceToBishopBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(FriendlyKingDistanceToRookBonus);
-        FriendlyKingDistanceToRookBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(FriendlyKingDistanceToQueenBonus);
-        FriendlyKingDistanceToQueenBonus.to_cpp(parameters, ss, name);
 
         name = NAME(FriendlyKingDistanceToPassedPawnBonus);
         FriendlyKingDistanceToPassedPawnBonus.to_cpp(parameters, ss, name);
@@ -670,8 +666,8 @@ int RookAdditonalEvaluation(int squareIndex, int pieceIndex, int bucket, int sam
     const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
     if (friendlyKingDistance >= 4)
     {
-        packedBonus += FriendlyKingDistanceToRookBonus.packed[friendlyKingDistance];
-        IncrementCoefficients(coefficients, FriendlyKingDistanceToRookBonus.index + friendlyKingDistance - FriendlyKingDistanceToRookBonus.start, color);
+        packedBonus += FriendlyKingDistanceToRookPenalty.packed;
+        IncrementCoefficients(coefficients, FriendlyKingDistanceToRookPenalty.index, color);
     }
 
     return packedBonus;
@@ -702,8 +698,8 @@ int KnightAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
     if (friendlyKingDistance >= 4)
     {
-        packedBonus += FriendlyKingDistanceToKnightBonus.packed[friendlyKingDistance];
-        IncrementCoefficients(coefficients, FriendlyKingDistanceToKnightBonus.index + friendlyKingDistance - FriendlyKingDistanceToKnightBonus.start, color);
+        packedBonus += FriendlyKingDistanceToKnightPenalty.packed;
+        IncrementCoefficients(coefficients, FriendlyKingDistanceToKnightPenalty.index, color);
     }
 
     return packedBonus;
@@ -773,8 +769,8 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
     if (friendlyKingDistance >= 4)
     {
-        packedBonus += FriendlyKingDistanceToBishopBonus.packed[friendlyKingDistance];
-        IncrementCoefficients(coefficients, FriendlyKingDistanceToBishopBonus.index + friendlyKingDistance - FriendlyKingDistanceToBishopBonus.start, color);
+        packedBonus += FriendlyKingDistanceToBishopPenalty.packed;
+        IncrementCoefficients(coefficients, FriendlyKingDistanceToBishopPenalty.index, color);
     }
 
     return packedBonus;
@@ -806,8 +802,8 @@ int QueenAdditionalEvaluation(int squareIndex, int bucket, int sameSideKingSquar
     const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
     if (friendlyKingDistance >= 4)
     {
-        packedBonus += FriendlyKingDistanceToQueenBonus.packed[friendlyKingDistance];
-        IncrementCoefficients(coefficients, FriendlyKingDistanceToQueenBonus.index + friendlyKingDistance - FriendlyKingDistanceToQueenBonus.start, color);
+        packedBonus += FriendlyKingDistanceToQueenPenalty.packed;
+        IncrementCoefficients(coefficients, FriendlyKingDistanceToQueenPenalty.index, color);
     }
 
     return packedBonus;

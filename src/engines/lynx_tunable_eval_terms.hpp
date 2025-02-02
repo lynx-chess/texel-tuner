@@ -5914,6 +5914,10 @@ TunableSingle BishopPairBonus(30, 71);
 TunableSingle BishopInUnblockedLongDiagonalBonus(19, 12);
 TunableSingle BishopRookThreatsBonus(43, 5);
 TunableSingle BishopQueenThreatsBonus(36, 50);
+TunableSingle FriendlyKingDistanceToKnightPenalty(36, 50);
+TunableSingle FriendlyKingDistanceToBishopPenalty(36, 50);
+TunableSingle FriendlyKingDistanceToRookPenalty(36, 50);
+TunableSingle FriendlyKingDistanceToQueenPenalty(36, 50);
 TunableSingle PieceAttackedByPawnPenalty(-48, -33);
 TunableArray PawnPhalanxBonus(
 	chess::PieceType::PAWN,
@@ -5955,34 +5959,6 @@ TunableArray CheckBonus(
 	std::vector<int>{0, 17, 17, 31, 12},
 	std::vector<int>{0, 3, 15, 3, 19},
 	1,
-	0);
-
-TunableArray FriendlyKingDistanceToKnightBonus(
-	chess::PieceType::PAWN,
-	std::vector<int>{0, 223, 216, 185, 171, 178, 174, 131},
-	std::vector<int>{0, 204, 202, 202, 202, 202, 202, 205},
-	4,
-	0);
-
-TunableArray FriendlyKingDistanceToBishopBonus(
-	chess::PieceType::PAWN,
-	std::vector<int>{0, 129, 114, 93, 72, 82, 61, 49},
-	std::vector<int>{0, 113, 110, 110, 115, 118, 126, 136},
-	4,
-	0);
-
-TunableArray FriendlyKingDistanceToRookBonus(
-	chess::PieceType::PAWN,
-	std::vector<int>{0, 237, 232, 211, 202, 192, 186, 179},
-	std::vector<int>{0, 346, 352, 355, 355, 357, 360, 365},
-	4,
-	0);
-
-TunableArray FriendlyKingDistanceToQueenBonus(
-	chess::PieceType::PAWN,
-	std::vector<int>{0, 476, 472, 469, 475, 489, 503, 492},
-	std::vector<int>{0, 641, 650, 658, 660, 665, 673, 696},
-	4,
 	0);
 
 TunableArray FriendlyKingDistanceToPassedPawnBonus(
