@@ -159,10 +159,10 @@ public:
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
         assert(PieceProtectedByPawnBonus.bucketTunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
-        assert(FriendlyKingDistanceToKnightBonus.tunableSize == 7);
-        assert(FriendlyKingDistanceToBishopBonus.tunableSize == 7);
-        assert(FriendlyKingDistanceToRookBonus.tunableSize == 7);
-        assert(FriendlyKingDistanceToQueenBonus.tunableSize == 7);
+        assert(FriendlyKingDistanceToKnightBonus.tunableSize == 4);
+        assert(FriendlyKingDistanceToBishopBonus.tunableSize == 4);
+        assert(FriendlyKingDistanceToRookBonus.tunableSize == 4);
+        assert(FriendlyKingDistanceToQueenBonus.tunableSize == 4);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
         assert(VirtualKingMobilityBonus.tunableSize == 28);
