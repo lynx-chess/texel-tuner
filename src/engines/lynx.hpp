@@ -27,6 +27,7 @@ const static int numParameters = psqtIndexCount +
                                  BishopInUnblockedLongDiagonalBonus.size +
                                  BishopRookThreatsBonus.size +
                                  BishopQueenThreatsBonus.size +
+                                 RookQueenThreatsBonus.size +
                                  PieceAttackedByPawnPenalty.size +
 
                                  // Arrays
@@ -120,6 +121,7 @@ public:
         BishopInUnblockedLongDiagonalBonus.add(result);
         BishopRookThreatsBonus.add(result);
         BishopQueenThreatsBonus.add(result);
+        RookQueenThreatsBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
 
         // Arrays
@@ -286,6 +288,9 @@ public:
         name = NAME(BishopQueenThreatsBonus);
         BishopQueenThreatsBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(RookQueenThreatsBonus);
+        RookQueenThreatsBonus.to_csharp(parameters, ss, name);
+
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
@@ -401,6 +406,9 @@ public:
 
         name = NAME(BishopQueenThreatsBonus);
         BishopQueenThreatsBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(RookQueenThreatsBonus);
+        RookQueenThreatsBonus.to_cpp(parameters, ss, name);
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
@@ -616,6 +624,11 @@ int RookAdditonalEvaluation(int squareIndex, int pieceIndex, int bucket, int opp
 
     packedBonus += CheckBonus.packed[noColorPieceIndex] * checksCount;
     IncrementCoefficients(coefficients, CheckBonus.index + noColorPieceIndex - CheckBonus.start, color, checksCount);
+
+    // Major threats
+    const auto queenThreatsCount = chess::builtin::popcount(attacks & GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, ~color));
+    packedBonus += RookQueenThreatsBonus.packed * queenThreatsCount;
+    IncrementCoefficients(coefficients, RookQueenThreatsBonus.index, color, queenThreatsCount);
 
     // Connected rooks
     if (chess::builtin::popcount(attacks & GetPieceSwappingEndianness(board, chess::PieceType::ROOK, color)) >= 1)
