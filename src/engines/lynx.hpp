@@ -35,6 +35,10 @@ const static int numParameters = psqtIndexCount +
                                  BadBishop_SameColorPawnsPenalty.tunableSize +
                                  BadBishop_BlockedCentralPawnsPenalty.tunableSize +
                                  CheckBonus.tunableSize +
+                                 FriendlyKingDistanceToKnightBonus.tunableSize +     // 7, removing start
+                                 FriendlyKingDistanceToBishopBonus.tunableSize +     // 7, removing start
+                                 FriendlyKingDistanceToRookBonus.tunableSize +       // 7, removing start
+                                 FriendlyKingDistanceToQueenBonus.tunableSize +      // 7, removing start
                                  FriendlyKingDistanceToPassedPawnBonus.tunableSize + // 7, removing start
                                  EnemyKingDistanceToPassedPawnPenalty.tunableSize +  // 7, removing start
                                  VirtualKingMobilityBonus.tunableSize +              // 28
@@ -128,6 +132,10 @@ public:
         BadBishop_BlockedCentralPawnsPenalty.add(result);
         CheckBonus.add(result);
 
+        FriendlyKingDistanceToKnightBonus.add(result);
+        FriendlyKingDistanceToBishopBonus.add(result);
+        FriendlyKingDistanceToRookBonus.add(result);
+        FriendlyKingDistanceToQueenBonus.add(result);
         FriendlyKingDistanceToPassedPawnBonus.add(result);
         EnemyKingDistanceToPassedPawnPenalty.add(result);
         VirtualKingMobilityBonus.add(result);
@@ -149,6 +157,10 @@ public:
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
         assert(PieceProtectedByPawnBonus.bucketTunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
+        assert(FriendlyKingDistanceToKnightBonus.tunableSize == 7);
+        assert(FriendlyKingDistanceToBishopBonus.tunableSize == 7);
+        assert(FriendlyKingDistanceToRookBonus.tunableSize == 7);
+        assert(FriendlyKingDistanceToQueenBonus.tunableSize == 7);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
         assert(VirtualKingMobilityBonus.tunableSize == 28);
@@ -303,6 +315,18 @@ public:
         name = NAME(CheckBonus);
         CheckBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(FriendlyKingDistanceToKnightBonus);
+        FriendlyKingDistanceToKnightBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(FriendlyKingDistanceToBishopBonus);
+        FriendlyKingDistanceToBishopBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(FriendlyKingDistanceToRookBonus);
+        FriendlyKingDistanceToRookBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(FriendlyKingDistanceToQueenBonus);
+        FriendlyKingDistanceToQueenBonus.to_csharp(parameters, ss, name);
+
         name = NAME(FriendlyKingDistanceToPassedPawnBonus);
         FriendlyKingDistanceToPassedPawnBonus.to_csharp(parameters, ss, name);
 
@@ -421,6 +445,18 @@ public:
         name = NAME(CheckBonus);
         CheckBonus.to_cpp(parameters, ss, name);
         ss << "\n";
+
+        name = NAME(FriendlyKingDistanceToKnightBonus);
+        FriendlyKingDistanceToKnightBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(FriendlyKingDistanceToBishopBonus);
+        FriendlyKingDistanceToBishopBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(FriendlyKingDistanceToRookBonus);
+        FriendlyKingDistanceToRookBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(FriendlyKingDistanceToQueenBonus);
+        FriendlyKingDistanceToQueenBonus.to_cpp(parameters, ss, name);
 
         name = NAME(FriendlyKingDistanceToPassedPawnBonus);
         FriendlyKingDistanceToPassedPawnBonus.to_cpp(parameters, ss, name);
@@ -570,7 +606,7 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
     return packedBonus;
 }
 
-int RookAdditonalEvaluation(int squareIndex, int pieceIndex, int bucket, int oppositeSideKingSquare, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+int RookAdditonalEvaluation(int squareIndex, int pieceIndex, int bucket, int sameSideKingSquare, int oppositeSideKingSquare, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     const auto noColorPieceIndex = static_cast<int>(chess::PieceType::ROOK);
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
@@ -622,10 +658,15 @@ int RookAdditonalEvaluation(int squareIndex, int pieceIndex, int bucket, int opp
         IncrementCoefficients(coefficients, ConnectedRooksBonus.index - ConnectedRooksBonus.start + rank, color);
     }
 
+    // Distance to friendly king
+    const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
+    packedBonus += FriendlyKingDistanceToRookBonus.packed[friendlyKingDistance];
+    IncrementCoefficients(coefficients, FriendlyKingDistanceToRookBonus.index + friendlyKingDistance - FriendlyKingDistanceToRookBonus.start, color);
+
     return packedBonus;
 }
 
-int KnightAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int oppositeSideKingSquare, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+int KnightAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int sameSideKingSquare, int oppositeSideKingSquare, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     const auto noColorPieceIndex = static_cast<int>(chess::PieceType::KNIGHT);
     const auto attacks = chess::attacks::knight(static_cast<chess::Square>(squareIndex)).getBits();
@@ -646,15 +687,15 @@ int KnightAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     packedBonus += CheckBonus.packed[noColorPieceIndex] * checksCount;
     IncrementCoefficients(coefficients, CheckBonus.index + noColorPieceIndex - CheckBonus.start, color, checksCount);
 
-    // Major threats
-    // const auto threatsCount = (board.pieces(chess::PieceType::ROOK, ~color) | board.pieces(chess::PieceType::QUEEN, ~color)).count();
-    // packedBonus += BishopMajorThreatsBonus.packed * threatsCount;
-    // IncrementCoefficients(coefficients, BishopMajorThreatsBonus.index, color, threatsCount);
+    // Distance to friendly king
+    const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
+    packedBonus += FriendlyKingDistanceToKnightBonus.packed[friendlyKingDistance];
+    IncrementCoefficients(coefficients, FriendlyKingDistanceToKnightBonus.index + friendlyKingDistance - FriendlyKingDistanceToKnightBonus.start, color);
 
     return packedBonus;
 }
 
-int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int oppositeSideKingSquare, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int sameSideKingSquare, int oppositeSideKingSquare, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     const auto noColorPieceIndex = static_cast<int>(chess::PieceType::BISHOP);
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
@@ -706,10 +747,15 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     packedBonus += BishopQueenThreatsBonus.packed * queenThreatsCount;
     IncrementCoefficients(coefficients, BishopQueenThreatsBonus.index, color, queenThreatsCount);
 
+    // Distance to friendly king
+    const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
+    packedBonus += FriendlyKingDistanceToBishopBonus.packed[friendlyKingDistance];
+    IncrementCoefficients(coefficients, FriendlyKingDistanceToBishopBonus.index + friendlyKingDistance - FriendlyKingDistanceToBishopBonus.start, color);
+
     return packedBonus;
 }
 
-int QueenAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideKingSquare, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+int QueenAdditionalEvaluation(int squareIndex, int bucket, int sameSideKingSquare, int oppositeSideKingSquare, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     const auto noColorPieceIndex = static_cast<int>(chess::PieceType::QUEEN);
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
@@ -730,6 +776,11 @@ int QueenAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideKingS
 
     packedBonus += CheckBonus.packed[noColorPieceIndex] * checksCount;
     IncrementCoefficients(coefficients, CheckBonus.index + noColorPieceIndex - CheckBonus.start, color, checksCount);
+
+    // Distance to friendly king
+    const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
+    packedBonus += FriendlyKingDistanceToQueenBonus.packed[friendlyKingDistance];
+    IncrementCoefficients(coefficients, FriendlyKingDistanceToQueenBonus.index + friendlyKingDistance - FriendlyKingDistanceToQueenBonus.start, color);
 
     return packedBonus;
 }
@@ -823,19 +874,19 @@ int AdditionalPieceEvaluation(int pieceSquareIndex, int pieceIndex, int bucket, 
 
     case 1:
     case 7:
-        return KnightAdditionalEvaluation(pieceSquareIndex, pieceIndex, bucket, oppositeSideKingSquare, opponentPawnAttacks, board, color, coefficients);
+        return KnightAdditionalEvaluation(pieceSquareIndex, pieceIndex, bucket, sameSideKingSquare, oppositeSideKingSquare, opponentPawnAttacks, board, color, coefficients);
 
     case 3:
     case 9:
-        return RookAdditonalEvaluation(pieceSquareIndex, pieceIndex, bucket, oppositeSideKingSquare, opponentPawnAttacks, board, color, coefficients);
+        return RookAdditonalEvaluation(pieceSquareIndex, pieceIndex, bucket, sameSideKingSquare, oppositeSideKingSquare, opponentPawnAttacks, board, color, coefficients);
 
     case 2:
     case 8:
-        return BishopAdditionalEvaluation(pieceSquareIndex, pieceIndex, bucket, oppositeSideKingSquare, opponentPawnAttacks, board, color, coefficients);
+        return BishopAdditionalEvaluation(pieceSquareIndex, pieceIndex, bucket, sameSideKingSquare, oppositeSideKingSquare, opponentPawnAttacks, board, color, coefficients);
 
     case 4:
     case 10:
-        return QueenAdditionalEvaluation(pieceSquareIndex, bucket, oppositeSideKingSquare, opponentPawnAttacks, board, color, coefficients);
+        return QueenAdditionalEvaluation(pieceSquareIndex, bucket, sameSideKingSquare, oppositeSideKingSquare, opponentPawnAttacks, board, color, coefficients);
 
     default:
         return 0;
