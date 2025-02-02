@@ -668,8 +668,11 @@ int RookAdditonalEvaluation(int squareIndex, int pieceIndex, int bucket, int sam
 
     // Distance to friendly king
     const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
-    packedBonus += FriendlyKingDistanceToRookBonus.packed[friendlyKingDistance];
-    IncrementCoefficients(coefficients, FriendlyKingDistanceToRookBonus.index + friendlyKingDistance - FriendlyKingDistanceToRookBonus.start, color);
+    if (friendlyKingDistance >= 4)
+    {
+        packedBonus += FriendlyKingDistanceToRookBonus.packed[friendlyKingDistance];
+        IncrementCoefficients(coefficients, FriendlyKingDistanceToRookBonus.index + friendlyKingDistance - FriendlyKingDistanceToRookBonus.start, color);
+    }
 
     return packedBonus;
 }
@@ -697,8 +700,11 @@ int KnightAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
 
     // Distance to friendly king
     const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
-    packedBonus += FriendlyKingDistanceToKnightBonus.packed[friendlyKingDistance];
-    IncrementCoefficients(coefficients, FriendlyKingDistanceToKnightBonus.index + friendlyKingDistance - FriendlyKingDistanceToKnightBonus.start, color);
+    if (friendlyKingDistance >= 4)
+    {
+        packedBonus += FriendlyKingDistanceToKnightBonus.packed[friendlyKingDistance];
+        IncrementCoefficients(coefficients, FriendlyKingDistanceToKnightBonus.index + friendlyKingDistance - FriendlyKingDistanceToKnightBonus.start, color);
+    }
 
     return packedBonus;
 }
@@ -765,8 +771,11 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
 
     // Distance to friendly king
     const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
-    packedBonus += FriendlyKingDistanceToBishopBonus.packed[friendlyKingDistance];
-    IncrementCoefficients(coefficients, FriendlyKingDistanceToBishopBonus.index + friendlyKingDistance - FriendlyKingDistanceToBishopBonus.start, color);
+    if (friendlyKingDistance >= 4)
+    {
+        packedBonus += FriendlyKingDistanceToBishopBonus.packed[friendlyKingDistance];
+        IncrementCoefficients(coefficients, FriendlyKingDistanceToBishopBonus.index + friendlyKingDistance - FriendlyKingDistanceToBishopBonus.start, color);
+    }
 
     return packedBonus;
 }
@@ -795,8 +804,11 @@ int QueenAdditionalEvaluation(int squareIndex, int bucket, int sameSideKingSquar
 
     // Distance to friendly king
     const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
-    packedBonus += FriendlyKingDistanceToQueenBonus.packed[friendlyKingDistance];
-    IncrementCoefficients(coefficients, FriendlyKingDistanceToQueenBonus.index + friendlyKingDistance - FriendlyKingDistanceToQueenBonus.start, color);
+    if (friendlyKingDistance >= 4)
+    {
+        packedBonus += FriendlyKingDistanceToQueenBonus.packed[friendlyKingDistance];
+        IncrementCoefficients(coefficients, FriendlyKingDistanceToQueenBonus.index + friendlyKingDistance - FriendlyKingDistanceToQueenBonus.start, color);
+    }
 
     return packedBonus;
 }
