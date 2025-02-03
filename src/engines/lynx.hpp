@@ -159,10 +159,10 @@ public:
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
         assert(PieceProtectedByPawnBonus.bucketTunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
-        assert(FriendlyKingDistanceToKnightBonus.tunableSize == 4);
-        assert(FriendlyKingDistanceToBishopBonus.tunableSize == 4);
-        assert(FriendlyKingDistanceToRookBonus.tunableSize == 4);
-        assert(FriendlyKingDistanceToQueenBonus.tunableSize == 4);
+        assert(FriendlyKingDistanceToKnightBonus.tunableSize == 5);
+        assert(FriendlyKingDistanceToBishopBonus.tunableSize == 5);
+        assert(FriendlyKingDistanceToRookBonus.tunableSize == 5);
+        assert(FriendlyKingDistanceToQueenBonus.tunableSize == 5);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
         assert(VirtualKingMobilityBonus.tunableSize == 28);
@@ -673,6 +673,11 @@ int RookAdditonalEvaluation(int squareIndex, int pieceIndex, int bucket, int sam
         packedBonus += FriendlyKingDistanceToRookBonus.packed[friendlyKingDistance];
         IncrementCoefficients(coefficients, FriendlyKingDistanceToRookBonus.index + friendlyKingDistance - FriendlyKingDistanceToRookBonus.start, color);
     }
+    else
+    {
+        packedBonus += FriendlyKingDistanceToRookBonus.packed[3];
+        IncrementCoefficients(coefficients, FriendlyKingDistanceToRookBonus.index, color);
+    }
 
     return packedBonus;
 }
@@ -704,6 +709,11 @@ int KnightAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     {
         packedBonus += FriendlyKingDistanceToKnightBonus.packed[friendlyKingDistance];
         IncrementCoefficients(coefficients, FriendlyKingDistanceToKnightBonus.index + friendlyKingDistance - FriendlyKingDistanceToKnightBonus.start, color);
+    }
+    else
+    {
+        packedBonus += FriendlyKingDistanceToKnightBonus.packed[3];
+        IncrementCoefficients(coefficients, FriendlyKingDistanceToKnightBonus.index, color);
     }
 
     return packedBonus;
@@ -776,6 +786,11 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
         packedBonus += FriendlyKingDistanceToBishopBonus.packed[friendlyKingDistance];
         IncrementCoefficients(coefficients, FriendlyKingDistanceToBishopBonus.index + friendlyKingDistance - FriendlyKingDistanceToBishopBonus.start, color);
     }
+    else
+    {
+        packedBonus += FriendlyKingDistanceToBishopBonus.packed[3];
+        IncrementCoefficients(coefficients, FriendlyKingDistanceToBishopBonus.index, color);
+    }
 
     return packedBonus;
 }
@@ -808,6 +823,11 @@ int QueenAdditionalEvaluation(int squareIndex, int bucket, int sameSideKingSquar
     {
         packedBonus += FriendlyKingDistanceToQueenBonus.packed[friendlyKingDistance];
         IncrementCoefficients(coefficients, FriendlyKingDistanceToQueenBonus.index + friendlyKingDistance - FriendlyKingDistanceToQueenBonus.start, color);
+    }
+    else
+    {
+        packedBonus += FriendlyKingDistanceToQueenBonus.packed[3];
+        IncrementCoefficients(coefficients, FriendlyKingDistanceToQueenBonus.index, color);
     }
 
     return packedBonus;

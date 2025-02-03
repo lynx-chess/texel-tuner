@@ -5961,28 +5961,28 @@ TunableArray FriendlyKingDistanceToKnightBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{0, 0, 0, 0, 1, 24, 28, -5},
 	std::vector<int>{0, 0, 0, 0, -2, -1, 5, 29},
-	4,
+	3,
 	0);
 
 TunableArray FriendlyKingDistanceToBishopBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{0, 0, 0, 0, -21, -8, -28, -37},
 	std::vector<int>{0, 0, 0, 0, 5, 10, 19, 32},
-	4,
+	3,
 	0);
 
 TunableArray FriendlyKingDistanceToRookBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{0, 0, 0, 0, 2, -4, 6, 13},
 	std::vector<int>{0, 0, 0, 0, -1, 3, 3, 42},
-	4,
+	3,
 	0);
 
 TunableArray FriendlyKingDistanceToQueenBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{0, 0, 0, 0, 32, 84, 130, 167},
 	std::vector<int>{0, 0, 0, 0, 84, 118, 154, 237},
-	4,
+	3,
 	0);
 
 TunableArray FriendlyKingDistanceToPassedPawnBonus(
