@@ -159,10 +159,10 @@ public:
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
         assert(PieceProtectedByPawnBonus.bucketTunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
-        assert(FriendlyKingDistanceToKnightBonus.tunableSize == 4);
-        assert(FriendlyKingDistanceToBishopBonus.tunableSize == 4);
-        assert(FriendlyKingDistanceToRookBonus.tunableSize == 4);
-        assert(FriendlyKingDistanceToQueenBonus.tunableSize == 4);
+        assert(FriendlyKingDistanceToKnightBonus.tunableSize == 3);
+        assert(FriendlyKingDistanceToBishopBonus.tunableSize == 3);
+        assert(FriendlyKingDistanceToRookBonus.tunableSize == 3);
+        assert(FriendlyKingDistanceToQueenBonus.tunableSize == 3);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
         assert(VirtualKingMobilityBonus.tunableSize == 28);
@@ -668,7 +668,7 @@ int RookAdditonalEvaluation(int squareIndex, int pieceIndex, int bucket, int sam
 
     // Distance to friendly king
     const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
-    if (friendlyKingDistance >= 4)
+    if (friendlyKingDistance >= 5)
     {
         packedBonus += FriendlyKingDistanceToRookBonus.packed[friendlyKingDistance];
         IncrementCoefficients(coefficients, FriendlyKingDistanceToRookBonus.index + friendlyKingDistance - FriendlyKingDistanceToRookBonus.start, color);
@@ -700,7 +700,7 @@ int KnightAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
 
     // Distance to friendly king
     const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
-    if (friendlyKingDistance >= 4)
+    if (friendlyKingDistance >= 5)
     {
         packedBonus += FriendlyKingDistanceToKnightBonus.packed[friendlyKingDistance];
         IncrementCoefficients(coefficients, FriendlyKingDistanceToKnightBonus.index + friendlyKingDistance - FriendlyKingDistanceToKnightBonus.start, color);
@@ -771,7 +771,7 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
 
     // Distance to friendly king
     const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
-    if (friendlyKingDistance >= 4)
+    if (friendlyKingDistance >= 5)
     {
         packedBonus += FriendlyKingDistanceToBishopBonus.packed[friendlyKingDistance];
         IncrementCoefficients(coefficients, FriendlyKingDistanceToBishopBonus.index + friendlyKingDistance - FriendlyKingDistanceToBishopBonus.start, color);
@@ -804,7 +804,7 @@ int QueenAdditionalEvaluation(int squareIndex, int bucket, int sameSideKingSquar
 
     // Distance to friendly king
     const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
-    if (friendlyKingDistance >= 4)
+    if (friendlyKingDistance >= 5)
     {
         packedBonus += FriendlyKingDistanceToQueenBonus.packed[friendlyKingDistance];
         IncrementCoefficients(coefficients, FriendlyKingDistanceToQueenBonus.index + friendlyKingDistance - FriendlyKingDistanceToQueenBonus.start, color);
