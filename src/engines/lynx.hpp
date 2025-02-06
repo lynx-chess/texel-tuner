@@ -829,6 +829,31 @@ int PawnIslands(const u64 bitboard)
     return islandCount;
 }
 
+int Threats(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+{
+    const auto occupancy = __builtin_bswap64(board.occ().getBits());
+
+    int packedBonus = 0;
+    u64 rookAttacks = 0;
+
+    // Bitboard copy that we 'empty'
+    auto rooks = GetPieceSwappingEndianness(board, chess::PieceType::KNIGHT, color);
+    while (rooks != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(rooks).index();
+        ResetLS1B(rooks);
+        const auto attacks = chess::attacks::rook(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
+        rookAttacks |= attacks;
+    }
+
+    // Major threats
+    const auto queenThreatsCount = chess::builtin::popcount(rookAttacks & GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, ~color));
+    packedBonus += RookQueenThreatsBonus.packed * queenThreatsCount;
+    IncrementCoefficients(coefficients, RookQueenThreatsBonus.index, color, queenThreatsCount);
+
+    return packedBonus;
+}
+
 int AdditionalPieceEvaluation(int pieceSquareIndex, int pieceIndex, int bucket, int oppositeSideBucket, int sameSideKingSquare, int oppositeSideKingSquare, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     switch (pieceIndex)
@@ -1053,6 +1078,10 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     packedScore += PawnIslandsBonus.packed[whitePawnIslands] - PawnIslandsBonus.packed[blackPawnIslands];
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + whitePawnIslands - PawnIslandsBonus.start, chess::Color::WHITE);
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
+
+    // Threats not included in additional eval
+    packedScore += Threats(board, chess::Color::WHITE, coefficients) -
+                   Threats(board, chess::Color::BLACK, coefficients);
 
     // Debugging eval
     // return EvalResult{
