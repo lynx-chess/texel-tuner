@@ -24,6 +24,7 @@ const static int numParameters = psqtIndexCount +
                                  OpenFileKingPenalty.size +
                                  KingShieldBonus.size +
                                  BishopPairBonus.size +
+                                 BishopInUnblockedLongDiagonalBonus.size +
                                  KnightDefendingKnightBonus.size +
                                  BishopRookThreatsBonus.size +
                                  BishopQueenThreatsBonus.size +
@@ -31,6 +32,7 @@ const static int numParameters = psqtIndexCount +
 
                                  // Arrays
                                  PawnPhalanxBonus.tunableSize +
+                                 ConnectedRooksBonus.tunableSize +
                                  PawnIslandsBonus.tunableSize +
                                  BadBishop_SameColorPawnsPenalty.tunableSize +
                                  BadBishop_BlockedCentralPawnsPenalty.tunableSize +
@@ -116,6 +118,7 @@ public:
         OpenFileKingPenalty.add(result);
         KingShieldBonus.add(result);
         BishopPairBonus.add(result);
+        BishopInUnblockedLongDiagonalBonus.add(result);
         KnightDefendingKnightBonus.add(result);
         BishopRookThreatsBonus.add(result);
         BishopQueenThreatsBonus.add(result);
@@ -123,6 +126,7 @@ public:
 
         // Arrays
         PawnPhalanxBonus.add(result);
+        ConnectedRooksBonus.add(result);
         PawnIslandsBonus.add(result);
         BadBishop_SameColorPawnsPenalty.add(result);
         BadBishop_BlockedCentralPawnsPenalty.add(result);
@@ -148,6 +152,7 @@ public:
         assert(PassedPawnBonusNoEnemiesAheadBonus.bucketTunableSize == 6);
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
         assert(PieceProtectedByPawnBonus.bucketTunableSize == 5);
+        assert(ConnectedRooksBonus.tunableSize == 8);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
         assert(VirtualKingMobilityBonus.tunableSize == 28);
@@ -274,6 +279,9 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(BishopInUnblockedLongDiagonalBonus);
+        BishopInUnblockedLongDiagonalBonus.to_csharp(parameters, ss, name);
+
         name = NAME(KnightDefendingKnightBonus);
         KnightDefendingKnightBonus.to_csharp(parameters, ss, name);
 
@@ -289,6 +297,9 @@ public:
         // Arrays
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(ConnectedRooksBonus);
+        ConnectedRooksBonus.to_csharp(parameters, ss, name);
 
         name = NAME(PawnIslandsBonus);
         PawnIslandsBonus.to_csharp(parameters, ss, name);
@@ -387,6 +398,9 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
 
+        name = NAME(BishopInUnblockedLongDiagonalBonus);
+        BishopInUnblockedLongDiagonalBonus.to_cpp(parameters, ss, name);
+
         name = NAME(KnightDefendingKnightBonus);
         KnightDefendingKnightBonus.to_cpp(parameters, ss, name);
 
@@ -402,6 +416,10 @@ public:
         // Arrays
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_cpp(parameters, ss, name);
+        ss << "\n";
+
+        name = NAME(ConnectedRooksBonus);
+        ConnectedRooksBonus.to_cpp(parameters, ss, name);
         ss << "\n";
 
         name = NAME(PawnIslandsBonus);
@@ -607,6 +625,19 @@ int RookAdditonalEvaluation(int squareIndex, int pieceIndex, int bucket, int opp
     packedBonus += CheckBonus.packed[noColorPieceIndex] * checksCount;
     IncrementCoefficients(coefficients, CheckBonus.index + noColorPieceIndex - CheckBonus.start, color, checksCount);
 
+    // Connected rooks
+    if (chess::builtin::popcount(attacks & GetPieceSwappingEndianness(board, chess::PieceType::ROOK, color)) >= 1)
+    {
+        auto rank = Rank[squareIndex];
+        if (color == chess::Color::BLACK)
+        {
+            rank = 7 - rank;
+        }
+
+        packedBonus += ConnectedRooksBonus.packed[rank];
+        IncrementCoefficients(coefficients, ConnectedRooksBonus.index - ConnectedRooksBonus.start + rank, color);
+    }
+
     return packedBonus;
 }
 
@@ -666,6 +697,7 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
     packedBonus += BadBishop_SameColorPawnsPenalty.packed[sameColorPawnsCount];
     IncrementCoefficients(coefficients, BadBishop_SameColorPawnsPenalty.index + sameColorPawnsCount, color);
 
+    // Blocked central pawns
     const auto sameSideCentralPawns = sameSidePawns & CentralFiles;
     const auto pawnBlockerSquares = pieceIndex == static_cast<int>(chess::Piece::WHITEBISHOP)
                                         ? ShiftUp(sameSideCentralPawns)
@@ -676,6 +708,13 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int 
 
     packedBonus += BadBishop_BlockedCentralPawnsPenalty.packed[pawnBlockersCount];
     IncrementCoefficients(coefficients, BadBishop_BlockedCentralPawnsPenalty.index - BadBishop_BlockedCentralPawnsPenalty.start + pawnBlockersCount, color);
+
+    // Bishop in unblocked long diagonals
+    if (chess::builtin::popcount(attacks & CentralSquares) == 2)
+    {
+        packedBonus += BishopInUnblockedLongDiagonalBonus.packed;
+        IncrementCoefficients(coefficients, BishopInUnblockedLongDiagonalBonus.index, color);
+    }
 
     // Checks
     const auto enemyKingCheckThreats = chess::attacks::bishop(static_cast<chess::Square>(oppositeSideKingSquare), occupancy).getBits();
@@ -991,14 +1030,17 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
         enemyKingBaseIndex + (48 * PSQTBucketCount) + (64 * PSQTBucketCount * 4) + (64 * whiteBucket) + (blackKing ^ 56),
         chess::Color::BLACK);
 
+    const auto whiteBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::WHITE);
+    const auto blackBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::BLACK);
+
     // Bishop pair bonus
-    if (board.pieces(chess::PieceType::BISHOP, chess::Color::WHITE).count() >= 2)
+    if (chess::builtin::popcount(whiteBishops) >= 2)
     {
         packedScore += BishopPairBonus.packed;
         IncrementCoefficients(coefficients, BishopPairBonus.index, chess::Color::WHITE);
     }
 
-    if (board.pieces(chess::PieceType::BISHOP, chess::Color::BLACK).count() >= 2)
+    if (chess::builtin::popcount(blackBishops) >= 2)
     {
         packedScore -= BishopPairBonus.packed;
         IncrementCoefficients(coefficients, BishopPairBonus.index, chess::Color::BLACK);
