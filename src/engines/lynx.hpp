@@ -20,6 +20,7 @@ const static int numParameters = psqtIndexCount +
                                  IsolatedPawnPenalty.size +
                                  OpenFileRookBonus.size +
                                  SemiOpenFileRookBonus.size +
+                                 RookBehindPassedPawnBonus.size +
                                  SemiOpenFileKingPenalty.size +
                                  OpenFileKingPenalty.size +
                                  KingShieldBonus.size +
@@ -113,6 +114,7 @@ public:
         IsolatedPawnPenalty.add(result);
         OpenFileRookBonus.add(result);
         SemiOpenFileRookBonus.add(result);
+        RookBehindPassedPawnBonus.add(result);
         SemiOpenFileKingPenalty.add(result);
         OpenFileKingPenalty.add(result);
         KingShieldBonus.add(result);
@@ -265,6 +267,9 @@ public:
         name = NAME(SemiOpenFileRookBonus);
         SemiOpenFileRookBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(RookBehindPassedPawnBonus);
+        RookBehindPassedPawnBonus.to_csharp(parameters, ss, name);
+
         name = NAME(SemiOpenFileKingPenalty);
         SemiOpenFileKingPenalty.to_csharp(parameters, ss, name);
 
@@ -380,6 +385,9 @@ public:
 
         name = NAME(SemiOpenFileRookBonus);
         SemiOpenFileRookBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(RookBehindPassedPawnBonus);
+        RookBehindPassedPawnBonus.to_cpp(parameters, ss, name);
 
         name = NAME(SemiOpenFileKingPenalty);
         SemiOpenFileKingPenalty.to_cpp(parameters, ss, name);
@@ -567,6 +575,21 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
         const auto enemyKingDistance = ChebyshevDistance(oppositeSideKingSquare, squareIndex);
         packedBonus += EnemyKingDistanceToPassedPawnPenalty.packed[enemyKingDistance];
         IncrementCoefficients(coefficients, EnemyKingDistanceToPassedPawnPenalty.index + enemyKingDistance - EnemyKingDistanceToPassedPawnPenalty.start, color);
+
+        // Rook behind passed pawn
+        const auto whiteRookBehindPawn = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, chess::Color::WHITE) & WhiteBehindPawnMask[squareIndex];
+        if (whiteRookBehindPawn != 0)
+        {
+            packedBonus += RookBehindPassedPawnBonus.packed;
+            IncrementCoefficients(coefficients, RookBehindPassedPawnBonus.index, chess::Color::WHITE);
+        }
+
+        const auto blackRookBehindPawn = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, chess::Color::BLACK) & BlackBehindPawnMask[squareIndex];
+        if (blackRookBehindPawn != 0)
+        {
+            packedBonus -= RookBehindPassedPawnBonus.packed;
+            IncrementCoefficients(coefficients, RookBehindPassedPawnBonus.index, chess::Color::BLACK);
+        }
     }
 
     if (File[squareIndex] != 7 && GetBit(sameSidePawns, squareIndex + 1))
