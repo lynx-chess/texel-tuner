@@ -1,4 +1,5 @@
 *
 !example.book
 !quiet-labeled-subset-1_1000.epd
+!extract_lynx_datasets.sh
 !.gitignore
