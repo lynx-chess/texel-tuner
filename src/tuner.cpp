@@ -615,8 +615,9 @@ static void read_fens(const DataSource& source, const high_resolution_clock::tim
 
 static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const vector<string>& fens, const parameters_t& parameters, const high_resolution_clock::time_point time_start, vector<Entry>& entries)
 {
+    const auto real_data_load_thread_count = print_eval ? 1 : data_load_thread_count;
     cout << "Parsing " << fens.size() << " positions..." << endl;
-    array<vector<Entry>, data_load_thread_count> thread_entries;
+    array<vector<Entry>, real_data_load_thread_count> thread_entries;
     const auto side_to_move_wdl = source.side_to_move_wdl;
     constexpr int batch_size = 10000;
     mutex mut;
@@ -636,7 +637,7 @@ static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const 
         batches.emplace(current_batch);
     }
 
-    for (int thread_id = 0; thread_id < data_load_thread_count; thread_id++)
+    for (int thread_id = 0; thread_id < real_data_load_thread_count; thread_id++)
     {
         thread_pool.enqueue([thread_id, &thread_entries, &mut, side_to_move_wdl, parameters, &batches, time_start]()
         {
@@ -656,7 +657,7 @@ static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const 
                     batches.pop();
                 }
 
-                constexpr auto thread_data_load_print_interval = data_load_print_interval / data_load_thread_count;
+                constexpr auto thread_data_load_print_interval = data_load_print_interval / real_data_load_thread_count;
                 for(auto& fen : thread_batch)
                 {
                     parse_fen(side_to_move_wdl, parameters, entries, fen);
@@ -664,7 +665,7 @@ static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const 
                     if (thread_id == 0 && position_count % thread_data_load_print_interval == 0)
                     {
                         print_elapsed(time_start);
-                        std::cout << "Parsed ~" << position_count * data_load_thread_count << " positions..." << endl;
+                        std::cout << "Parsed ~" << position_count * real_data_load_thread_count << " positions..." << endl;
                     }
                 }
             }
@@ -675,7 +676,7 @@ static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const 
 
     thread_pool.wait_for_completion();
 
-    for (int thread_id = 0; thread_id < data_load_thread_count; thread_id++)
+    for (int thread_id = 0; thread_id < real_data_load_thread_count; thread_id++)
     {
         for(const Entry& entry : thread_entries[thread_id])
         {

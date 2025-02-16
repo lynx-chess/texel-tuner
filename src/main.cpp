@@ -37,14 +37,14 @@ int main(int argc, char** argv) {
             stringstream ss(line);
             if(!getline(ss, source.path, ','))
             {
-                cout << "CSV misformatted" << endl;
+                cout << "CSV misformatted 1" << endl;
                 return -1;
             }
 
             string flipped_wdl_str;
             if (!getline(ss, flipped_wdl_str, ','))
             {
-                cout << "CSV misformatted" << endl;
+                cout << "CSV misformatted 2" << endl;
                 return -1;
             }
             try
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
             string position_limit_str;
             if (!getline(ss, flipped_wdl_str, ','))
             {
-                cout << "CSV misformatted" << endl;
+                cout << "CSV misformatted 3" << endl;
                 return -1;
             }
             try
