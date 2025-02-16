@@ -25,7 +25,7 @@ constexpr tune_t learning_rate_drop_ratio = 1;
 constexpr bool print_data_entries = false;
 constexpr bool print_eval = false;
 
-constexpr bool parse_static_eval = false;
+constexpr bool parse_static_eval = true;
 constexpr int32_t wdl_percentage = 50;
 constexpr bool use_scaled_static_eval = true;
 
