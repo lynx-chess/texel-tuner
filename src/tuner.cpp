@@ -770,12 +770,18 @@ static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& en
         thread_pool.enqueue([thread_id, &thread_errors, &entries, &parameters, K]()
         {
             auto batch_count = 100;
-            // Manual clamp
-            auto wdl_count = wdl_percentage < 0
-                ? 0
-                : (wdl_percentage > 100
-                    ? 100
-                    : wdl_percentage);
+
+            // Manual clamp - std::clamp only in C++ 20
+            auto wdl_count = wdl_percentage;
+
+            if(wdl_count < 0)
+            {
+                wdl_count = 0;
+            }
+            else if(wdl_count > 100)
+            {
+                wdl_count = 100;
+            }
 
             const auto gcd = std::__gcd(batch_count, wdl_count);
             wdl_count /= gcd;
