@@ -1,6 +1,6 @@
 # Path, WDL from side playing, position limit
-../../datasets/lichess-big3-resolved.book,0,7000000
-../../datasets/stash_gedas.epd,0,777777
-../../datasets/gedas_filtered_sf_d9.epd,1,777777
-../../datasets/pedantic_master_training_data_ver7.0d_wdl.csv,0,500000
-../../datasets/E12.46FRC-1250k-D12-1s-Resolved.book,0,777777
+../../datasets/lynx_relabelled_sp_net042_dev9_255_128_uc/lichess-big3-resolved_0-7000000.texeltuner,0,7000000
+../../datasets/lynx_relabelled_sp_net042_dev9_255_128_uc/stash_gedas_formatted_0-777777.texeltuner,0,777777
+../../datasets/lynx_relabelled_sp_net042_dev9_255_128_uc/gedas_filtered_sf_d9_formatted_0-777777.texeltuner,1,777777
+../../datasets/lynx_relabelled_sp_net042_dev9_255_128_uc/pedantic_master_training_data_ver7.0d_wdl_0-500000.texeltuner,0,500000
+../../datasets/lynx_relabelled_sp_net042_dev9_255_128_uc/E12.46FRC-1250k-D12-1s-Resolved_0-7777777.texeltuner,0,759000
