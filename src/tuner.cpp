@@ -54,6 +54,11 @@ static const array<WdlMarker, 4> markers
     WdlMarker{"0-1", 0}
 };
 
+static tune_t sigmoid(const tune_t K, const tune_t eval)
+{
+    return static_cast<tune_t>(1) / (static_cast<tune_t>(1) + exp(-K * eval / static_cast<tune_t>(400)));
+}
+
 static std::tuple<tune_t, tune_t, tune_t> get_fen_wdl(const string& original_fen, const bool original_white_to_move, const bool white_to_move, const bool side_to_move_wdl)
 {
     tune_t wdl, scaled_static_eval, static_eval;
@@ -621,6 +626,7 @@ static void parse_fen(const bool side_to_move_wdl, const parameters_t& parameter
     entry.static_eval = std::get<1>(tuple);
 
     // std::cout << original_fen << " [" << entry.wdl << "] [" << entry.scaled_static_eval << "] [" << entry.static_eval << "]" << std::endl;
+    // std::cout << original_fen << " <" << sigmoid(preferred_k, entry.scaled_static_eval) << ">" << std::endl;
 
     get_coefficient_entries(eval_result.coefficients, entry.coefficients, static_cast<int32_t>(parameters.size()));
 #if TAPERED
@@ -754,11 +760,6 @@ static void load_fens(ThreadPool& thread_pool, const DataSource& source, const p
     vector<string> fens;
     read_fens(source, start, fens);
     parse_fens(thread_pool, source, fens, parameters, start, entries);
-}
-
-static tune_t sigmoid(const tune_t K, const tune_t eval)
-{
-    return static_cast<tune_t>(1) / (static_cast<tune_t>(1) + exp(-K * eval / static_cast<tune_t>(400)));
 }
 
 static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& entries, const parameters_t& parameters, tune_t K)
