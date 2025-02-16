@@ -623,7 +623,7 @@ static void parse_fen(const bool side_to_move_wdl, const parameters_t& parameter
     const auto tuple =  get_fen_wdl(original_fen, original_white_to_move, entry.white_to_move, side_to_move_wdl);
     entry.wdl = std::get<0>(tuple);
     entry.scaled_static_eval = std::get<1>(tuple);
-    entry.static_eval = std::get<1>(tuple);
+    entry.static_eval = std::get<2>(tuple);
 
     // std::cout << original_fen << " [" << entry.wdl << "] [" << entry.scaled_static_eval << "] [" << entry.static_eval << "]" << std::endl;
     // std::cout << original_fen << " <" << sigmoid(preferred_k, entry.scaled_static_eval) << ">" << std::endl;
