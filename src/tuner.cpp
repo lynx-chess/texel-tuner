@@ -858,6 +858,8 @@ static void update_single_gradient(parameters_t& gradient, const Entry& entry, c
                     : entry.eval);
         // std::cout<< (batch_index < wdl_count ? "WDL" : "Eval") << std::endl;
 
+        // std::cout << "Entry WDL vs sigmoided: " << entry.wdl << " vs " << sigmoided_entry_score << std::endl;
+
     const tune_t res = (sigmoided_entry_score - sig) * sig * (1 - sig);
 
 #if TAPERED
