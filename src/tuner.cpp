@@ -631,9 +631,8 @@ static void parse_fen(const bool side_to_move_wdl, const bool side_to_move_eval,
     entry.scaled_eval = std::get<1>(tuple);
     entry.eval = std::get<2>(tuple);
 
-    // std::cout << original_fen << " [" << entry.wdl << "] [" << entry.scaled_eval << "] [" << entry.eval << "]" << std::endl;
-    // std::cout << original_fen << " <" << sigmoid(preferred_k, entry.scaled_eval) << ">" << std::endl;
-
+    // std::cout << original_fen << " || " << " [" << entry.wdl << "] [" << entry.scaled_eval << "] [" << entry.eval << "]" << " <"  << sigmoid(preferred_k, entry.scaled_eval) << ">" << std::endl;
+    
     get_coefficient_entries(eval_result.coefficients, entry.coefficients, static_cast<int32_t>(parameters.size()));
 #if TAPERED
     entry.phase = get_phase(board);
