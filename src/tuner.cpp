@@ -60,7 +60,7 @@ static tune_t sigmoid(const tune_t K, const tune_t eval)
     return static_cast<tune_t>(1) / (static_cast<tune_t>(1) + exp(-K * eval / static_cast<tune_t>(400)));
 }
 
-static std::tuple<tune_t, tune_t, tune_t> get_fen_wdl(const string& original_fen, const bool original_white_to_move, const bool white_to_move, const bool side_to_move_wdl)
+static std::tuple<tune_t, tune_t, tune_t> get_fen_wdl(const string& original_fen, const bool original_white_to_move, const bool side_to_move_wdl, const bool side_to_move_eval)
 {
     tune_t wdl, scaled_eval, eval;
 
@@ -109,11 +109,6 @@ static std::tuple<tune_t, tune_t, tune_t> get_fen_wdl(const string& original_fen
             cout << "Raw eval not found on line " << original_fen << endl;
             throw std::runtime_error("Raw eval eval not found");
         }
-
-        if(!original_white_to_move && side_to_move_wdl)
-        {
-            wdl = 1 - wdl;
-        }
     }
     else
     {
@@ -158,10 +153,19 @@ static std::tuple<tune_t, tune_t, tune_t> get_fen_wdl(const string& original_fen
             cout << "WDL marker not found on line " << original_fen << endl;
             throw std::runtime_error("WDL marker not found");
         }
+    }
 
-        if(!original_white_to_move && side_to_move_wdl)
+    if(!original_white_to_move)
+    {
+        if(side_to_move_wdl)
         {
             wdl = 1 - wdl;
+        }
+
+        if(side_to_move_eval)
+        {
+            scaled_eval = -scaled_eval;
+            eval = -eval;
         }
     }
 
@@ -573,7 +577,7 @@ chess::Board quiescence_root(const parameters_t& parameters, chess::Board board)
     return board;
 }
 
-static void parse_fen(const bool side_to_move_wdl, const parameters_t& parameters, vector<Entry>& entries, const string& original_fen)
+static void parse_fen(const bool side_to_move_wdl, const bool side_to_move_eval, const parameters_t& parameters, vector<Entry>& entries, const string& original_fen)
 {
     if constexpr (print_data_entries)
     {
@@ -620,8 +624,9 @@ static void parse_fen(const bool side_to_move_wdl, const parameters_t& parameter
     entry.endgame_scale = eval_result.endgame_scale;
 #endif
     const bool original_white_to_move = get_fen_color_to_move(original_fen);
+    assert(entry.white_to_move == original_white_to_move);
     //cout << (entry.white_to_move ? "w" : "b") << " ";
-    const auto tuple =  get_fen_wdl(original_fen, original_white_to_move, entry.white_to_move, side_to_move_wdl);
+    const auto tuple =  get_fen_wdl(original_fen, original_white_to_move, side_to_move_wdl, side_to_move_eval);
     entry.wdl = std::get<0>(tuple);
     entry.scaled_eval = std::get<1>(tuple);
     entry.eval = std::get<2>(tuple);
@@ -690,6 +695,7 @@ static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const 
     cout << "Parsing " << fens.size() << " positions..." << endl;
     array<vector<Entry>, real_data_load_thread_count> thread_entries;
     const auto side_to_move_wdl = source.side_to_move_wdl;
+    const auto side_to_move_eval = source.side_to_move_eval;
     constexpr int batch_size = 10000;
     mutex mut;
     queue<vector<string>> batches;
@@ -710,7 +716,7 @@ static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const 
 
     for (int thread_id = 0; thread_id < real_data_load_thread_count; thread_id++)
     {
-        thread_pool.enqueue([thread_id, &thread_entries, &mut, side_to_move_wdl, parameters, &batches, time_start]()
+        thread_pool.enqueue([thread_id, &thread_entries, &mut, side_to_move_wdl, side_to_move_eval, parameters, &batches, time_start]()
         {
             vector<Entry> entries;
 
@@ -731,7 +737,7 @@ static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const 
                 constexpr auto thread_data_load_print_interval = data_load_print_interval / real_data_load_thread_count;
                 for(auto& fen : thread_batch)
                 {
-                    parse_fen(side_to_move_wdl, parameters, entries, fen);
+                    parse_fen(side_to_move_wdl, side_to_move_eval, parameters, entries, fen);
                     position_count++;
                     if (thread_id == 0 && position_count % thread_data_load_print_interval == 0)
                     {
