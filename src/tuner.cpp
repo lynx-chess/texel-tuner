@@ -793,7 +793,7 @@ static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& en
 
                 // Mix between WDL and eval
                 const auto wdl_or_eval =
-                    (use_eval || batch_index < wdl_count)
+                    (!use_eval || batch_index < wdl_count)
                         ? entry.wdl
                         : sigmoid(
                             K,
@@ -849,7 +849,7 @@ static void update_single_gradient(parameters_t& gradient, const Entry& entry, c
 
     // Mix between WDL and static eval
     const auto sigmoided_entry_score =
-        (use_eval || batch_index < wdl_count)
+        (!use_eval || batch_index < wdl_count)
             ? entry.wdl
             : sigmoid(
                 K,
