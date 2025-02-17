@@ -57,15 +57,31 @@ int main(int argc, char** argv) {
                 return -1;
             }
 
-            string position_limit_str;
-            if (!getline(ss, flipped_wdl_str, ','))
+            string flipped_eval_str;
+            if (!getline(ss, flipped_eval_str, ','))
             {
                 cout << "CSV misformatted 3" << endl;
                 return -1;
             }
             try
             {
-                source.position_limit = stoll(flipped_wdl_str);
+                source.side_to_move_eval = stoul(flipped_eval_str);
+            }
+            catch (const std::invalid_argument&)
+            {
+                cout << flipped_eval_str << " is not valid for a eval flip flag";
+                return -1;
+            }
+
+            string position_limit_str;
+            if (!getline(ss, position_limit_str, ','))
+            {
+                cout << "CSV misformatted 4" << endl;
+                return -1;
+            }
+            try
+            {
+                source.position_limit = stoll(position_limit_str);
             }
             catch (const std::invalid_argument&)
             {

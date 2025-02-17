@@ -35,8 +35,8 @@ struct Entry
 {
     vector<CoefficientEntry> coefficients;
     tune_t wdl;
-    tune_t scaled_static_eval;
-    tune_t static_eval;
+    tune_t scaled_eval;
+    tune_t eval;
     bool white_to_move;
     //tune_t initial_eval;
     tune_t additional_score;
@@ -60,18 +60,18 @@ static tune_t sigmoid(const tune_t K, const tune_t eval)
     return static_cast<tune_t>(1) / (static_cast<tune_t>(1) + exp(-K * eval / static_cast<tune_t>(400)));
 }
 
-static std::tuple<tune_t, tune_t, tune_t> get_fen_wdl(const string& original_fen, const bool original_white_to_move, const bool white_to_move, const bool side_to_move_wdl)
+static std::tuple<tune_t, tune_t, tune_t> get_fen_wdl(const string& original_fen, const bool original_white_to_move, const bool side_to_move_wdl, const bool side_to_move_eval)
 {
-    tune_t wdl, scaled_static_eval, static_eval;
+    tune_t wdl, scaled_eval, eval;
 
     if(use_eval)
     {
-        // <fen> [<wdl>] [<scaled_static_eval>] [<static_eval>]
+        // <fen> [<wdl>] [<scaled_eval>] [<eval>]
         // Square brackets are required, unlike when use_eval is disabled
 
         bool wdl_found = false;
-        bool scaled_static_eval_found = false;
-        bool static_eval_found = false;
+        bool scaled_eval_found = false;
+        bool eval_found = false;
         stringstream ss(original_fen);
         while (!ss.eof())
         {
@@ -82,15 +82,15 @@ static std::tuple<tune_t, tune_t, tune_t> get_fen_wdl(const string& original_fen
                 wdl = stod(word.substr(1, word.size() - 2));
                 wdl_found = true;
             }
-            else if(!scaled_static_eval_found && word.starts_with("["))
+            else if(!scaled_eval_found && word.starts_with("["))
             {
-                scaled_static_eval = stod(word.substr(1, word.size() - 2));
-                scaled_static_eval_found = true;
+                scaled_eval = stod(word.substr(1, word.size() - 2));
+                scaled_eval_found = true;
             }
-            else if (!static_eval_found && word.starts_with("["))
+            else if (!eval_found && word.starts_with("["))
             {
-                static_eval = stod(word.substr(1, word.size() - 2));
-                static_eval_found = true;
+                eval = stod(word.substr(1, word.size() - 2));
+                eval_found = true;
             }
         }
 
@@ -99,20 +99,15 @@ static std::tuple<tune_t, tune_t, tune_t> get_fen_wdl(const string& original_fen
             cout << "WDL not found on line " << original_fen << endl;
             throw std::runtime_error("WDL marker not found");
         }
-        if (!scaled_static_eval_found)
+        if (!scaled_eval_found)
         {
             cout << "Scaled eval not found on line " << original_fen << endl;
             throw std::runtime_error("Scaled static eval not found");
         }
-        if (!static_eval_found)
+        if (!eval_found)
         {
-            cout << "Scaled static eval not found on line " << original_fen << endl;
-            throw std::runtime_error("Scaled static eval not found");
-        }
-
-        if(!original_white_to_move && side_to_move_wdl)
-        {
-            wdl = 1 - wdl;
+            cout << "Raw eval not found on line " << original_fen << endl;
+            throw std::runtime_error("Raw eval eval not found");
         }
     }
     else
@@ -158,14 +153,23 @@ static std::tuple<tune_t, tune_t, tune_t> get_fen_wdl(const string& original_fen
             cout << "WDL marker not found on line " << original_fen << endl;
             throw std::runtime_error("WDL marker not found");
         }
+    }
 
-        if(!original_white_to_move && side_to_move_wdl)
+    if(!original_white_to_move)
+    {
+        if(side_to_move_wdl)
         {
             wdl = 1 - wdl;
         }
+
+        if(side_to_move_eval)
+        {
+            scaled_eval = -scaled_eval;
+            eval = -eval;
+        }
     }
 
-    return std::make_tuple(wdl, scaled_static_eval, static_eval);
+    return std::make_tuple(wdl, scaled_eval, eval);
 }
 
 static bool get_fen_color_to_move(const string& fen)
@@ -573,7 +577,7 @@ chess::Board quiescence_root(const parameters_t& parameters, chess::Board board)
     return board;
 }
 
-static void parse_fen(const bool side_to_move_wdl, const parameters_t& parameters, vector<Entry>& entries, const string& original_fen)
+static void parse_fen(const bool side_to_move_wdl, const bool side_to_move_eval, const parameters_t& parameters, vector<Entry>& entries, const string& original_fen)
 {
     if constexpr (print_data_entries)
     {
@@ -620,15 +624,15 @@ static void parse_fen(const bool side_to_move_wdl, const parameters_t& parameter
     entry.endgame_scale = eval_result.endgame_scale;
 #endif
     const bool original_white_to_move = get_fen_color_to_move(original_fen);
+    assert(entry.white_to_move == original_white_to_move);
     //cout << (entry.white_to_move ? "w" : "b") << " ";
-    const auto tuple =  get_fen_wdl(original_fen, original_white_to_move, entry.white_to_move, side_to_move_wdl);
+    const auto tuple =  get_fen_wdl(original_fen, original_white_to_move, side_to_move_wdl, side_to_move_eval);
     entry.wdl = std::get<0>(tuple);
-    entry.scaled_static_eval = std::get<1>(tuple);
-    entry.static_eval = std::get<2>(tuple);
+    entry.scaled_eval = std::get<1>(tuple);
+    entry.eval = std::get<2>(tuple);
 
-    // std::cout << original_fen << " [" << entry.wdl << "] [" << entry.scaled_static_eval << "] [" << entry.static_eval << "]" << std::endl;
-    // std::cout << original_fen << " <" << sigmoid(preferred_k, entry.scaled_static_eval) << ">" << std::endl;
-
+    // std::cout << original_fen << " || " << " [" << entry.wdl << "] [" << entry.scaled_eval << "] [" << entry.eval << "]" << " <"  << sigmoid(preferred_k, entry.scaled_eval) << ">" << std::endl;
+    
     get_coefficient_entries(eval_result.coefficients, entry.coefficients, static_cast<int32_t>(parameters.size()));
 #if TAPERED
     entry.phase = get_phase(board);
@@ -690,6 +694,7 @@ static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const 
     cout << "Parsing " << fens.size() << " positions..." << endl;
     array<vector<Entry>, real_data_load_thread_count> thread_entries;
     const auto side_to_move_wdl = source.side_to_move_wdl;
+    const auto side_to_move_eval = source.side_to_move_eval;
     constexpr int batch_size = 10000;
     mutex mut;
     queue<vector<string>> batches;
@@ -710,7 +715,7 @@ static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const 
 
     for (int thread_id = 0; thread_id < real_data_load_thread_count; thread_id++)
     {
-        thread_pool.enqueue([thread_id, &thread_entries, &mut, side_to_move_wdl, parameters, &batches, time_start]()
+        thread_pool.enqueue([thread_id, &thread_entries, &mut, side_to_move_wdl, side_to_move_eval, parameters, &batches, time_start]()
         {
             vector<Entry> entries;
 
@@ -731,7 +736,7 @@ static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const 
                 constexpr auto thread_data_load_print_interval = data_load_print_interval / real_data_load_thread_count;
                 for(auto& fen : thread_batch)
                 {
-                    parse_fen(side_to_move_wdl, parameters, entries, fen);
+                    parse_fen(side_to_move_wdl, side_to_move_eval, parameters, entries, fen);
                     position_count++;
                     if (thread_id == 0 && position_count % thread_data_load_print_interval == 0)
                     {
@@ -773,7 +778,7 @@ static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& en
             auto batch_count = 100;
             auto wdl_count = std::clamp(wdl_percentage, 0, 100);
 
-            const auto gcd = std::__gcd(batch_count, wdl_count);
+            const auto gcd = std::gcd(batch_count, wdl_count);
             wdl_count /= gcd;
             batch_count /= gcd;
 
@@ -786,10 +791,7 @@ static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& en
             for (int i = start; i < end; i++)
             {
                 const auto batch_index = i % batch_count;
-
                 const auto& entry = entries[i];
-                const auto eval = linear_eval(entry, parameters);
-                const auto sig = sigmoid(K, eval);
 
                 // Mix between WDL and eval
                 const auto wdl_or_eval =
@@ -797,11 +799,13 @@ static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& en
                         ? entry.wdl
                         : sigmoid(
                             K,
-                            use_scaled_static_eval
-                                ? entry.scaled_static_eval
-                                : entry.static_eval);
+                            use_scaled_eval
+                                ? entry.scaled_eval
+                                : entry.eval);
                     // std::cout<< (batch_index < wdl_count ? "WDL" : "Eval") << std::endl;
 
+                const auto eval = linear_eval(entry, parameters);
+                const auto sig = sigmoid(K, eval);
                 const auto diff = wdl_or_eval - sig;
                 const auto entry_error = pow(diff, 2);
                 error += entry_error;
@@ -844,21 +848,21 @@ static tune_t find_optimal_k(ThreadPool& thread_pool, const vector<Entry>& entri
 
 static void update_single_gradient(parameters_t& gradient, const Entry& entry, const int32_t batch_index, const int32_t wdl_count, const parameters_t& params, tune_t K) {
 
-    const tune_t eval = linear_eval(entry, params);
-    const tune_t sig = sigmoid(K, eval);
-
     // Mix between WDL and static eval
-    const auto sigmoided_entry_score =
+    const auto wdl_or_eval =
         (!use_eval || batch_index < wdl_count)
             ? entry.wdl
             : sigmoid(
                 K,
-                use_scaled_static_eval
-                    ? entry.scaled_static_eval
-                    : entry.static_eval);
+                use_scaled_eval
+                    ? entry.scaled_eval
+                    : entry.eval);
         // std::cout<< (batch_index < wdl_count ? "WDL" : "Eval") << std::endl;
+        // std::cout << "Entry WDL vs sigmoided: " << entry.wdl << " vs " << wdl_or_eval << std::endl;
 
-    const tune_t res = (sigmoided_entry_score - sig) * sig * (1 - sig);
+    const tune_t eval = linear_eval(entry, params);
+    const tune_t sig = sigmoid(K, eval);
+    const tune_t res = (wdl_or_eval - sig) * sig * (1 - sig);
 
 #if TAPERED
     const auto mg_base = res * (entry.phase / static_cast<tune_t>(24));
