@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <thread>
 #include <vector>
+#include <numeric>
 
 using namespace std;
 using namespace std::chrono;
@@ -63,10 +64,10 @@ static std::tuple<tune_t, tune_t, tune_t> get_fen_wdl(const string& original_fen
 {
     tune_t wdl, scaled_static_eval, static_eval;
 
-    if(parse_static_eval)
+    if(use_eval)
     {
         // <fen> [<wdl>] [<scaled_static_eval>] [<static_eval>]
-        // Square brackets are required, unlike when parse_static_eval is disabled
+        // Square brackets are required, unlike when use_eval is disabled
 
         bool wdl_found = false;
         bool scaled_static_eval_found = false;
@@ -770,18 +771,7 @@ static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& en
         thread_pool.enqueue([thread_id, &thread_errors, &entries, &parameters, K]()
         {
             auto batch_count = 100;
-
-            // Manual clamp - std::clamp only in C++ 20
-            auto wdl_count = wdl_percentage;
-
-            if(wdl_count < 0)
-            {
-                wdl_count = 0;
-            }
-            else if(wdl_count > 100)
-            {
-                wdl_count = 100;
-            }
+            auto wdl_count = std::clamp(wdl_percentage, 0, 100);
 
             const auto gcd = std::__gcd(batch_count, wdl_count);
             wdl_count /= gcd;
@@ -802,8 +792,8 @@ static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& en
                 const auto sig = sigmoid(K, eval);
 
                 // Mix between WDL and eval
-                const auto entry_sigmoided_score =
-                    batch_index < wdl_count
+                const auto wdl_or_eval =
+                    (use_eval || batch_index < wdl_count)
                         ? entry.wdl
                         : sigmoid(
                             K,
@@ -812,7 +802,7 @@ static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& en
                                 : entry.static_eval);
                     // std::cout<< (batch_index < wdl_count ? "WDL" : "Eval") << std::endl;
 
-                const auto diff = entry_sigmoided_score - sig;
+                const auto diff = wdl_or_eval - sig;
                 const auto entry_error = pow(diff, 2);
                 error += entry_error;
             }
@@ -852,11 +842,23 @@ static tune_t find_optimal_k(ThreadPool& thread_pool, const vector<Entry>& entri
     return K;
 }
 
-static void update_single_gradient(parameters_t& gradient, const Entry& entry, const parameters_t& params, tune_t K) {
+static void update_single_gradient(parameters_t& gradient, const Entry& entry, const int32_t batch_index, const int32_t wdl_count, const parameters_t& params, tune_t K) {
 
     const tune_t eval = linear_eval(entry, params);
     const tune_t sig = sigmoid(K, eval);
-    const tune_t res = (entry.wdl - sig) * sig * (1 - sig);
+
+    // Mix between WDL and static eval
+    const auto sigmoided_entry_score =
+        (use_eval || batch_index < wdl_count)
+            ? entry.wdl
+            : sigmoid(
+                K,
+                use_scaled_static_eval
+                    ? entry.scaled_static_eval
+                    : entry.static_eval);
+        // std::cout<< (batch_index < wdl_count ? "WDL" : "Eval") << std::endl;
+
+    const tune_t res = (sigmoided_entry_score - sig) * sig * (1 - sig);
 
 #if TAPERED
     const auto mg_base = res * (entry.phase / static_cast<tune_t>(24));
@@ -884,6 +886,14 @@ static void compute_gradient(ThreadPool& thread_pool, parameters_t& gradient, co
             const auto entries_per_thread = entries.size() / thread_count;
             const auto start = static_cast<int>(thread_id * entries_per_thread);
             const auto end = static_cast<int>((thread_id + 1) * entries_per_thread - 1);
+
+            auto batch_count = 100;
+            auto wdl_count = std::clamp(wdl_percentage, 0, 100);
+
+            const auto gcd = std::gcd(batch_count, wdl_count);
+            wdl_count /= gcd;
+            batch_count /= gcd;
+
 #if TAPERED
             parameters_t gradient = parameters_t(params.size(), pair_t{});
 #else
@@ -892,7 +902,7 @@ static void compute_gradient(ThreadPool& thread_pool, parameters_t& gradient, co
             for (int i = start; i < end; i++)
             {
                 const auto& entry = entries[i];
-                update_single_gradient(gradient, entry, params, K);
+                update_single_gradient(gradient, entry, i, wdl_count, params, K);
             }
             thread_gradients[thread_id] = gradient;
         });
