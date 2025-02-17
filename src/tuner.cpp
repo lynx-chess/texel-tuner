@@ -35,8 +35,8 @@ struct Entry
 {
     vector<CoefficientEntry> coefficients;
     tune_t wdl;
-    tune_t scaled_static_eval;
-    tune_t static_eval;
+    tune_t scaled_eval;
+    tune_t eval;
     bool white_to_move;
     //tune_t initial_eval;
     tune_t additional_score;
@@ -62,16 +62,16 @@ static tune_t sigmoid(const tune_t K, const tune_t eval)
 
 static std::tuple<tune_t, tune_t, tune_t> get_fen_wdl(const string& original_fen, const bool original_white_to_move, const bool white_to_move, const bool side_to_move_wdl)
 {
-    tune_t wdl, scaled_static_eval, static_eval;
+    tune_t wdl, scaled_eval, eval;
 
     if(use_eval)
     {
-        // <fen> [<wdl>] [<scaled_static_eval>] [<static_eval>]
+        // <fen> [<wdl>] [<scaled_eval>] [<eval>]
         // Square brackets are required, unlike when use_eval is disabled
 
         bool wdl_found = false;
-        bool scaled_static_eval_found = false;
-        bool static_eval_found = false;
+        bool scaled_eval_found = false;
+        bool eval_found = false;
         stringstream ss(original_fen);
         while (!ss.eof())
         {
@@ -82,15 +82,15 @@ static std::tuple<tune_t, tune_t, tune_t> get_fen_wdl(const string& original_fen
                 wdl = stod(word.substr(1, word.size() - 2));
                 wdl_found = true;
             }
-            else if(!scaled_static_eval_found && word.starts_with("["))
+            else if(!scaled_eval_found && word.starts_with("["))
             {
-                scaled_static_eval = stod(word.substr(1, word.size() - 2));
-                scaled_static_eval_found = true;
+                scaled_eval = stod(word.substr(1, word.size() - 2));
+                scaled_eval_found = true;
             }
-            else if (!static_eval_found && word.starts_with("["))
+            else if (!eval_found && word.starts_with("["))
             {
-                static_eval = stod(word.substr(1, word.size() - 2));
-                static_eval_found = true;
+                eval = stod(word.substr(1, word.size() - 2));
+                eval_found = true;
             }
         }
 
@@ -99,15 +99,15 @@ static std::tuple<tune_t, tune_t, tune_t> get_fen_wdl(const string& original_fen
             cout << "WDL not found on line " << original_fen << endl;
             throw std::runtime_error("WDL marker not found");
         }
-        if (!scaled_static_eval_found)
+        if (!scaled_eval_found)
         {
             cout << "Scaled eval not found on line " << original_fen << endl;
             throw std::runtime_error("Scaled static eval not found");
         }
-        if (!static_eval_found)
+        if (!eval_found)
         {
-            cout << "Scaled static eval not found on line " << original_fen << endl;
-            throw std::runtime_error("Scaled static eval not found");
+            cout << "Raw eval not found on line " << original_fen << endl;
+            throw std::runtime_error("Raw eval eval not found");
         }
 
         if(!original_white_to_move && side_to_move_wdl)
@@ -165,7 +165,7 @@ static std::tuple<tune_t, tune_t, tune_t> get_fen_wdl(const string& original_fen
         }
     }
 
-    return std::make_tuple(wdl, scaled_static_eval, static_eval);
+    return std::make_tuple(wdl, scaled_eval, eval);
 }
 
 static bool get_fen_color_to_move(const string& fen)
@@ -623,11 +623,11 @@ static void parse_fen(const bool side_to_move_wdl, const parameters_t& parameter
     //cout << (entry.white_to_move ? "w" : "b") << " ";
     const auto tuple =  get_fen_wdl(original_fen, original_white_to_move, entry.white_to_move, side_to_move_wdl);
     entry.wdl = std::get<0>(tuple);
-    entry.scaled_static_eval = std::get<1>(tuple);
-    entry.static_eval = std::get<2>(tuple);
+    entry.scaled_eval = std::get<1>(tuple);
+    entry.eval = std::get<2>(tuple);
 
-    // std::cout << original_fen << " [" << entry.wdl << "] [" << entry.scaled_static_eval << "] [" << entry.static_eval << "]" << std::endl;
-    // std::cout << original_fen << " <" << sigmoid(preferred_k, entry.scaled_static_eval) << ">" << std::endl;
+    // std::cout << original_fen << " [" << entry.wdl << "] [" << entry.scaled_eval << "] [" << entry.eval << "]" << std::endl;
+    // std::cout << original_fen << " <" << sigmoid(preferred_k, entry.scaled_eval) << ">" << std::endl;
 
     get_coefficient_entries(eval_result.coefficients, entry.coefficients, static_cast<int32_t>(parameters.size()));
 #if TAPERED
@@ -797,9 +797,9 @@ static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& en
                         ? entry.wdl
                         : sigmoid(
                             K,
-                            use_scaled_static_eval
-                                ? entry.scaled_static_eval
-                                : entry.static_eval);
+                            use_scaled_eval
+                                ? entry.scaled_eval
+                                : entry.eval);
                     // std::cout<< (batch_index < wdl_count ? "WDL" : "Eval") << std::endl;
 
                 const auto diff = wdl_or_eval - sig;
@@ -853,9 +853,9 @@ static void update_single_gradient(parameters_t& gradient, const Entry& entry, c
             ? entry.wdl
             : sigmoid(
                 K,
-                use_scaled_static_eval
-                    ? entry.scaled_static_eval
-                    : entry.static_eval);
+                use_scaled_eval
+                    ? entry.scaled_eval
+                    : entry.eval);
         // std::cout<< (batch_index < wdl_count ? "WDL" : "Eval") << std::endl;
 
     const tune_t res = (sigmoided_entry_score - sig) * sig * (1 - sig);
