@@ -773,7 +773,7 @@ static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& en
             auto batch_count = 100;
             auto wdl_count = std::clamp(wdl_percentage, 0, 100);
 
-            const auto gcd = std::__gcd(batch_count, wdl_count);
+            const auto gcd = std::gcd(batch_count, wdl_count);
             wdl_count /= gcd;
             batch_count /= gcd;
 
