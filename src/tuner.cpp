@@ -786,10 +786,7 @@ static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& en
             for (int i = start; i < end; i++)
             {
                 const auto batch_index = i % batch_count;
-
                 const auto& entry = entries[i];
-                const auto eval = linear_eval(entry, parameters);
-                const auto sig = sigmoid(K, eval);
 
                 // Mix between WDL and eval
                 const auto wdl_or_eval =
@@ -802,6 +799,8 @@ static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& en
                                 : entry.eval);
                     // std::cout<< (batch_index < wdl_count ? "WDL" : "Eval") << std::endl;
 
+                const auto eval = linear_eval(entry, parameters);
+                const auto sig = sigmoid(K, eval);
                 const auto diff = wdl_or_eval - sig;
                 const auto entry_error = pow(diff, 2);
                 error += entry_error;
@@ -844,11 +843,8 @@ static tune_t find_optimal_k(ThreadPool& thread_pool, const vector<Entry>& entri
 
 static void update_single_gradient(parameters_t& gradient, const Entry& entry, const int32_t batch_index, const int32_t wdl_count, const parameters_t& params, tune_t K) {
 
-    const tune_t eval = linear_eval(entry, params);
-    const tune_t sig = sigmoid(K, eval);
-
     // Mix between WDL and static eval
-    const auto sigmoided_entry_score =
+    const auto wdl_or_eval =
         (!use_eval || batch_index < wdl_count)
             ? entry.wdl
             : sigmoid(
@@ -857,10 +853,11 @@ static void update_single_gradient(parameters_t& gradient, const Entry& entry, c
                     ? entry.scaled_eval
                     : entry.eval);
         // std::cout<< (batch_index < wdl_count ? "WDL" : "Eval") << std::endl;
+        // std::cout << "Entry WDL vs sigmoided: " << entry.wdl << " vs " << wdl_or_eval << std::endl;
 
-        // std::cout << "Entry WDL vs sigmoided: " << entry.wdl << " vs " << sigmoided_entry_score << std::endl;
-
-    const tune_t res = (sigmoided_entry_score - sig) * sig * (1 - sig);
+    const tune_t eval = linear_eval(entry, params);
+    const tune_t sig = sigmoid(K, eval);
+    const tune_t res = (wdl_or_eval - sig) * sig * (1 - sig);
 
 #if TAPERED
     const auto mg_base = res * (entry.phase / static_cast<tune_t>(24));
