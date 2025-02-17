@@ -27,7 +27,7 @@ constexpr bool print_eval = false;
 
 constexpr bool use_eval = true;
 constexpr int32_t wdl_percentage = 0;
-constexpr bool use_scaled_static_eval = true;
+constexpr bool use_scaled_eval = true;
 
 constexpr bool complete_step_ouput = true;
 constexpr int32_t data_load_print_interval = 10000;
