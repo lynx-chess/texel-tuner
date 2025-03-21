@@ -5920,7 +5920,7 @@ TunableArray OpenFileBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{0, 1, 3, 5, 7},
 	std::vector<int>{0, 2, 4, 6, 8},
-	1,
+	0,
 	0);
 
 TunableArray PawnPhalanxBonus(
