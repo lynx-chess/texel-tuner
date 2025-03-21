@@ -30,6 +30,7 @@ const static int numParameters = psqtIndexCount +
                                  PieceAttackedByPawnPenalty.size +
 
                                  // Arrays
+                                 SemiOpenFileBonus.tunableSize +
                                  PawnPhalanxBonus.tunableSize +
                                  ConnectedRooksBonus.tunableSize +
                                  PawnIslandsBonus.tunableSize +
@@ -123,6 +124,7 @@ public:
         PieceAttackedByPawnPenalty.add(result);
 
         // Arrays
+        SemiOpenFileBonus.add(result);
         PawnPhalanxBonus.add(result);
         ConnectedRooksBonus.add(result);
         PawnIslandsBonus.add(result);
@@ -290,6 +292,9 @@ public:
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
         // Arrays
+        name = NAME(SemiOpenFileBonus);
+        SemiOpenFileBonus.to_csharp(parameters, ss, name);
+
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_csharp(parameters, ss, name);
 
@@ -406,6 +411,9 @@ public:
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
 
         // Arrays
+        name = NAME(SemiOpenFileBonus);
+        SemiOpenFileBonus.to_cpp(parameters, ss, name);
+
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_cpp(parameters, ss, name);
         ss << "\n";
@@ -937,6 +945,13 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                     coefficients,
                     enemyKingBaseIndex + (48 * PSQTBucketCount) + (64 * PSQTBucketCount * (pieceIndex - 1)) + (64 * blackBucket) + pieceSquareIndex,
                     chess::Color::WHITE);
+
+                // Semiopen file bonus
+                if((FileMasks[pieceSquareIndex] & whitePawns) == 0)
+                {
+                    IncrementCoefficients(coefficients, SemiOpenFileBonus.index + pieceIndex, chess::Color::WHITE);
+                    packedScore += SemiOpenFileBonus.packed[pieceIndex];
+                }
             }
         }
     }
@@ -988,6 +1003,13 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                     coefficients,
                     enemyKingBaseIndex + (48 * PSQTBucketCount) + (64 * PSQTBucketCount * (tunerPieceIndex - 1)) + (64 * whiteBucket) + (pieceSquareIndex ^ 56),
                     chess::Color::BLACK);
+
+                // Semiopen file bonus
+                if((FileMasks[pieceSquareIndex] & blackPawns) == 0)
+                {
+                    IncrementCoefficients(coefficients, SemiOpenFileBonus.index + tunerPieceIndex, chess::Color::BLACK);
+                    packedScore += SemiOpenFileBonus.packed[tunerPieceIndex];
+                }
             }
         }
     }
