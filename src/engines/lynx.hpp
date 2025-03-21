@@ -30,7 +30,7 @@ const static int numParameters = psqtIndexCount +
                                  PieceAttackedByPawnPenalty.size +
 
                                  // Arrays
-                                 SemiOpenFileBonus.tunableSize +
+                                 OpenFileBonus.tunableSize +
                                  PawnPhalanxBonus.tunableSize +
                                  ConnectedRooksBonus.tunableSize +
                                  PawnIslandsBonus.tunableSize +
@@ -124,7 +124,7 @@ public:
         PieceAttackedByPawnPenalty.add(result);
 
         // Arrays
-        SemiOpenFileBonus.add(result);
+        OpenFileBonus.add(result);
         PawnPhalanxBonus.add(result);
         ConnectedRooksBonus.add(result);
         PawnIslandsBonus.add(result);
@@ -292,8 +292,8 @@ public:
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
         // Arrays
-        name = NAME(SemiOpenFileBonus);
-        SemiOpenFileBonus.to_csharp(parameters, ss, name);
+        name = NAME(OpenFileBonus);
+        OpenFileBonus.to_csharp(parameters, ss, name);
 
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_csharp(parameters, ss, name);
@@ -411,8 +411,8 @@ public:
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
 
         // Arrays
-        name = NAME(SemiOpenFileBonus);
-        SemiOpenFileBonus.to_cpp(parameters, ss, name);
+        name = NAME(OpenFileBonus);
+        OpenFileBonus.to_cpp(parameters, ss, name);
 
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_cpp(parameters, ss, name);
@@ -893,6 +893,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     const auto blackPawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK);
     const auto blackPawnAttacks = ShiftDownLeft(blackPawns) | ShiftDownRight(blackPawns);
 
+    const auto allPawns = whitePawns | blackPawns;
+
     const auto whiteKing = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::KING, chess::Color::WHITE)).index();
     const auto blackKing = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::KING, chess::Color::BLACK)).index();
 
@@ -947,10 +949,10 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                     chess::Color::WHITE);
 
                 // Semiopen file bonus
-                if((FileMasks[pieceSquareIndex] & whitePawns) == 0)
+                if((FileMasks[pieceSquareIndex] & allPawns) == 0)
                 {
-                    IncrementCoefficients(coefficients, SemiOpenFileBonus.index + pieceIndex, chess::Color::WHITE);
-                    packedScore += SemiOpenFileBonus.packed[pieceIndex];
+                    IncrementCoefficients(coefficients, OpenFileBonus.index + pieceIndex, chess::Color::WHITE);
+                    packedScore += OpenFileBonus.packed[pieceIndex];
                 }
             }
         }
@@ -1005,10 +1007,10 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                     chess::Color::BLACK);
 
                 // Semiopen file bonus
-                if((FileMasks[pieceSquareIndex] & blackPawns) == 0)
+                if((FileMasks[pieceSquareIndex] & allPawns) == 0)
                 {
-                    IncrementCoefficients(coefficients, SemiOpenFileBonus.index + tunerPieceIndex, chess::Color::BLACK);
-                    packedScore += SemiOpenFileBonus.packed[tunerPieceIndex];
+                    IncrementCoefficients(coefficients, OpenFileBonus.index + tunerPieceIndex, chess::Color::BLACK);
+                    packedScore += OpenFileBonus.packed[tunerPieceIndex];
                 }
             }
         }

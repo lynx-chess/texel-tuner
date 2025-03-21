@@ -5916,7 +5916,7 @@ TunableSingle BishopRookThreatsBonus(43, 5);
 TunableSingle BishopQueenThreatsBonus(36, 50);
 TunableSingle PieceAttackedByPawnPenalty(-48, -33);
 
-TunableArray SemiOpenFileBonus(
+TunableArray OpenFileBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{0, 1, 3, 5, 7},
 	std::vector<int>{0, 2, 4, 6, 8},
