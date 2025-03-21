@@ -31,6 +31,7 @@ const static int numParameters = psqtIndexCount +
 
                                  // Arrays
                                  OpenFileBonus.tunableSize +
+                                 SemiOpenFileBonus.tunableSize +
                                  PawnPhalanxBonus.tunableSize +
                                  ConnectedRooksBonus.tunableSize +
                                  PawnIslandsBonus.tunableSize +
@@ -125,6 +126,7 @@ public:
 
         // Arrays
         OpenFileBonus.add(result);
+        SemiOpenFileBonus.add(result);
         PawnPhalanxBonus.add(result);
         ConnectedRooksBonus.add(result);
         PawnIslandsBonus.add(result);
@@ -295,6 +297,9 @@ public:
         name = NAME(OpenFileBonus);
         OpenFileBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(SemiOpenFileBonus);
+        SemiOpenFileBonus.to_csharp(parameters, ss, name);
+
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_csharp(parameters, ss, name);
 
@@ -413,6 +418,9 @@ public:
         // Arrays
         name = NAME(OpenFileBonus);
         OpenFileBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(SemiOpenFileBonus);
+        SemiOpenFileBonus.to_cpp(parameters, ss, name);
 
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_cpp(parameters, ss, name);
@@ -954,6 +962,11 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                     IncrementCoefficients(coefficients, OpenFileBonus.index + pieceIndex, chess::Color::WHITE);
                     packedScore += OpenFileBonus.packed[pieceIndex];
                 }
+                else if((FileMasks[pieceSquareIndex] & whitePawns) == 0)
+                {
+                    IncrementCoefficients(coefficients, SemiOpenFileBonus.index + pieceIndex, chess::Color::WHITE);
+                    packedScore += SemiOpenFileBonus.packed[pieceIndex];
+                }
             }
         }
     }
@@ -1011,6 +1024,11 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                 {
                     IncrementCoefficients(coefficients, OpenFileBonus.index + tunerPieceIndex, chess::Color::BLACK);
                     packedScore += OpenFileBonus.packed[tunerPieceIndex];
+                }
+                else if((FileMasks[pieceSquareIndex] & blackPawns) == 0)
+                {
+                    IncrementCoefficients(coefficients, SemiOpenFileBonus.index + tunerPieceIndex, chess::Color::BLACK);
+                    packedScore += SemiOpenFileBonus.packed[tunerPieceIndex];
                 }
             }
         }
