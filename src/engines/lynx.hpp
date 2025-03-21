@@ -18,8 +18,6 @@ constexpr int enemyKingBaseIndex = psqtIndexCount / 2;
 const static int numParameters = psqtIndexCount +
                                  // DoubledPawnPenalty.size
                                  IsolatedPawnPenalty.size +
-                                 OpenFileRookBonus.size +
-                                 SemiOpenFileRookBonus.size +
                                  SemiOpenFileKingPenalty.size +
                                  OpenFileKingPenalty.size +
                                  KingShieldBonus.size +
@@ -113,8 +111,6 @@ public:
 
         // DoubledPawnPenalty.add(result);
         IsolatedPawnPenalty.add(result);
-        OpenFileRookBonus.add(result);
-        SemiOpenFileRookBonus.add(result);
         SemiOpenFileKingPenalty.add(result);
         OpenFileKingPenalty.add(result);
         KingShieldBonus.add(result);
@@ -263,12 +259,6 @@ public:
         name = NAME(IsolatedPawnPenalty);
         IsolatedPawnPenalty.to_csharp(parameters, ss, name);
 
-        name = NAME(OpenFileRookBonus);
-        OpenFileRookBonus.to_csharp(parameters, ss, name);
-
-        name = NAME(SemiOpenFileRookBonus);
-        SemiOpenFileRookBonus.to_csharp(parameters, ss, name);
-
         name = NAME(SemiOpenFileKingPenalty);
         SemiOpenFileKingPenalty.to_csharp(parameters, ss, name);
 
@@ -384,12 +374,6 @@ public:
 
         name = NAME(IsolatedPawnPenalty);
         IsolatedPawnPenalty.to_cpp(parameters, ss, name);
-
-        name = NAME(OpenFileRookBonus);
-        OpenFileRookBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(SemiOpenFileRookBonus);
-        SemiOpenFileRookBonus.to_cpp(parameters, ss, name);
 
         name = NAME(SemiOpenFileKingPenalty);
         SemiOpenFileKingPenalty.to_cpp(parameters, ss, name);
@@ -608,24 +592,7 @@ int RookAdditonalEvaluation(int squareIndex, int pieceIndex, int bucket, int opp
 
     int packedBonus = RookMobilityBonus.packed[mobilityCount];
     IncrementCoefficients(coefficients, RookMobilityBonus.index + mobilityCount, color);
-
-    // Open file
-    if (((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) & FileMasks[squareIndex]) == 0)
-    {
-        // std::cout << "OpenFileRookBonus" << std::endl;
-        IncrementCoefficients(coefficients, OpenFileRookBonus.index, color);
-        packedBonus += OpenFileRookBonus.packed;
-    }
-    else
-    {
-        // Semi-open file
-        if ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color) & FileMasks[squareIndex]) == 0)
-        {
-            packedBonus += SemiOpenFileRookBonus.packed;
-            IncrementCoefficients(coefficients, SemiOpenFileRookBonus.index, color);
-        }
-    }
-
+    
     // Checks
     const auto enemyKingCheckThreats = chess::attacks::rook(oppositeSideKingSquare, occupancy).getBits();
     const auto checksCount = chess::builtin::popcount(attacks & enemyKingCheckThreats);
