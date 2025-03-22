@@ -373,7 +373,7 @@ public:
         IsolatedPawnPenalty.to_cpp(parameters, ss, name);
 
         name = NAME(DoubledPawnPenalty);
-        DoubledPawnPenalty.to_json(parameters, ss, name);
+        DoubledPawnPenalty.to_cpp(parameters, ss, name);
 
         name = NAME(OpenFileRookBonus);
         OpenFileRookBonus.to_cpp(parameters, ss, name);
