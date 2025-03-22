@@ -16,8 +16,8 @@ using u64 = uint64_t;
 
 constexpr int enemyKingBaseIndex = psqtIndexCount / 2;
 const static int numParameters = psqtIndexCount +
-                                 // DoubledPawnPenalty.size
                                  IsolatedPawnPenalty.size +
+                                 DoubledPawnPenalty.size +
                                  OpenFileRookBonus.size +
                                  SemiOpenFileRookBonus.size +
                                  SemiOpenFileKingPenalty.size +
@@ -109,8 +109,8 @@ public:
         }
         add_piece_values(5, 0, 64, 0); // Kings
 
-        // DoubledPawnPenalty.add(result);
         IsolatedPawnPenalty.add(result);
+        DoubledPawnPenalty.add(result);
         OpenFileRookBonus.add(result);
         SemiOpenFileRookBonus.add(result);
         SemiOpenFileKingPenalty.add(result);
@@ -250,14 +250,14 @@ public:
         std::stringstream ss;
         std::string name;
 
-        // name = NAME(DoubledPawnPenalty);
-        // DoubledPawnPenalty.to_json(parameters, ss, name);
-
         ss << "public static class EvaluationParams" << std::endl
            << "{" << std::endl;
 
         name = NAME(IsolatedPawnPenalty);
         IsolatedPawnPenalty.to_csharp(parameters, ss, name);
+
+        name = NAME(DoubledPawnPenalty);
+        DoubledPawnPenalty.to_csharp(parameters, ss, name);
 
         name = NAME(OpenFileRookBonus);
         OpenFileRookBonus.to_csharp(parameters, ss, name);
@@ -369,11 +369,11 @@ public:
         std::stringstream ss;
         std::string name;
 
-        // name = NAME(DoubledPawnPenalty);
-        // DoubledPawnPenalty.to_json(parameters, ss, name);
-
         name = NAME(IsolatedPawnPenalty);
         IsolatedPawnPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(DoubledPawnPenalty);
+        DoubledPawnPenalty.to_json(parameters, ss, name);
 
         name = NAME(OpenFileRookBonus);
         OpenFileRookBonus.to_cpp(parameters, ss, name);
@@ -538,6 +538,11 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
         packedBonus += IsolatedPawnPenalty.packed;
         IncrementCoefficients(coefficients, IsolatedPawnPenalty.index, color);
     }
+
+    // Doubled pawn
+    const auto doubledPawnCounts = chess::builtin::popcount(FileMasks[squareIndex] & ~(1ULL << squareIndex) && sameSidePawns);
+    packedBonus += DoubledPawnPenalty.packed * doubledPawnCounts;
+    IncrementCoefficients(coefficients, DoubledPawnPenalty.index, color, doubledPawnCounts);
 
     // Passed pawn
     if ((opposideSidePawns & passedPawnMask) == 0)
