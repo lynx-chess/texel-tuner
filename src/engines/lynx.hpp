@@ -540,7 +540,7 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
     }
 
     // Doubled pawn
-    const auto doubledPawnCounts = chess::builtin::popcount(FileMasks[squareIndex] & ~(1ULL << squareIndex) && sameSidePawns);
+    const auto doubledPawnCounts = chess::builtin::popcount(FileMasks[squareIndex] & ~(1ULL << squareIndex) & sameSidePawns);
     packedBonus += DoubledPawnPenalty.packed * doubledPawnCounts;
     IncrementCoefficients(coefficients, DoubledPawnPenalty.index, color, doubledPawnCounts);
 
