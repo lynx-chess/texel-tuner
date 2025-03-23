@@ -33,6 +33,7 @@ const static int numParameters = psqtIndexCount +
                                  PawnPhalanxBonus.tunableSize +
                                  ConnectedRooksBonus.tunableSize +
                                  PawnIslandsBonus.tunableSize +
+                                 PawnStormBonus.tunableSize +
                                  BadBishop_SameColorPawnsPenalty.tunableSize +
                                  BadBishop_BlockedCentralPawnsPenalty.tunableSize +
                                  CheckBonus.tunableSize +
@@ -126,6 +127,7 @@ public:
         PawnPhalanxBonus.add(result);
         ConnectedRooksBonus.add(result);
         PawnIslandsBonus.add(result);
+        PawnStormBonus.add(result);
         BadBishop_SameColorPawnsPenalty.add(result);
         BadBishop_BlockedCentralPawnsPenalty.add(result);
         CheckBonus.add(result);
@@ -299,6 +301,9 @@ public:
         name = NAME(PawnIslandsBonus);
         PawnIslandsBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(PawnStormBonus);
+        PawnStormBonus.to_csharp(parameters, ss, name);
+
         name = NAME(BadBishop_SameColorPawnsPenalty);
         BadBishop_SameColorPawnsPenalty.to_csharp(parameters, ss, name);
 
@@ -416,6 +421,10 @@ public:
 
         name = NAME(PawnIslandsBonus);
         PawnIslandsBonus.to_cpp(parameters, ss, name);
+        ss << "\n";
+
+        name = NAME(PawnStormBonus);
+        PawnStormBonus.to_cpp(parameters, ss, name);
         ss << "\n";
 
         name = NAME(BadBishop_SameColorPawnsPenalty);
@@ -829,6 +838,26 @@ int PawnIslands(const u64 bitboard)
     return islandCount;
 }
 
+int PawnStorm(const int oppositeSideKingSquare, const u64 sameSidePawnsInFrontOfEnemyKing, const chess::Color color, coefficients_t &coefficients)
+{
+    int packedBonus = 0;
+
+    auto sameSidePawnsInFrontOfEnemyKingCopy = sameSidePawnsInFrontOfEnemyKing;
+    while (sameSidePawnsInFrontOfEnemyKingCopy != 0)
+    {
+        const auto stormPawn = chess::builtin::lsb(sameSidePawnsInFrontOfEnemyKingCopy).index();
+        ResetLS1B(sameSidePawnsInFrontOfEnemyKingCopy);
+
+        // TODO try to limit it, i.e. Math.Max(4, Constants.ChebyshevDistance[oppositeSideKingSquare][stormPawn]);
+        const auto stormPawnDistance = ChebyshevDistance(oppositeSideKingSquare, stormPawn);
+
+        packedBonus += stormPawn; // PawnStormBonus.packed[stormPawnDistance];
+        IncrementCoefficients(coefficients, PawnStormBonus.index + stormPawnDistance - PawnStormBonus.start, color);
+    }
+
+    return packedBonus;
+}
+
 int AdditionalPieceEvaluation(int pieceSquareIndex, int pieceIndex, int bucket, int oppositeSideBucket, int sameSideKingSquare, int oppositeSideKingSquare, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     switch (pieceIndex)
@@ -1053,6 +1082,12 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     packedScore += PawnIslandsBonus.packed[whitePawnIslands] - PawnIslandsBonus.packed[blackPawnIslands];
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + whitePawnIslands - PawnIslandsBonus.start, chess::Color::WHITE);
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
+
+    // Pawn storms
+    const auto whitePawnStorm = PawnStorm(blackKing, whitePawns & BlackPassedPawnMasks[blackKing], chess::Color::WHITE, coefficients);
+    const auto blackPawnStorm = PawnStorm(whiteKing, blackPawns & WhitePassedPawnMasks[whiteKing], chess::Color::BLACK, coefficients);
+
+    packedScore += whitePawnStorm - blackPawnStorm;
 
     // Debugging eval
     // return EvalResult{
