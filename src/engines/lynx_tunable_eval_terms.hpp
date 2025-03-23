@@ -5938,8 +5938,8 @@ TunableArray PawnIslandsBonus(
 
 TunableArray PawnStormBonus(
 	chess::PieceType::PAWN,
-	std::vector<int>{0, 27, 50, 35, 26, 12, 1},
-	std::vector<int>{0, 1, 19, 17, 17, 19, 13},
+	std::vector<int>{0, 27, 50, 35, 26},
+	std::vector<int>{0, 1, 19, 17, 17},
 	1,
 	0);
 

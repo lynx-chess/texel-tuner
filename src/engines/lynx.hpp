@@ -851,8 +851,11 @@ int PawnStorm(const int oppositeSideKingSquare, const u64 sameSidePawnsInFrontOf
         // TODO try to limit it, i.e. Math.Max(4, Constants.ChebyshevDistance[oppositeSideKingSquare][stormPawn]);
         const auto stormPawnDistance = ChebyshevDistance(oppositeSideKingSquare, stormPawn);
 
-        packedBonus += PawnStormBonus.packed[stormPawnDistance];
-        IncrementCoefficients(coefficients, PawnStormBonus.index + stormPawnDistance - PawnStormBonus.start, color);
+        if (stormPawnDistance <= 4)
+        {
+            packedBonus += PawnStormBonus.packed[stormPawnDistance];
+            IncrementCoefficients(coefficients, PawnStormBonus.index + stormPawnDistance - PawnStormBonus.start, color);
+        }
     }
 
     return packedBonus;
