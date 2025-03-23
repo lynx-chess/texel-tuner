@@ -309,7 +309,7 @@ constexpr int MaxEval = PositiveCheckmateDetectionLimit - 1;
     return ShiftLeft(ShiftDown(board));
 }
 
-[[nodiscard]] static u64 ChebyshevDistance(const u64 square1, const u64 square2)
+[[nodiscard]] static int ChebyshevDistance(const u64 square1, const u64 square2)
 {
     auto xDelta = std::abs(File[square1] - File[square2]);
     auto yDelta = std::abs(Rank[square1] - Rank[square2]);
