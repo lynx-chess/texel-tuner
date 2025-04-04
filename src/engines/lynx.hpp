@@ -522,6 +522,7 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
     auto oppositeSidePieces = blackPieces;
     auto passedPawnMask = WhitePassedPawnMasks[squareIndex];
     auto rank = Rank[squareIndex];
+    auto pushSquareIndex = squareIndex - 8;
 
     if (color == chess::Color::BLACK)
     {
@@ -530,6 +531,7 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
         oppositeSidePieces = whitePieces;
         passedPawnMask = BlackPassedPawnMasks[squareIndex];
         rank = 7 - rank;
+        pushSquareIndex = squareIndex + 8;
     }
 
     // Isolated pawn
@@ -559,12 +561,12 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
         }
 
         // King distance to passed pawn
-        const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
+        const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, pushSquareIndex);
         packedBonus += FriendlyKingDistanceToPassedPawnBonus.packed[friendlyKingDistance];
         IncrementCoefficients(coefficients, FriendlyKingDistanceToPassedPawnBonus.index + friendlyKingDistance - FriendlyKingDistanceToPassedPawnBonus.start, color);
 
         // Enemy king distance to passed pawn
-        const auto enemyKingDistance = ChebyshevDistance(oppositeSideKingSquare, squareIndex);
+        const auto enemyKingDistance = ChebyshevDistance(oppositeSideKingSquare, pushSquareIndex);
         packedBonus += EnemyKingDistanceToPassedPawnPenalty.packed[enemyKingDistance];
         IncrementCoefficients(coefficients, EnemyKingDistanceToPassedPawnPenalty.index + enemyKingDistance - EnemyKingDistanceToPassedPawnPenalty.start, color);
     }
