@@ -28,9 +28,9 @@ const static int numParameters = psqtIndexCount +
                                  BishopRookThreatsBonus.size +
                                  BishopQueenThreatsBonus.size +
                                  PieceAttackedByPawnPenalty.size +
-                                 FriendlyKingInFrontOfPassedPawnBonus.size +
 
                                  // Arrays
+                                 FriendlyKingInFrontOfPassedPawnBonus.tunableSize +
                                  PawnPhalanxBonus.tunableSize +
                                  ConnectedRooksBonus.tunableSize +
                                  PawnIslandsBonus.tunableSize +
@@ -122,9 +122,9 @@ public:
         BishopRookThreatsBonus.add(result);
         BishopQueenThreatsBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
-        FriendlyKingInFrontOfPassedPawnBonus.add(result);
 
         // Arrays
+        FriendlyKingInFrontOfPassedPawnBonus.add(result);
         PawnPhalanxBonus.add(result);
         ConnectedRooksBonus.add(result);
         PawnIslandsBonus.add(result);
@@ -160,6 +160,7 @@ public:
         assert(BishopMobilityBonus.tunableSize == 14);
         assert(RookMobilityBonus.tunableSize == 15);
         assert(QueenMobilityBonus.tunableSize == 28);
+        assert(FriendlyKingInFrontOfPassedPawnBonus.tunableSize == 6);
 
         std::cout << result.size() << " == " << numParameters << std::endl;
         assert(result.size() == numParameters);
@@ -291,10 +292,10 @@ public:
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
+        // Arrays
         name = NAME(FriendlyKingInFrontOfPassedPawnBonus);
         FriendlyKingInFrontOfPassedPawnBonus.to_csharp(parameters, ss, name);
 
-        // Arrays
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_csharp(parameters, ss, name);
 
@@ -410,10 +411,11 @@ public:
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
 
+        // Arrays
         name = NAME(FriendlyKingInFrontOfPassedPawnBonus);
         FriendlyKingInFrontOfPassedPawnBonus.to_cpp(parameters, ss, name);
+        ss << "\n";
 
-        // Arrays
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_cpp(parameters, ss, name);
         ss << "\n";
@@ -583,8 +585,8 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
         // King in front of passed pawn
         if (sameSideKingRank > rank)
         {
-            packedBonus += FriendlyKingInFrontOfPassedPawnBonus.packed;
-            IncrementCoefficients(coefficients, FriendlyKingInFrontOfPassedPawnBonus.index, color);
+            packedBonus += FriendlyKingInFrontOfPassedPawnBonus.packed[sameSideKingRank];
+            IncrementCoefficients(coefficients, FriendlyKingInFrontOfPassedPawnBonus.index + sameSideKingRank - FriendlyKingInFrontOfPassedPawnBonus.start, color);
         }
 
         // // Enemy king in front of passed pawn
