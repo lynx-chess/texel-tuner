@@ -155,12 +155,12 @@ public:
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
+        assert(FriendlyKingInFrontOfPassedPawnBonus.tunableSize == 7);
         assert(VirtualKingMobilityBonus.tunableSize == 28);
         assert(KnightMobilityBonus.tunableSize == 9);
         assert(BishopMobilityBonus.tunableSize == 14);
         assert(RookMobilityBonus.tunableSize == 15);
         assert(QueenMobilityBonus.tunableSize == 28);
-        assert(FriendlyKingInFrontOfPassedPawnBonus.tunableSize == 6);
 
         std::cout << result.size() << " == " << numParameters << std::endl;
         assert(result.size() == numParameters);
