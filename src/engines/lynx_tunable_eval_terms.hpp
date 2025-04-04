@@ -5915,6 +5915,7 @@ TunableSingle BishopInUnblockedLongDiagonalBonus(19, 12);
 TunableSingle BishopRookThreatsBonus(43, 5);
 TunableSingle BishopQueenThreatsBonus(36, 50);
 TunableSingle PieceAttackedByPawnPenalty(-48, -33);
+TunableSingle FriendlyKingInFrontOfPassedPawnBonus(-48, -33);
 TunableArray PawnPhalanxBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{0, 3, 20, 27, 59, 211, -48},

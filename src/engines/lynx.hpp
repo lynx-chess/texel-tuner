@@ -28,6 +28,7 @@ const static int numParameters = psqtIndexCount +
                                  BishopRookThreatsBonus.size +
                                  BishopQueenThreatsBonus.size +
                                  PieceAttackedByPawnPenalty.size +
+                                 FriendlyKingInFrontOfPassedPawnBonus.size +
 
                                  // Arrays
                                  PawnPhalanxBonus.tunableSize +
@@ -121,6 +122,7 @@ public:
         BishopRookThreatsBonus.add(result);
         BishopQueenThreatsBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
+        FriendlyKingInFrontOfPassedPawnBonus.add(result);
 
         // Arrays
         PawnPhalanxBonus.add(result);
@@ -289,6 +291,9 @@ public:
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
+        name = NAME(FriendlyKingInFrontOfPassedPawnBonus);
+        FriendlyKingInFrontOfPassedPawnBonus.to_csharp(parameters, ss, name);
+
         // Arrays
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_csharp(parameters, ss, name);
@@ -404,6 +409,9 @@ public:
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(FriendlyKingInFrontOfPassedPawnBonus);
+        FriendlyKingInFrontOfPassedPawnBonus.to_cpp(parameters, ss, name);
 
         // Arrays
         name = NAME(PawnPhalanxBonus);
@@ -522,6 +530,8 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
     auto oppositeSidePieces = blackPieces;
     auto passedPawnMask = WhitePassedPawnMasks[squareIndex];
     auto rank = Rank[squareIndex];
+    auto sameSideKingRank = Rank[sameSideKingSquare];
+    auto oppositeSideKingRank = Rank[oppositeSideKingSquare];
 
     if (color == chess::Color::BLACK)
     {
@@ -530,6 +540,8 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
         oppositeSidePieces = whitePieces;
         passedPawnMask = BlackPassedPawnMasks[squareIndex];
         rank = 7 - rank;
+        sameSideKingRank = 7 - sameSideKingRank;
+        oppositeSideKingRank = 7 - oppositeSideKingRank;
     }
 
     // Isolated pawn
@@ -567,6 +579,20 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
         const auto enemyKingDistance = ChebyshevDistance(oppositeSideKingSquare, squareIndex);
         packedBonus += EnemyKingDistanceToPassedPawnPenalty.packed[enemyKingDistance];
         IncrementCoefficients(coefficients, EnemyKingDistanceToPassedPawnPenalty.index + enemyKingDistance - EnemyKingDistanceToPassedPawnPenalty.start, color);
+
+        // King in front of passed pawn
+        if (sameSideKingRank > rank)
+        {
+            packedBonus += FriendlyKingInFrontOfPassedPawnBonus.packed;
+            IncrementCoefficients(coefficients, FriendlyKingInFrontOfPassedPawnBonus.index, color);
+        }
+
+        // // Enemy king in front of passed pawn
+        // if(oppositeSideKingRank < rank)
+        // {
+        //     packedBonus += EnemyKingInFrontOfPassedPawnPenalty.packed;
+        //     IncrementCoefficients(coefficients, EnemyKingInFrontOfPassedPawnPenalty.index, color);
+        // }
     }
 
     if (File[squareIndex] != 7 && GetBit(sameSidePawns, squareIndex + 1))
