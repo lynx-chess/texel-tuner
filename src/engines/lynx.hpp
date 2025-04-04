@@ -560,12 +560,12 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
             IncrementCoefficients(coefficients, PassedPawnBonusNoEnemiesAheadEnemyBonus.index(oppositeSideBucket, rank - PassedPawnBonusNoEnemiesAheadEnemyBonus.start), color); // There's no coefficient for rank 0
         }
 
-        // King distance to passed pawn
-        const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, pushSquareIndex);
+        // King distance to passed pawn (to protect it)
+        const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
         packedBonus += FriendlyKingDistanceToPassedPawnBonus.packed[friendlyKingDistance];
         IncrementCoefficients(coefficients, FriendlyKingDistanceToPassedPawnBonus.index + friendlyKingDistance - FriendlyKingDistanceToPassedPawnBonus.start, color);
 
-        // Enemy king distance to passed pawn
+        // Enemy king distance to passed pawn push square (to stop it)
         const auto enemyKingDistance = ChebyshevDistance(oppositeSideKingSquare, pushSquareIndex);
         packedBonus += EnemyKingDistanceToPassedPawnPenalty.packed[enemyKingDistance];
         IncrementCoefficients(coefficients, EnemyKingDistanceToPassedPawnPenalty.index + enemyKingDistance - EnemyKingDistanceToPassedPawnPenalty.start, color);
