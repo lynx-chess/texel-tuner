@@ -5921,6 +5921,12 @@ TunableArray FriendlyKingInFrontOfPassedPawnBonus(
 	std::vector<int>{0, 0, 8, 4, 2, 4, 20, 40},
 	2,
 	0);
+TunableArray EnemyKingInFrontOfPassedPawnPenalty(
+	chess::PieceType::PAWN,
+	std::vector<int>{0, -55, -3, -18, 24, 2, -11},
+	std::vector<int>{0, 13, -3, 9, 6, 16, 33},
+	1,
+	0);
 
 TunableArray PawnPhalanxBonus(
 	chess::PieceType::PAWN,
