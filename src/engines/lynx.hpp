@@ -590,11 +590,11 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
         }
 
         // // Enemy king in front of passed pawn
-        // if(oppositeSideKingRank < rank)
-        // {
-        //     packedBonus += EnemyKingInFrontOfPassedPawnPenalty.packed;
-        //     IncrementCoefficients(coefficients, EnemyKingInFrontOfPassedPawnPenalty.index, color);
-        // }
+        if(oppositeSideKingRank > rank)
+        {
+            packedBonus += EnemyKingInFrontOfPassedPawnPenalty.packed[rank];
+            IncrementCoefficients(coefficients, EnemyKingInFrontOfPassedPawnPenalty.index + rank - EnemyKingInFrontOfPassedPawnPenalty.start, color);
+        }
     }
 
     if (File[squareIndex] != 7 && GetBit(sameSidePawns, squareIndex + 1))
