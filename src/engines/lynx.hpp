@@ -600,8 +600,8 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
         // Enemy King in front of passed pawn
         if (oppositeSideKingRank > rank)
         {
-            packedBonus += EnemyKingInFrontOfPassedPawnPenalty.packed[sameSideKingRank];
-            IncrementCoefficients(coefficients, EnemyKingInFrontOfPassedPawnPenalty.index + sameSideKingRank - EnemyKingInFrontOfPassedPawnPenalty.start, color);
+            packedBonus += EnemyKingInFrontOfPassedPawnPenalty.packed[oppositeSideKingRank];
+            IncrementCoefficients(coefficients, EnemyKingInFrontOfPassedPawnPenalty.index + oppositeSideKingRank - EnemyKingInFrontOfPassedPawnPenalty.start, color);
         }
     }
 
