@@ -31,6 +31,7 @@ const static int numParameters = psqtIndexCount +
 
                                  // Arrays
                                  FriendlyKingInFrontOfPassedPawnBonus.tunableSize +
+                                 EnemyKingInFrontOfPassedPawnPenalty.tunableSize +
                                  PawnPhalanxBonus.tunableSize +
                                  ConnectedRooksBonus.tunableSize +
                                  PawnIslandsBonus.tunableSize +
@@ -125,6 +126,7 @@ public:
 
         // Arrays
         FriendlyKingInFrontOfPassedPawnBonus.add(result);
+        EnemyKingInFrontOfPassedPawnPenalty.add(result);
         PawnPhalanxBonus.add(result);
         ConnectedRooksBonus.add(result);
         PawnIslandsBonus.add(result);
@@ -161,6 +163,7 @@ public:
         assert(RookMobilityBonus.tunableSize == 15);
         assert(QueenMobilityBonus.tunableSize == 28);
         assert(FriendlyKingInFrontOfPassedPawnBonus.tunableSize == 6);
+        assert(EnemyKingInFrontOfPassedPawnPenalty.tunableSize == 6);
 
         std::cout << result.size() << " == " << numParameters << std::endl;
         assert(result.size() == numParameters);
@@ -295,6 +298,8 @@ public:
         // Arrays
         name = NAME(FriendlyKingInFrontOfPassedPawnBonus);
         FriendlyKingInFrontOfPassedPawnBonus.to_csharp(parameters, ss, name);
+        name = NAME(EnemyKingInFrontOfPassedPawnPenalty);
+        EnemyKingInFrontOfPassedPawnPenalty.to_csharp(parameters, ss, name);
 
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_csharp(parameters, ss, name);
@@ -414,6 +419,9 @@ public:
         // Arrays
         name = NAME(FriendlyKingInFrontOfPassedPawnBonus);
         FriendlyKingInFrontOfPassedPawnBonus.to_cpp(parameters, ss, name);
+        ss << "\n";
+        name = NAME(EnemyKingInFrontOfPassedPawnPenalty);
+        EnemyKingInFrontOfPassedPawnPenalty.to_cpp(parameters, ss, name);
         ss << "\n";
 
         name = NAME(PawnPhalanxBonus);
@@ -589,12 +597,12 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
             IncrementCoefficients(coefficients, FriendlyKingInFrontOfPassedPawnBonus.index + rank - FriendlyKingInFrontOfPassedPawnBonus.start, color);
         }
 
-        // // Enemy king in front of passed pawn
-        // if(oppositeSideKingRank < rank)
-        // {
-        //     packedBonus += EnemyKingInFrontOfPassedPawnPenalty.packed;
-        //     IncrementCoefficients(coefficients, EnemyKingInFrontOfPassedPawnPenalty.index, color);
-        // }
+        // Enemy King in front of passed pawn
+        if (oppositeSideKingRank > rank)
+        {
+            packedBonus += EnemyKingInFrontOfPassedPawnPenalty.packed[rank];
+            IncrementCoefficients(coefficients, EnemyKingInFrontOfPassedPawnPenalty.index + rank - EnemyKingInFrontOfPassedPawnPenalty.start, color);
+        }
     }
 
     if (File[squareIndex] != 7 && GetBit(sameSidePawns, squareIndex + 1))
