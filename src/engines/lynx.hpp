@@ -404,6 +404,9 @@ public:
         name = NAME(BishopRookThreatsBonus);
         BishopRookThreatsBonus.to_cpp(parameters, ss, name);
 
+        name = NAME(BishopQueenThreatsBonus);
+        BishopQueenThreatsBonus.to_cpp(parameters, ss, name);
+
         name = NAME(PassedPawnSquareRuleBonus);
         PassedPawnSquareRuleBonus.to_cpp(parameters, ss, name);
 
