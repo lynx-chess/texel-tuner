@@ -27,6 +27,7 @@ const static int numParameters = psqtIndexCount +
                                  BishopInUnblockedLongDiagonalBonus.size +
                                  BishopRookThreatsBonus.size +
                                  BishopQueenThreatsBonus.size +
+                                 PassedPawnSquareRuleBonus.size +
                                  PieceAttackedByPawnPenalty.size +
 
                                  // Arrays
@@ -120,6 +121,7 @@ public:
         BishopInUnblockedLongDiagonalBonus.add(result);
         BishopRookThreatsBonus.add(result);
         BishopQueenThreatsBonus.add(result);
+        PassedPawnSquareRuleBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
 
         // Arrays
@@ -286,6 +288,9 @@ public:
         name = NAME(BishopQueenThreatsBonus);
         BishopQueenThreatsBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(PassedPawnSquareRuleBonus);
+        PassedPawnSquareRuleBonus.to_csharp(parameters, ss, name);
+
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
@@ -399,8 +404,8 @@ public:
         name = NAME(BishopRookThreatsBonus);
         BishopRookThreatsBonus.to_cpp(parameters, ss, name);
 
-        name = NAME(BishopQueenThreatsBonus);
-        BishopQueenThreatsBonus.to_cpp(parameters, ss, name);
+        name = NAME(PassedPawnSquareRuleBonus);
+        PassedPawnSquareRuleBonus.to_cpp(parameters, ss, name);
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
@@ -522,6 +527,7 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
     auto oppositeSidePieces = blackPieces;
     auto passedPawnMask = WhitePassedPawnMasks[squareIndex];
     auto rank = Rank[squareIndex];
+    auto oppositeSideKingRank = Rank[oppositeSideKingSquare];
 
     if (color == chess::Color::BLACK)
     {
@@ -530,6 +536,7 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
         oppositeSidePieces = whitePieces;
         passedPawnMask = BlackPassedPawnMasks[squareIndex];
         rank = 7 - rank;
+        oppositeSideKingRank = 7 - oppositeSideKingRank;
     }
 
     // Isolated pawn
@@ -567,6 +574,18 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
         const auto enemyKingDistance = ChebyshevDistance(oppositeSideKingSquare, squareIndex);
         packedBonus += EnemyKingDistanceToPassedPawnPenalty.packed[enemyKingDistance];
         IncrementCoefficients(coefficients, EnemyKingDistanceToPassedPawnPenalty.index + enemyKingDistance - EnemyKingDistanceToPassedPawnPenalty.start, color);
+
+        // Square rule
+        const auto distanceToPromoting = 7 - rank;
+        const auto pawnFile = File[squareIndex];
+        const auto oppositeSideKingFile = File[oppositeSideKingSquare];
+
+        if (oppositeSideKingRank >= rank
+            && std::abs(oppositeSideKingFile - pawnFile) <= distanceToPromoting)
+        {
+            packedBonus += PassedPawnSquareRuleBonus.packed;
+            IncrementCoefficients(coefficients, PassedPawnSquareRuleBonus.index, color);
+        }
     }
 
     if (File[squareIndex] != 7 && GetBit(sameSidePawns, squareIndex + 1))
