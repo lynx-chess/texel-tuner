@@ -577,18 +577,17 @@ int PawnAdditionalEvaluation(int squareIndex, int pieceIndex, int bucket, int op
         const auto enemyKingDistance = ChebyshevDistance(oppositeSideKingSquare, squareIndex);
         packedBonus += EnemyKingDistanceToPassedPawnPenalty.packed[enemyKingDistance];
         IncrementCoefficients(coefficients, EnemyKingDistanceToPassedPawnPenalty.index + enemyKingDistance - EnemyKingDistanceToPassedPawnPenalty.start, color);
+    }
 
-        // Square rule
-        const auto distanceToPromoting = 7 - rank;
-        const auto pawnFile = File[squareIndex];
-        const auto oppositeSideKingFile = File[oppositeSideKingSquare];
-
-        if (oppositeSideKingRank >= rank
-            && std::abs(oppositeSideKingFile - pawnFile) <= distanceToPromoting)
-        {
-            packedBonus += PassedPawnSquareRuleBonus.packed;
-            IncrementCoefficients(coefficients, PassedPawnSquareRuleBonus.index, color);
-        }
+    // Square rule
+    const auto distanceToPromoting = 7 - rank;
+    const auto pawnFile = File[squareIndex];
+    const auto oppositeSideKingFile = File[oppositeSideKingSquare];
+    
+    if (oppositeSideKingRank >= rank && std::abs(oppositeSideKingFile - pawnFile) <= distanceToPromoting)
+    {
+        packedBonus += PassedPawnSquareRuleBonus.packed;
+        IncrementCoefficients(coefficients, PassedPawnSquareRuleBonus.index, color);
     }
 
     if (File[squareIndex] != 7 && GetBit(sameSidePawns, squareIndex + 1))
