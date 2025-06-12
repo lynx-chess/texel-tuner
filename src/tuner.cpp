@@ -545,7 +545,11 @@ static void parse_fen(const bool side_to_move_wdl, const parameters_t& parameter
 
     if constexpr (print_eval)
     {
-        std::cout << original_fen << ": " << TuneEval::NormalizeScore(eval_result.score) << std::endl;
+        const auto whitePerspectiveEval = board.sideToMove() == chess::Color::WHITE
+            ? eval_result.score
+            : -eval_result.score;
+
+        std::cout << original_fen << ": " << TuneEval::NormalizeScore(whitePerspectiveEval) << std::endl;
     }
 
 

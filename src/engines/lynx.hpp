@@ -56,7 +56,6 @@ class Lynx
 
 public:
     constexpr static bool includes_additional_score = false;
-    // constexpr static bool includes_additional_score = true;
     constexpr static bool supports_external_chess_eval = true;
 
     static parameters_t get_initial_parameters()
@@ -879,6 +878,10 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     int packedScore = 0;
     int gamePhase = 0;
 
+    // // Tempo bonus
+    constexpr auto tempo = S(16, 8);
+    packedScore += tempo;
+
     const auto whitePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE);
     const auto whitePawnAttacks = ShiftUpLeft(whitePawns) | ShiftUpRight(whitePawns);
 
@@ -1141,6 +1144,11 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     eval = ScaleEvalWith50MovesDrawDistance(eval, 0);
 
     eval = std::clamp(eval, MinEval, MaxEval);
+
+    if (board.sideToMove() == chess::Color::BLACK)
+    {
+        eval = -eval;
+    }
 
     // Always white's perspective
     return EvalResult{
