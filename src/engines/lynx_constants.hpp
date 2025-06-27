@@ -32,7 +32,7 @@ constexpr int PieceOffset(bool isWhite)
 
 std::array<int, 6> phaseValues = {0, 1, 1, 2, 4, 0};
 
-constexpr static int EvalNormalizationCoefficient = 119;
+constexpr static int EvalNormalizationCoefficient = 106;
 
 constexpr static std::array<std::array<std::array<std::array<int, 64>, PSQTBucketCount>, 6>, 2> MiddleGamePositionalWhiteTables = {{
 
