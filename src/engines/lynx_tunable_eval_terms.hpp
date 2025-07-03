@@ -6006,6 +6006,34 @@ TunableArray QueenMobilityBonus(
 	0,
 	0);
 
+TunableArray KnightThreatsBonus(
+	chess::PieceType::KNIGHT,
+	std::vector<int>{0, 1, 2, 3, 4, 5},
+	std::vector<int>{10, 11, 12, 13, 14, 15},
+	0,
+	0);
+
+TunableArray BishopThreatsBonus(
+	chess::PieceType::BISHOP,
+	std::vector<int>{0, 1, 2, 3, 4, 5},
+	std::vector<int>{10, 11, 12, 13, 14, 15},
+	0,
+	0);
+
+TunableArray RookThreatsBonus(
+	chess::PieceType::ROOK,
+	std::vector<int>{0, 1, 2, 3, 4, 5},
+	std::vector<int>{10, 11, 12, 13, 14, 15},
+	0,
+	0);
+
+TunableArray QueenThreatsBonus(
+	chess::PieceType::QUEEN,
+	std::vector<int>{0, 1, 2, 3, 4,	5},
+	std::vector<int>{10, 11, 12, 13, 14, 15},
+	0,
+	0);
+
 TunableArrayBucketed PassedPawnBonus(
 	chess::PieceType::PAWN,
 	std::array<std::vector<int>, PSQTBucketCount>{{
