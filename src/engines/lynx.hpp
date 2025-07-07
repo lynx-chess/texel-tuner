@@ -42,9 +42,13 @@ const static int numParameters = psqtIndexCount +
                                  RookMobilityBonus.tunableSize +                     // 15
                                  QueenMobilityBonus.tunableSize +
                                  KnightThreatsBonus.tunableSize +
+                                 KnightThreatsBonus_Defended.tunableSize +
                                  BishopThreatsBonus.tunableSize +
+                                 BishopThreatsBonus_Defended.tunableSize +
                                  RookThreatsBonus.tunableSize +
+                                 RookThreatsBonus_Defended.tunableSize +
                                  QueenThreatsBonus.tunableSize +
+                                 QueenThreatsBonus_Defended.tunableSize +
 
                                  // Bucketed arrays
                                  PassedPawnBonus.size +                         // PSQTBucketCount * 6, removing 1 rank values
@@ -138,9 +142,13 @@ public:
         RookMobilityBonus.add(result);
         QueenMobilityBonus.add(result);
         KnightThreatsBonus.add(result);
+        KnightThreatsBonus_Defended.add(result);
         BishopThreatsBonus.add(result);
+        BishopThreatsBonus_Defended.add(result);
         RookThreatsBonus.add(result);
+        RookThreatsBonus_Defended.add(result);
         QueenThreatsBonus.add(result);
+        QueenThreatsBonus_Defended.add(result);
 
         // Bucketed arrays
         PassedPawnBonus.add(result);
@@ -163,9 +171,13 @@ public:
         assert(RookMobilityBonus.tunableSize == 15);
         assert(QueenMobilityBonus.tunableSize == 28);
         assert(KnightThreatsBonus.tunableSize == 6);
+        assert(KnightThreatsBonus_Defended.tunableSize == 6);
         assert(BishopThreatsBonus.tunableSize == 6);
+        assert(BishopThreatsBonus_Defended.tunableSize == 6);
         assert(RookThreatsBonus.tunableSize == 6);
+        assert(RookThreatsBonus_Defended.tunableSize == 6);
         assert(QueenThreatsBonus.tunableSize == 6);
+        assert(QueenThreatsBonus_Defended.tunableSize == 6);
 
         std::cout << result.size() << " == " << numParameters << std::endl;
         assert(result.size() == numParameters);
@@ -334,14 +346,26 @@ public:
         name = NAME(KnightThreatsBonus);
         KnightThreatsBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(KnightThreatsBonus_Defended);
+        KnightThreatsBonus_Defended.to_csharp(parameters, ss, name);
+
         name = NAME(BishopThreatsBonus);
         BishopThreatsBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(BishopThreatsBonus_Defended);
+        BishopThreatsBonus_Defended.to_csharp(parameters, ss, name);
 
         name = NAME(RookThreatsBonus);
         RookThreatsBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(RookThreatsBonus_Defended);
+        RookThreatsBonus_Defended.to_csharp(parameters, ss, name);
+
         name = NAME(QueenThreatsBonus);
         QueenThreatsBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(QueenThreatsBonus_Defended);
+        QueenThreatsBonus_Defended.to_csharp(parameters, ss, name);
 
         // Bucketed arrays
         name = NAME(PassedPawnBonus);
@@ -462,14 +486,26 @@ public:
         name = NAME(KnightThreatsBonus);
         KnightThreatsBonus.to_cpp(parameters, ss, name);
 
+        name = NAME(KnightThreatsBonus_Defended);
+        KnightThreatsBonus_Defended.to_cpp(parameters, ss, name);
+
         name = NAME(BishopThreatsBonus);
         BishopThreatsBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(BishopThreatsBonus_Defended);
+        BishopThreatsBonus_Defended.to_cpp(parameters, ss, name);
 
         name = NAME(RookThreatsBonus);
         RookThreatsBonus.to_cpp(parameters, ss, name);
 
+        name = NAME(RookThreatsBonus_Defended);
+        RookThreatsBonus_Defended.to_cpp(parameters, ss, name);
+
         name = NAME(QueenThreatsBonus);
         QueenThreatsBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(QueenThreatsBonus_Defended);
+        QueenThreatsBonus_Defended.to_cpp(parameters, ss, name);
 
         // Bucketed arrays
         name = NAME(PassedPawnBonus);
