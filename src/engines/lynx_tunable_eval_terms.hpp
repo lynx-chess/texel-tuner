@@ -6004,6 +6004,20 @@ TunableArray QueenMobilityBonus(
 	0,
 	0);
 
+TunableArray PawnThreatsBonus(
+	chess::PieceType::PAWN,
+	std::vector<int>{-5, -2, 25, 67, 30, 24},
+	std::vector<int>{16, 38, 11, -25, -48, 9},
+	0,
+	0);
+
+TunableArray PawnThreatsBonus_Defended(
+	chess::PieceType::PAWN,
+	std::vector<int>{-12, -1, 27, 55, 23, 25},
+	std::vector<int>{1, 74, 31, 2, -36, 22},
+	0,
+	0);
+
 TunableArray KnightThreatsBonus(
 	chess::PieceType::KNIGHT,
 	std::vector<int>{-5, -2, 25, 67, 30, 24},

@@ -41,6 +41,8 @@ const static int numParameters = psqtIndexCount +
                                  BishopMobilityBonus.tunableSize +                   // 14, removing end
                                  RookMobilityBonus.tunableSize +                     // 15
                                  QueenMobilityBonus.tunableSize +
+                                 PawnThreatsBonus.tunableSize +
+                                 PawnThreatsBonus_Defended.tunableSize +
                                  KnightThreatsBonus.tunableSize +
                                  KnightThreatsBonus_Defended.tunableSize +
                                  BishopThreatsBonus.tunableSize +
@@ -141,6 +143,8 @@ public:
         BishopMobilityBonus.add(result);
         RookMobilityBonus.add(result);
         QueenMobilityBonus.add(result);
+        PawnThreatsBonus.add(result);
+        PawnThreatsBonus_Defended.add(result);
         KnightThreatsBonus.add(result);
         KnightThreatsBonus_Defended.add(result);
         BishopThreatsBonus.add(result);
@@ -170,6 +174,8 @@ public:
         assert(BishopMobilityBonus.tunableSize == 14);
         assert(RookMobilityBonus.tunableSize == 15);
         assert(QueenMobilityBonus.tunableSize == 28);
+        assert(PawnThreatsBonus.tunableSize == 6);
+        assert(PawnThreatsBonus_Defended.tunableSize == 6);
         assert(KnightThreatsBonus.tunableSize == 6);
         assert(KnightThreatsBonus_Defended.tunableSize == 6);
         assert(BishopThreatsBonus.tunableSize == 6);
@@ -343,6 +349,12 @@ public:
         name = NAME(QueenMobilityBonus);
         QueenMobilityBonus.to_csharp(parameters, ss, name, mobilityPieceValues);
 
+        name = NAME(PawnThreatsBonus);
+        PawnThreatsBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(PawnThreatsBonus_Defended);
+        PawnThreatsBonus_Defended.to_csharp(parameters, ss, name);
+
         name = NAME(KnightThreatsBonus);
         KnightThreatsBonus.to_csharp(parameters, ss, name);
 
@@ -482,6 +494,12 @@ public:
 
         name = NAME(QueenMobilityBonus);
         QueenMobilityBonus.to_cpp(parameters, ss, name, mobilityPieceValues);
+
+        name = NAME(PawnThreatsBonus);
+        PawnThreatsBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(PawnThreatsBonus_Defended);
+        PawnThreatsBonus_Defended.to_cpp(parameters, ss, name);
 
         name = NAME(KnightThreatsBonus);
         KnightThreatsBonus.to_cpp(parameters, ss, name);
@@ -885,11 +903,23 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     const auto them = __builtin_bswap64(board.them(color).getBits());
 
     // Calculate attacks
+    u64 pawnThreats = 0;
     u64 knightThreats = 0;
     u64 bishopThreats = 0;
     u64 rookThreats = 0;
     u64 queenThreats = 0;
     u64 kingThreats = 0;
+
+    auto pawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
+    while (pawns != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(pawns).index();
+        ResetLS1B(pawns);
+
+        // Using oppositeColor here instead of color because of little/big endian
+        const auto attacks = chess::attacks::pawn(oppositeColor, static_cast<chess::Square>(pieceSquareIndex)).getBits();
+        pawnThreats |= attacks;
+    }
 
     auto knights = GetPieceSwappingEndianness(board, chess::PieceType::KNIGHT, color);
     while (knights != 0)
@@ -941,6 +971,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         kingThreats |= attacks;
     }
 
+    pawnThreats &= them;
     knightThreats &= them;
     bishopThreats &= them;
     rookThreats &= them;
@@ -961,7 +992,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         const auto pieceSquareIndex = chess::builtin::lsb(oppositePawns).index();
         ResetLS1B(oppositePawns);
 
-        // Using color here instead of oppositeColor because if little/big endian
+        // Using color here instead of oppositeColor because of little/big endian
         const auto attacks = chess::attacks::pawn(color, static_cast<chess::Square>(pieceSquareIndex)).getBits();
         oppositeSidePawnThreats |= attacks;
     }
@@ -1023,6 +1054,26 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     const auto defendedSquares = oppositeSideThreats & them;
 
     // Calculate bonus
+
+    while (pawnThreats != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(pawnThreats).index();
+        ResetLS1B(pawnThreats);
+
+        const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
+
+        if (GetBit(defendedSquares, pieceSquareIndex))
+        {
+            packedBonus += PawnThreatsBonus_Defended.packed[attackedPiece];
+            IncrementCoefficients(coefficients, PawnThreatsBonus_Defended.index + attackedPiece, color);
+        }
+        else
+        {
+            packedBonus += PawnThreatsBonus.packed[attackedPiece];
+            IncrementCoefficients(coefficients, PawnThreatsBonus.index + attackedPiece, color);
+        }
+    }
+
     while (knightThreats != 0)
     {
         const auto pieceSquareIndex = chess::builtin::lsb(knightThreats).index();
