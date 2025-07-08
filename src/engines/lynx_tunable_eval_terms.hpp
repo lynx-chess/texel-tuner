@@ -5948,12 +5948,19 @@ TunableArray BadBishop_BlockedCentralPawnsPenalty(
 	0,
 	0);
 
-TunableArray CheckBonus(
-	chess::PieceType::PAWN,
-	std::vector<int>{0, 17, 17, 33, 13},
-	std::vector<int>{0, 3, 14, 3, 19},
-	1,
-	0);
+TunableArray SafeCheckBonus(
+    chess::PieceType::PAWN,
+    std::vector<int>{0, 86, 19, 55, 30},
+    std::vector<int>{0, -3, 19, 1, 23},
+    1,
+    0);
+
+TunableArray UnsafeCheckBonus(
+    chess::PieceType::PAWN,
+    std::vector<int>{0, 2, 17, 26, 9},
+    std::vector<int>{0, -1, 14, 1, 11},
+    1,
+    0);
 
 TunableArray FriendlyKingDistanceToPassedPawnBonus(
 	chess::PieceType::PAWN,
