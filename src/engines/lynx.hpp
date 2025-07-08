@@ -1107,10 +1107,10 @@ int Checks(const chess::Board &board, const chess::Color &color, coefficients_t 
         const auto safeChecksCount = checkThreatsCount - unsafeChecksCount;
 
         packedBonus += SafeCheckBonus.packed[pieceIndex] * safeChecksCount;
-        IncrementCoefficients(coefficients, SafeCheckBonus.index + pieceIndex, color, safeChecksCount);
+        IncrementCoefficients(coefficients, SafeCheckBonus.index + pieceIndex - SafeCheckBonus.start, color, safeChecksCount);
 
         packedBonus += UnsafeCheckBonus.packed[pieceIndex] * unsafeChecksCount;
-        IncrementCoefficients(coefficients, UnsafeCheckBonus.index + pieceIndex, color, unsafeChecksCount);
+        IncrementCoefficients(coefficients, UnsafeCheckBonus.index + pieceIndex - UnsafeCheckBonus.start, color, unsafeChecksCount);
     }
 
     return packedBonus;
