@@ -876,152 +876,111 @@ int PawnIslands(const u64 bitboard)
     return islandCount;
 }
 
-int Threats(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+std::array<u64, 12> CalculateAttacks(const chess::Board &board)
+{
+    const auto occupancy = __builtin_bswap64(board.occ().getBits());
+
+    std::array<u64, 12> pieceAttacks = {};
+
+    for (auto color : {chess::Color::WHITE, chess::Color::BLACK})
+    {
+        const auto offset = color == chess::Color::WHITE ? 0 : 6;
+
+        auto pawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
+        while (pawns != 0)
+        {
+            const auto pieceSquareIndex = chess::builtin::lsb(pawns).index();
+            ResetLS1B(pawns);
+
+            // Using oppositeColor here instead of color because of little/big endian
+            const auto attacks = chess::attacks::pawn(~color, static_cast<chess::Square>(pieceSquareIndex)).getBits();
+            pieceAttacks[static_cast<int>(chess::PieceType::PAWN) + offset] |= attacks;
+        }
+
+        auto knights = GetPieceSwappingEndianness(board, chess::PieceType::KNIGHT, color);
+        while (knights != 0)
+        {
+            const auto pieceSquareIndex = chess::builtin::lsb(knights).index();
+            ResetLS1B(knights);
+
+            const auto attacks = chess::attacks::knight(static_cast<chess::Square>(pieceSquareIndex)).getBits();
+            pieceAttacks[static_cast<int>(chess::PieceType::KNIGHT) + offset] |= attacks;
+        }
+
+        auto bishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, color);
+        while (bishops != 0)
+        {
+            const auto pieceSquareIndex = chess::builtin::lsb(bishops).index();
+            ResetLS1B(bishops);
+
+            const auto attacks = chess::attacks::bishop(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
+            pieceAttacks[static_cast<int>(chess::PieceType::BISHOP) + offset] |= attacks;
+        }
+
+        auto rooks = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, color);
+        while (rooks != 0)
+        {
+            const auto pieceSquareIndex = chess::builtin::lsb(rooks).index();
+            ResetLS1B(rooks);
+
+            const auto attacks = chess::attacks::rook(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
+            pieceAttacks[static_cast<int>(chess::PieceType::ROOK) + offset] |= attacks;
+        }
+
+        auto queens = GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, color);
+        while (queens != 0)
+        {
+            const auto pieceSquareIndex = chess::builtin::lsb(queens).index();
+            ResetLS1B(queens);
+
+            const auto attacks = chess::attacks::queen(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
+            pieceAttacks[static_cast<int>(chess::PieceType::QUEEN) + offset] |= attacks;
+        }
+
+        auto kings = GetPieceSwappingEndianness(board, chess::PieceType::KING, color);
+        while (kings != 0)
+        {
+            const auto pieceSquareIndex = chess::builtin::lsb(kings).index();
+            ResetLS1B(kings);
+
+            const auto attacks = chess::attacks::king(static_cast<chess::Square>(pieceSquareIndex)).getBits();
+            pieceAttacks[static_cast<int>(chess::PieceType::KING) + offset] |= attacks;
+        }
+    }
+
+    return pieceAttacks;
+}
+
+std::array<u64, 2> CalculateSideAttacks(const std::array<u64, 12> &attacks)
+{
+    std::array<u64, 2> sideAttacks = {};
+
+    for (int i = 0; i < 6; ++i)
+    {
+        sideAttacks[0] |= attacks[i];     // White pieces
+        sideAttacks[1] |= attacks[i + 6]; // Black pieces
+    }
+
+    return sideAttacks;
+}
+
+int Threats(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients, const std::array<u64, 12> &attacks)
 {
     int packedBonus = 0;
 
-    auto oppositeColor = ~color;
-    const auto occupancy = __builtin_bswap64(board.occ().getBits());
     const auto them = __builtin_bswap64(board.them(color).getBits());
 
-    // Calculate attacks
-    u64 knightThreats = 0;
-    u64 bishopThreats = 0;
-    u64 rookThreats = 0;
-    u64 queenThreats = 0;
-    u64 kingThreats = 0;
+    // Extract attacks
+    const auto offset = color == chess::Color::WHITE ? 0 : 6;
+    const auto oppositeSideoffset = 6 - offset;
 
-    auto knights = GetPieceSwappingEndianness(board, chess::PieceType::KNIGHT, color);
-    while (knights != 0)
-    {
-        const auto pieceSquareIndex = chess::builtin::lsb(knights).index();
-        ResetLS1B(knights);
+    auto knightThreats = attacks[static_cast<int>(chess::PieceType::KNIGHT) + offset] & them;
+    auto bishopThreats = attacks[static_cast<int>(chess::PieceType::BISHOP) + offset] & them;
+    auto rookThreats = attacks[static_cast<int>(chess::PieceType::ROOK) + offset] & them;
+    auto queenThreats = attacks[static_cast<int>(chess::PieceType::QUEEN) + offset] & them;
+    auto kingThreats = attacks[static_cast<int>(chess::PieceType::KING) + offset] & them;
 
-        const auto attacks = chess::attacks::knight(static_cast<chess::Square>(pieceSquareIndex)).getBits();
-        knightThreats |= attacks;
-    }
-
-    auto bishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, color);
-    while (bishops != 0)
-    {
-        const auto pieceSquareIndex = chess::builtin::lsb(bishops).index();
-        ResetLS1B(bishops);
-
-        const auto attacks = chess::attacks::bishop(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
-        bishopThreats |= attacks;
-    }
-
-    auto rooks = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, color);
-    while (rooks != 0)
-    {
-        const auto pieceSquareIndex = chess::builtin::lsb(rooks).index();
-        ResetLS1B(rooks);
-
-        const auto attacks = chess::attacks::rook(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
-        rookThreats |= attacks;
-    }
-
-    auto queens = GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, color);
-    while (queens != 0)
-    {
-        const auto pieceSquareIndex = chess::builtin::lsb(queens).index();
-        ResetLS1B(queens);
-
-        const auto attacks = chess::attacks::queen(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
-        queenThreats |= attacks;
-    }
-
-    auto kings = GetPieceSwappingEndianness(board, chess::PieceType::KING, color);
-    while (kings != 0)
-    {
-        const auto pieceSquareIndex = chess::builtin::lsb(kings).index();
-        ResetLS1B(kings);
-
-        const auto attacks = chess::attacks::king(static_cast<chess::Square>(pieceSquareIndex)).getBits();
-        kingThreats |= attacks;
-    }
-
-    knightThreats &= them;
-    bishopThreats &= them;
-    rookThreats &= them;
-    queenThreats &= them;
-    kingThreats &= them;
-
-    // Calculate opposite side threats
-    u64 oppositeSidePawnThreats = 0;
-    // u64 oppositeSideKnightThreats = 0;
-    // u64 oppositeSideBishopThreats = 0;
-    // u64 oppositeSideRookThreats = 0;
-    // u64 oppositeSideQueenThreats = 0;
-    // u64 oppositeSideKingThreats = 0;
-
-    auto oppositePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, oppositeColor);
-    while (oppositePawns != 0)
-    {
-        const auto pieceSquareIndex = chess::builtin::lsb(oppositePawns).index();
-        ResetLS1B(oppositePawns);
-
-        // Using color here instead of oppositeColor because if little/big endian
-        const auto attacks = chess::attacks::pawn(color, static_cast<chess::Square>(pieceSquareIndex)).getBits();
-        oppositeSidePawnThreats |= attacks;
-    }
-
-    // auto oppositeKnights = GetPieceSwappingEndianness(board, chess::PieceType::KNIGHT, oppositeColor);
-    // while (oppositeKnights != 0)
-    // {
-    //     const auto pieceSquareIndex = chess::builtin::lsb(oppositeKnights).index();
-    //     ResetLS1B(oppositeKnights);
-
-    //     const auto attacks = chess::attacks::knight(static_cast<chess::Square>(pieceSquareIndex)).getBits();
-    //     oppositeSideKnightThreats |= attacks;
-    // }
-
-    // auto oppositeBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, oppositeColor);
-    // while (oppositeBishops != 0)
-    // {
-    //     const auto pieceSquareIndex = chess::builtin::lsb(oppositeBishops).index();
-    //     ResetLS1B(oppositeBishops);
-
-    //     const auto attacks = chess::attacks::bishop(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
-    //     oppositeSideBishopThreats |= attacks;
-    // }
-
-    // auto oppositeRooks = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, oppositeColor);
-    // while (oppositeRooks != 0)
-    // {
-    //     const auto pieceSquareIndex = chess::builtin::lsb(oppositeRooks).index();
-    //     ResetLS1B(oppositeRooks);
-
-    //     const auto attacks = chess::attacks::rook(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
-    //     oppositeSideRookThreats |= attacks;
-    // }
-
-    // auto oppositeQueens = GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, oppositeColor);
-    // while (oppositeQueens != 0)
-    // {
-    //     const auto pieceSquareIndex = chess::builtin::lsb(oppositeQueens).index();
-    //     ResetLS1B(oppositeQueens);
-
-    //     const auto attacks = chess::attacks::queen(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
-    //     oppositeSideQueenThreats |= attacks;
-    // }
-
-    // auto oppositeKings = GetPieceSwappingEndianness(board, chess::PieceType::KING, oppositeColor);
-    // while (oppositeKings != 0)
-    // {
-    //     const auto pieceSquareIndex = chess::builtin::lsb(oppositeKings).index();
-    //     ResetLS1B(oppositeKings);
-
-    //     const auto attacks = chess::attacks::king(static_cast<chess::Square>(pieceSquareIndex)).getBits();
-    //     oppositeSideKingThreats |= attacks;
-    // }
-
-    const auto oppositeSideThreats = oppositeSidePawnThreats;
-    // | oppositeSideKnightThreats | oppositeSideBishopThreats |
-        // oppositeSideRookThreats | oppositeSideQueenThreats | oppositeSideKingThreats;
-
-    // Squares defended by the opponent
-    const auto defendedSquares = oppositeSideThreats & them;
+    const auto defendedSquares = attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset];
 
     // Calculate bonus
     while (knightThreats != 0)
@@ -1347,9 +1306,12 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + whitePawnIslands - PawnIslandsBonus.start, chess::Color::WHITE);
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
 
+    const auto attacks = CalculateAttacks(board);
+    // const auto attacksBySide = CalculateSideAttacks(attacks);
+
     // Threats
-    packedScore += Threats(board, chess::Color::WHITE, coefficients);
-    packedScore -= Threats(board, chess::Color::BLACK, coefficients);
+    packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks);
+    packedScore -= Threats(board, chess::Color::BLACK, coefficients, attacks);
 
     // Debugging eval
     // return EvalResult{
