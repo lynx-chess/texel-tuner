@@ -49,6 +49,8 @@ const static int numParameters = psqtIndexCount +
                                  RookThreatsBonus_Defended.tunableSize +
                                  QueenThreatsBonus.tunableSize +
                                  QueenThreatsBonus_Defended.tunableSize +
+                                 KingThreatsBonus.tunableSize +
+                                 KingThreatsBonus_Defended.tunableSize +
 
                                  // Bucketed arrays
                                  PassedPawnBonus.size +                         // PSQTBucketCount * 6, removing 1 rank values
@@ -149,6 +151,8 @@ public:
         RookThreatsBonus_Defended.add(result);
         QueenThreatsBonus.add(result);
         QueenThreatsBonus_Defended.add(result);
+        KingThreatsBonus.add(result);
+        KingThreatsBonus_Defended.add(result);
 
         // Bucketed arrays
         PassedPawnBonus.add(result);
@@ -178,6 +182,8 @@ public:
         assert(RookThreatsBonus_Defended.tunableSize == 6);
         assert(QueenThreatsBonus.tunableSize == 6);
         assert(QueenThreatsBonus_Defended.tunableSize == 6);
+        assert(KingThreatsBonus.tunableSize == 6);
+        assert(KingThreatsBonus_Defended.tunableSize == 6);
 
         std::cout << result.size() << " == " << numParameters << std::endl;
         assert(result.size() == numParameters);
@@ -367,6 +373,12 @@ public:
         name = NAME(QueenThreatsBonus_Defended);
         QueenThreatsBonus_Defended.to_csharp(parameters, ss, name);
 
+        name = NAME(KingThreatsBonus);
+        KingThreatsBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(KingThreatsBonus_Defended);
+        KingThreatsBonus_Defended.to_csharp(parameters, ss, name);
+
         // Bucketed arrays
         name = NAME(PassedPawnBonus);
         PassedPawnBonus.to_csharp(parameters, ss, name);
@@ -506,6 +518,12 @@ public:
 
         name = NAME(QueenThreatsBonus_Defended);
         QueenThreatsBonus_Defended.to_cpp(parameters, ss, name);
+
+        name = NAME(KingThreatsBonus);
+        KingThreatsBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(KingThreatsBonus_Defended);
+        KingThreatsBonus_Defended.to_cpp(parameters, ss, name);
 
         // Bucketed arrays
         name = NAME(PassedPawnBonus);
@@ -1079,24 +1097,29 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         IncrementCoefficients(coefficients, QueenThreatsBonus.index + attackedPiece, color);
     }
 
-    // while (kingThreats != 0)
-    // {
-    //     const auto pieceSquareIndex = chess::builtin::lsb(kingThreats).index();
-    //     ResetLS1B(kingThreats);
+    auto defendedKingThreats = kingThreats & defendedSquares;
+    while (defendedKingThreats != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(defendedKingThreats).index();
+        ResetLS1B(defendedKingThreats);
 
-    //     const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
+        const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
 
-    //     if (GetBit(defendedSquares, pieceSquareIndex))
-    //     {
-    //         packedBonus += KingThreatsBonus_Defended.packed[attackedPiece];
-    //         IncrementCoefficients(coefficients, KingThreatsBonus_Defended.index + attackedPiece, color);
-    //     }
-    //     else
-    //     {
-    //         packedBonus += KingThreatsBonus.packed[attackedPiece];
-    //         IncrementCoefficients(coefficients, KingThreatsBonus.index + attackedPiece, color);
-    //     }
-    // }
+        packedBonus += KingThreatsBonus_Defended.packed[attackedPiece];
+        IncrementCoefficients(coefficients, KingThreatsBonus_Defended.index + attackedPiece, color);
+    }
+
+    auto undefendedKingThreats = kingThreats & (~defendedSquares);
+    while (undefendedKingThreats != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(undefendedKingThreats).index();
+        ResetLS1B(undefendedKingThreats);
+
+        const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
+
+        packedBonus += KingThreatsBonus.packed[attackedPiece];
+        IncrementCoefficients(coefficients, KingThreatsBonus.index + attackedPiece, color);
+    }
 
     return packedBonus;
 }
