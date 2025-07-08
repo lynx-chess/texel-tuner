@@ -6060,6 +6060,20 @@ TunableArray QueenThreatsBonus_Defended(
 	0,
 	0);
 
+TunableArray KingThreatsBonus(
+	chess::PieceType::KING,
+	std::vector<int>{-3, 5, -1, 3, 5, -6},
+	std::vector<int>{-1, 13, 40, -5, -4, 89},
+	0,
+	0);
+
+TunableArray KingThreatsBonus_Defended(
+	chess::PieceType::KING,
+	std::vector<int>{-7, -2, -6, 8, 6, 28},
+	std::vector<int>{5, -15, -1, -29, 6, 43},
+	0,
+	0);
+
 TunableArrayBucketed PassedPawnBonus(
 	chess::PieceType::PAWN,
 	std::array<std::vector<int>, PSQTBucketCount>{{
