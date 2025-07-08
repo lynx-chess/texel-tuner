@@ -983,80 +983,100 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     const auto defendedSquares = attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset];
 
     // Calculate bonus
-    while (knightThreats != 0)
+    auto defendedKnightThreats = knightThreats & defendedSquares;
+    while (defendedKnightThreats != 0)
     {
-        const auto pieceSquareIndex = chess::builtin::lsb(knightThreats).index();
-        ResetLS1B(knightThreats);
+        const auto pieceSquareIndex = chess::builtin::lsb(defendedKnightThreats).index();
+        ResetLS1B(defendedKnightThreats);
 
         const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
 
-        if (GetBit(defendedSquares, pieceSquareIndex))
-        {
-            packedBonus += KnightThreatsBonus_Defended.packed[attackedPiece];
-            IncrementCoefficients(coefficients, KnightThreatsBonus_Defended.index + attackedPiece, color);
-        }
-        else
-        {
-            packedBonus += KnightThreatsBonus.packed[attackedPiece];
-            IncrementCoefficients(coefficients, KnightThreatsBonus.index + attackedPiece, color);
-        }
+        packedBonus += KnightThreatsBonus_Defended.packed[attackedPiece];
+        IncrementCoefficients(coefficients, KnightThreatsBonus_Defended.index + attackedPiece, color);
     }
 
-    while (bishopThreats != 0)
+    auto undefendedKnightThreats = knightThreats & (~defendedSquares);
+    while (undefendedKnightThreats != 0)
     {
-        const auto pieceSquareIndex = chess::builtin::lsb(bishopThreats).index();
-        ResetLS1B(bishopThreats);
+        const auto pieceSquareIndex = chess::builtin::lsb(undefendedKnightThreats).index();
+        ResetLS1B(undefendedKnightThreats);
 
         const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
 
-        if (GetBit(defendedSquares, pieceSquareIndex))
-        {
-            packedBonus += BishopThreatsBonus_Defended.packed[attackedPiece];
-            IncrementCoefficients(coefficients, BishopThreatsBonus_Defended.index + attackedPiece, color);
-        }
-        else
-        {
-            packedBonus += BishopThreatsBonus.packed[attackedPiece];
-            IncrementCoefficients(coefficients, BishopThreatsBonus.index + attackedPiece, color);
-        }
+        packedBonus += KnightThreatsBonus.packed[attackedPiece];
+        IncrementCoefficients(coefficients, KnightThreatsBonus.index + attackedPiece, color);
     }
 
-    while (rookThreats != 0)
+    auto defendedBishopThreats = bishopThreats & defendedSquares;
+    while (defendedBishopThreats != 0)
     {
-        const auto pieceSquareIndex = chess::builtin::lsb(rookThreats).index();
-        ResetLS1B(rookThreats);
+        const auto pieceSquareIndex = chess::builtin::lsb(defendedBishopThreats).index();
+        ResetLS1B(defendedBishopThreats);
 
         const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
 
-        if (GetBit(defendedSquares, pieceSquareIndex))
-        {
-            packedBonus += RookThreatsBonus_Defended.packed[attackedPiece];
-            IncrementCoefficients(coefficients, RookThreatsBonus_Defended.index + attackedPiece, color);
-        }
-        else
-        {
-            packedBonus += RookThreatsBonus.packed[attackedPiece];
-            IncrementCoefficients(coefficients, RookThreatsBonus.index + attackedPiece, color);
-        }
+        packedBonus += BishopThreatsBonus_Defended.packed[attackedPiece];
+        IncrementCoefficients(coefficients, BishopThreatsBonus_Defended.index + attackedPiece, color);
     }
 
-    while (queenThreats != 0)
+    auto undefendedBishopThreats = bishopThreats & (~defendedSquares);
+    while (undefendedBishopThreats != 0)
     {
-        const auto pieceSquareIndex = chess::builtin::lsb(queenThreats).index();
-        ResetLS1B(queenThreats);
+        const auto pieceSquareIndex = chess::builtin::lsb(undefendedBishopThreats).index();
+        ResetLS1B(undefendedBishopThreats);
 
         const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
 
-        if (GetBit(defendedSquares, pieceSquareIndex))
-        {
-            packedBonus += QueenThreatsBonus_Defended.packed[attackedPiece];
-            IncrementCoefficients(coefficients, QueenThreatsBonus_Defended.index + attackedPiece, color);
-        }
-        else
-        {
-            packedBonus += QueenThreatsBonus.packed[attackedPiece];
-            IncrementCoefficients(coefficients, QueenThreatsBonus.index + attackedPiece, color);
-        }
+        packedBonus += BishopThreatsBonus.packed[attackedPiece];
+        IncrementCoefficients(coefficients, BishopThreatsBonus.index + attackedPiece, color);
+    }
+
+    auto defendedRookThreats = rookThreats & defendedSquares;
+    while (defendedRookThreats != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(defendedRookThreats).index();
+        ResetLS1B(defendedRookThreats);
+
+        const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
+
+        packedBonus += RookThreatsBonus_Defended.packed[attackedPiece];
+        IncrementCoefficients(coefficients, RookThreatsBonus_Defended.index + attackedPiece, color);
+    }
+
+    auto undefendedRookThreats = rookThreats & (~defendedSquares);
+    while (undefendedRookThreats != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(undefendedRookThreats).index();
+        ResetLS1B(undefendedRookThreats);
+
+        const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
+
+        packedBonus += RookThreatsBonus.packed[attackedPiece];
+        IncrementCoefficients(coefficients, RookThreatsBonus.index + attackedPiece, color);
+    }
+
+    auto defendedQueenThreats = queenThreats & defendedSquares;
+    while (defendedQueenThreats != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(defendedQueenThreats).index();
+        ResetLS1B(defendedQueenThreats);
+
+        const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
+
+        packedBonus += QueenThreatsBonus_Defended.packed[attackedPiece];
+        IncrementCoefficients(coefficients, QueenThreatsBonus_Defended.index + attackedPiece, color);
+    }
+
+    auto undefendedQueenThreats = queenThreats & (~defendedSquares);
+    while (undefendedQueenThreats != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(undefendedQueenThreats).index();
+        ResetLS1B(undefendedQueenThreats);
+
+        const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
+
+        packedBonus += QueenThreatsBonus.packed[attackedPiece];
+        IncrementCoefficients(coefficients, QueenThreatsBonus.index + attackedPiece, color);
     }
 
     // while (kingThreats != 0)
