@@ -1123,7 +1123,7 @@ int Checks(const chess::Board &board, const chess::Color &color, coefficients_t 
 
     for (int pieceIndex = static_cast<int>(chess::PieceType::KNIGHT); pieceIndex < static_cast<int>(chess::PieceType::KING); ++pieceIndex)
     {
-        const auto checks = attacks[pieceIndex + offset] & checkThreats[pieceIndex];
+        const auto checks = attacks[pieceIndex + offset] & checkThreats[pieceIndex] &(~attacks[static_cast<int>(chess::PieceType::PAWN) + 6 - offset]);
         const auto checkThreatsCount = chess::builtin::popcount(checks);
 
         const auto unsafeChecksCount = chess::builtin::popcount(checks & oppositeSideAttacks);
