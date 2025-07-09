@@ -11,6 +11,7 @@ namespace Tuner
     {
         std::string path;
         bool side_to_move_wdl;
+        bool side_to_move_eval;
         int64_t position_limit;
     };
 
