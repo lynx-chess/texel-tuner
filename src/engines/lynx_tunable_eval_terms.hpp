@@ -5952,14 +5952,14 @@ TunableArray SafeCheckBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{0, 84, 18, 61, 30},
 	std::vector<int>{0, -3, 18, -1, 24},
-	1,
+	0,
 	0);
 
 TunableArray UnsafeCheckBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{0, 3, 17, 28, 9},
 	std::vector<int>{0, -1, 12, 1, 12},
-	1,
+	0,
 	0);
 
 TunableArray FriendlyKingDistanceToPassedPawnBonus(

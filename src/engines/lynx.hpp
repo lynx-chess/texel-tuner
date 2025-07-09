@@ -1114,14 +1114,14 @@ int Checks(const chess::Board &board, const chess::Color &color, coefficients_t 
     const auto oppositeSideAttacks = attacksBySide[static_cast<int>(oppositeColor)];
 
     const std::array<u64, 5> checkThreats = {
-        0,
+        chess::attacks::pawn(color, oppositeSideKingSquare).getBits(),
         chess::attacks::knight(oppositeSideKingSquare).getBits(),
         chess::attacks::bishop(oppositeSideKingSquare, occupancy).getBits(),
         chess::attacks::rook(oppositeSideKingSquare, occupancy).getBits(),
         chess::attacks::queen(oppositeSideKingSquare, occupancy).getBits(),
     };
 
-    for (int pieceIndex = static_cast<int>(chess::PieceType::KNIGHT); pieceIndex < static_cast<int>(chess::PieceType::KING); ++pieceIndex)
+    for (int pieceIndex = static_cast<int>(chess::PieceType::PAWN); pieceIndex < static_cast<int>(chess::PieceType::KING); ++pieceIndex)
     {
         const auto checks = attacks[pieceIndex + offset] & checkThreats[pieceIndex];
         const auto checkThreatsCount = chess::builtin::popcount(checks);
