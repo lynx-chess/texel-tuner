@@ -988,7 +988,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
 
         packedBonus += KnightThreatsBonus_Defended.packed[attackedPiece];
-        IncrementCoefficients(coefficients, KnightThreatsBonus_Defended.index + attackedPiece, color);
+        IncrementCoefficients(coefficients, KnightThreatsBonus_Defended.index - KnightThreatsBonus_Defended.start + attackedPiece, color);
     }
 
     auto undefendedKnightThreats = knightThreats & (~defendedSquares);
@@ -1000,7 +1000,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
 
         packedBonus += KnightThreatsBonus.packed[attackedPiece];
-        IncrementCoefficients(coefficients, KnightThreatsBonus.index + attackedPiece, color);
+        IncrementCoefficients(coefficients, KnightThreatsBonus.index - KnightThreatsBonus.start + attackedPiece, color);
     }
 
     auto defendedBishopThreats = bishopThreats & defendedSquares;
@@ -1012,7 +1012,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
 
         packedBonus += BishopThreatsBonus_Defended.packed[attackedPiece];
-        IncrementCoefficients(coefficients, BishopThreatsBonus_Defended.index + attackedPiece, color);
+        IncrementCoefficients(coefficients, BishopThreatsBonus_Defended.index - BishopThreatsBonus_Defended.start + attackedPiece, color);
     }
 
     auto undefendedBishopThreats = bishopThreats & (~defendedSquares);
@@ -1024,7 +1024,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
 
         packedBonus += BishopThreatsBonus.packed[attackedPiece];
-        IncrementCoefficients(coefficients, BishopThreatsBonus.index + attackedPiece, color);
+        IncrementCoefficients(coefficients, BishopThreatsBonus.index - BishopThreatsBonus.start + attackedPiece, color);
     }
 
     auto defendedRookThreats = rookThreats & defendedSquares;
@@ -1036,7 +1036,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
 
         packedBonus += RookThreatsBonus_Defended.packed[attackedPiece];
-        IncrementCoefficients(coefficients, RookThreatsBonus_Defended.index + attackedPiece, color);
+        IncrementCoefficients(coefficients, RookThreatsBonus_Defended.index - RookThreatsBonus_Defended.start + attackedPiece, color);
     }
 
     auto undefendedRookThreats = rookThreats & (~defendedSquares);
@@ -1048,7 +1048,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
 
         packedBonus += RookThreatsBonus.packed[attackedPiece];
-        IncrementCoefficients(coefficients, RookThreatsBonus.index + attackedPiece, color);
+        IncrementCoefficients(coefficients, RookThreatsBonus.index - RookThreatsBonus.start + attackedPiece, color);
     }
 
     auto defendedQueenThreats = queenThreats & defendedSquares;
@@ -1060,7 +1060,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
 
         packedBonus += QueenThreatsBonus_Defended.packed[attackedPiece];
-        IncrementCoefficients(coefficients, QueenThreatsBonus_Defended.index + attackedPiece, color);
+        IncrementCoefficients(coefficients, QueenThreatsBonus_Defended.index - QueenThreatsBonus_Defended.start + attackedPiece, color);
     }
 
     auto undefendedQueenThreats = queenThreats & (~defendedSquares);
@@ -1072,7 +1072,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
 
         packedBonus += QueenThreatsBonus.packed[attackedPiece];
-        IncrementCoefficients(coefficients, QueenThreatsBonus.index + attackedPiece, color);
+        IncrementCoefficients(coefficients, QueenThreatsBonus.index - QueenThreatsBonus.start + attackedPiece, color);
     }
 
     auto defendedKingThreats = kingThreats & defendedSquares;
@@ -1084,7 +1084,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
 
         packedBonus += KingThreatsBonus_Defended.packed[attackedPiece];
-        IncrementCoefficients(coefficients, KingThreatsBonus_Defended.index + attackedPiece, color);
+        IncrementCoefficients(coefficients, KingThreatsBonus_Defended.index - KingThreatsBonus_Defended.start + attackedPiece, color);
     }
 
     auto undefendedKingThreats = kingThreats & (~defendedSquares);
@@ -1096,7 +1096,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
 
         packedBonus += KingThreatsBonus.packed[attackedPiece];
-        IncrementCoefficients(coefficients, KingThreatsBonus.index + attackedPiece, color);
+        IncrementCoefficients(coefficients, KingThreatsBonus.index - KingThreatsBonus.start + attackedPiece, color);
     }
 
     return packedBonus;
