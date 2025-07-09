@@ -943,7 +943,7 @@ void Tuner::run(const std::vector<DataSource>& sources)
 
             if(epoch % print_step_interval == 0)
             {
-                if constexpr (complete_step_ouput)
+                if constexpr (complete_step_output)
                 {
                     TuneEval::print_parameters(parameters);
                 }
