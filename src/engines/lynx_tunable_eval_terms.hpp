@@ -6013,71 +6013,71 @@ TunableArray QueenMobilityBonus(
 
 TunableArray KnightThreatsBonus(
 	chess::PieceType::KNIGHT,
-	std::vector<int>{-12, -1, 28, 61, 24, 58},
-	std::vector<int>{10, 54, 23, -16, -51, 5},
+	std::vector<int>{-12, -1, 28, 61, 24},
+	std::vector<int>{10, 54, 23, -16, -51},
 	0,
 	0);
 
 TunableArray KnightThreatsBonus_Defended(
 	chess::PieceType::KNIGHT,
-	std::vector<int>{-12, 3, 27, 42, 22, -38},
-	std::vector<int>{-6, 60, 28, 6, -10, 41},
+	std::vector<int>{-12, 3, 27, 42, 22},
+	std::vector<int>{-6, 60, 28, 6, -10},
 	0,
 	0);
 
 TunableArray BishopThreatsBonus(
 	chess::PieceType::BISHOP,
-	std::vector<int>{-3, 22, 1, 42, 37, -75},
-	std::vector<int>{9, 25, 5, 1, 68, -10},
+	std::vector<int>{-3, 22, 1, 42, 37},
+	std::vector<int>{9, 25, 5, 1, 68},
 	0,
 	0);
 
 TunableArray BishopThreatsBonus_Defended(
 	chess::PieceType::BISHOP,
-	std::vector<int>{-10, 15, -1, 65, 39, 4},
-	std::vector<int>{-10, 25, -5, 13, 98, 44},
+	std::vector<int>{-10, 15, -1, 65, 39},
+	std::vector<int>{-10, 25, -5, 13, 98},
 	0,
 	0);
 
 TunableArray RookThreatsBonus(
 	chess::PieceType::ROOK,
-	std::vector<int>{-6, 13, 18, -47, 50, -85},
-	std::vector<int>{17, 26, 27, -11, -3, 34},
+	std::vector<int>{-6, 13, 18, -47, 50},
+	std::vector<int>{17, 26, 27, -11, -3},
 	0,
 	0);
 
 TunableArray RookThreatsBonus_Defended(
 	chess::PieceType::ROOK,
-	std::vector<int>{-25, -14, -12, -43, 45, 61},
-	std::vector<int>{-5, 5, -5, -17, 29, -1},
+	std::vector<int>{-25, -14, -12, -43, 45},
+	std::vector<int>{-5, 5, -5, -17, 29},
 	0,
 	0);
 
 TunableArray QueenThreatsBonus(
 	chess::PieceType::QUEEN,
-	std::vector<int>{-2, 4, -1, 4, 5, -16},
-	std::vector<int>{-1, 14, 37, -7, -6, 83},
+	std::vector<int>{-2, 4, -1, 4, 5},
+	std::vector<int>{-1, 14, 37, -7, -6},
 	0,
 	0);
 
 TunableArray QueenThreatsBonus_Defended(
 	chess::PieceType::QUEEN,
-	std::vector<int>{-7, -2, -6, 7, 5, 12},
-	std::vector<int>{6, -16, -1, -29, 8, 26},
+	std::vector<int>{-7, -2, -6, 7, 5},
+	std::vector<int>{6, -16, -1, -29, 8},
 	0,
 	0);
 
 TunableArray KingThreatsBonus(
 	chess::PieceType::KING,
-	std::vector<int>{14, -72, 4, 6, -288, 0},
-	std::vector<int>{35, 30, 3, -2, -72, 0},
+	std::vector<int>{14, -72, 4, 6},
+	std::vector<int>{35, 30, 3, -2},
 	0,
 	0);
 
 TunableArray KingThreatsBonus_Defended(
 	chess::PieceType::KING,
-	std::vector<int>{-13, -74, -28, -27, -234, 0},
-	std::vector<int>{15, 13, 10, 9, -154, 0},
+	std::vector<int>{-13, -74, -28, -27},
+	std::vector<int>{15, 13, 10, 9},
 	0,
 	0);
 
