@@ -970,6 +970,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
     const auto defendedSquares =
         attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] |
+        doubleAttacksBySide[~color] |
         (attacksBySide[~color] & (~doubleAttacksBySide[color]));
 
     // Calculate bonus
