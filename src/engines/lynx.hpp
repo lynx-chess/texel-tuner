@@ -867,14 +867,13 @@ int PawnIslands(const u64 bitboard)
     return islandCount;
 }
 
-std::array<u64, 12> CalculateAttacks(const chess::Board &board)
+std::array<u64, 12> CalculateAttacks(const chess::Board &board, std::array<u64, 12> &pieceAttacks, std::array<u64, 2> &attacksBySide, std::array<u64, 2> &doubleAttacksBySide)
 {
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
 
-    std::array<u64, 12> pieceAttacks = {};
-
     for (auto color : {chess::Color::WHITE, chess::Color::BLACK})
     {
+        const auto colorInt = static_cast<int>(color);
         const auto offset = color == chess::Color::WHITE ? 0 : 6;
 
         auto pawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
@@ -886,6 +885,8 @@ std::array<u64, 12> CalculateAttacks(const chess::Board &board)
             // Using oppositeColor here instead of color because of little/big endian
             const auto attacks = chess::attacks::pawn(~color, static_cast<chess::Square>(pieceSquareIndex)).getBits();
             pieceAttacks[static_cast<int>(chess::PieceType::PAWN) + offset] |= attacks;
+            doubleAttacksBySide[colorInt] |= (attacks & attacksBySide[colorInt]);
+            attacksBySide[colorInt] |= attacks;
         }
 
         auto knights = GetPieceSwappingEndianness(board, chess::PieceType::KNIGHT, color);
@@ -896,6 +897,8 @@ std::array<u64, 12> CalculateAttacks(const chess::Board &board)
 
             const auto attacks = chess::attacks::knight(static_cast<chess::Square>(pieceSquareIndex)).getBits();
             pieceAttacks[static_cast<int>(chess::PieceType::KNIGHT) + offset] |= attacks;
+            doubleAttacksBySide[colorInt] |= (attacks & attacksBySide[colorInt]);
+            attacksBySide[colorInt] |= attacks;
         }
 
         auto bishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, color);
@@ -906,6 +909,8 @@ std::array<u64, 12> CalculateAttacks(const chess::Board &board)
 
             const auto attacks = chess::attacks::bishop(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
             pieceAttacks[static_cast<int>(chess::PieceType::BISHOP) + offset] |= attacks;
+            doubleAttacksBySide[colorInt] |= (attacks & attacksBySide[colorInt]);
+            attacksBySide[colorInt] |= attacks;
         }
 
         auto rooks = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, color);
@@ -916,6 +921,8 @@ std::array<u64, 12> CalculateAttacks(const chess::Board &board)
 
             const auto attacks = chess::attacks::rook(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
             pieceAttacks[static_cast<int>(chess::PieceType::ROOK) + offset] |= attacks;
+            doubleAttacksBySide[colorInt] |= (attacks & attacksBySide[colorInt]);
+            attacksBySide[colorInt] |= attacks;
         }
 
         auto queens = GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, color);
@@ -926,6 +933,8 @@ std::array<u64, 12> CalculateAttacks(const chess::Board &board)
 
             const auto attacks = chess::attacks::queen(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
             pieceAttacks[static_cast<int>(chess::PieceType::QUEEN) + offset] |= attacks;
+            doubleAttacksBySide[colorInt] |= (attacks & attacksBySide[colorInt]);
+            attacksBySide[colorInt] |= attacks;
         }
 
         auto kings = GetPieceSwappingEndianness(board, chess::PieceType::KING, color);
@@ -936,29 +945,12 @@ std::array<u64, 12> CalculateAttacks(const chess::Board &board)
 
             const auto attacks = chess::attacks::king(static_cast<chess::Square>(pieceSquareIndex)).getBits();
             pieceAttacks[static_cast<int>(chess::PieceType::KING) + offset] |= attacks;
+            doubleAttacksBySide[colorInt] |= (attacks & attacksBySide[colorInt]);
+            attacksBySide[colorInt] |= attacks;
         }
     }
 
     return pieceAttacks;
-}
-
-std::array<u64, 2> CalculateSideAttacks(const std::array<u64, 12> &attacks)
-{
-    std::array<u64, 2> sideAttacks = {0, 0};
-    for (auto color : {chess::Color::WHITE, chess::Color::BLACK})
-    {
-        const auto offset = color == chess::Color::WHITE ? 0 : 6;
-
-        sideAttacks[static_cast<int>(color)] |=
-            attacks[0 + offset] |
-            attacks[1 + offset] |
-            attacks[2 + offset] |
-            attacks[3 + offset] |
-            attacks[4 + offset] |
-            attacks[5 + offset];
-    }
-
-    return sideAttacks;
 }
 
 int Threats(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients, const std::array<u64, 12> &attacks)
@@ -1365,8 +1357,11 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + whitePawnIslands - PawnIslandsBonus.start, chess::Color::WHITE);
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
 
-    const auto attacks = CalculateAttacks(board);
-    const auto attacksBySide = CalculateSideAttacks(attacks);
+    std::array<u64, 12> pieceAttacks = {};
+    std::array<u64, 2> attacksBySide = {};
+    std::array<u64, 2> doubleAttacksBySide = {};
+
+    const auto attacks = CalculateAttacks(board, pieceAttacks, attacksBySide, doubleAttacksBySide);
 
     // Threats
     packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks);
