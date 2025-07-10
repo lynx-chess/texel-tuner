@@ -969,8 +969,8 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     auto kingThreats = attacks[static_cast<int>(chess::PieceType::KING) + offset] & them;
 
     const auto defendedSquares =
-        attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset]
-        | doubleAttacksBySide[~color];
+        attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] |
+        (attacksBySide[~color] & (~doubleAttacksBySide[color]));
 
     // Calculate bonus
     auto defendedKnightThreats = knightThreats & defendedSquares;
