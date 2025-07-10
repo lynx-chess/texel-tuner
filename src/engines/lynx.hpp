@@ -1114,7 +1114,7 @@ int Checks(const chess::Board &board, const chess::Color &color, coefficients_t 
     const auto oppositeSideAttacks = attacksBySide[static_cast<int>(oppositeColor)];
 
     const std::array<u64, 5> checkThreats = {
-        chess::attacks::pawn(color, oppositeSideKingSquare).getBits(),
+        chess::attacks::pawn(~color, oppositeSideKingSquare).getBits(),
         chess::attacks::knight(oppositeSideKingSquare).getBits(),
         chess::attacks::bishop(oppositeSideKingSquare, occupancy).getBits(),
         chess::attacks::rook(oppositeSideKingSquare, occupancy).getBits(),
