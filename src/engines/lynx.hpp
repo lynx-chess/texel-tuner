@@ -176,16 +176,16 @@ public:
         assert(BishopMobilityBonus.tunableSize == 14);
         assert(RookMobilityBonus.tunableSize == 15);
         assert(QueenMobilityBonus.tunableSize == 28);
-        assert(KnightThreatsBonus.tunableSize == 6);
-        assert(KnightThreatsBonus_Defended.tunableSize == 6);
-        assert(BishopThreatsBonus.tunableSize == 6);
-        assert(BishopThreatsBonus_Defended.tunableSize == 6);
-        assert(RookThreatsBonus.tunableSize == 6);
-        assert(RookThreatsBonus_Defended.tunableSize == 6);
-        assert(QueenThreatsBonus.tunableSize == 6);
-        assert(QueenThreatsBonus_Defended.tunableSize == 6);
-        assert(KingThreatsBonus.tunableSize == 6);
-        assert(KingThreatsBonus_Defended.tunableSize == 6);
+        assert(KnightThreatsBonus.tunableSize == 5);
+        assert(KnightThreatsBonus_Defended.tunableSize == 5);
+        assert(BishopThreatsBonus.tunableSize == 5);
+        assert(BishopThreatsBonus_Defended.tunableSize == 5);
+        assert(RookThreatsBonus.tunableSize == 5);
+        assert(RookThreatsBonus_Defended.tunableSize == 5);
+        assert(QueenThreatsBonus.tunableSize == 5);
+        assert(QueenThreatsBonus_Defended.tunableSize == 5);
+        assert(KingThreatsBonus.tunableSize == 4);
+        assert(KingThreatsBonus_Defended.tunableSize == 4);
 
         std::cout << result.size() << " == " << numParameters << std::endl;
         assert(result.size() == numParameters);
