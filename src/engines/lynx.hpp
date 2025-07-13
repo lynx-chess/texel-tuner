@@ -16,49 +16,50 @@ using u64 = uint64_t;
 
 constexpr int enemyKingBaseIndex = psqtIndexCount / 2;
 const static size_t numParameters = psqtIndexCount +
-                                               // DoubledPawnPenalty.size
-                                               IsolatedPawnPenalty.size +
-                                               OpenFileRookBonus.size +
-                                               SemiOpenFileRookBonus.size +
-                                               SemiOpenFileKingPenalty.size +
-                                               OpenFileKingPenalty.size +
-                                               KingShieldBonus.size +
-                                               BishopPairBonus.size +
-                                               BishopInUnblockedLongDiagonalBonus.size +
-                                               PieceAttackedByPawnPenalty.size +
+                                    // DoubledPawnPenalty.size
+                                    IsolatedPawnPenalty.size +
+                                    OpenFileRookBonus.size +
+                                    SemiOpenFileRookBonus.size +
+                                    SemiOpenFileKingPenalty.size +
+                                    OpenFileKingPenalty.size +
+                                    KingShieldBonus.size +
+                                    BishopPairBonus.size +
+                                    BishopInUnblockedLongDiagonalBonus.size +
+                                    PieceAttackedByPawnPenalty.size +
+                                    DoubleAttacksBonus.size +
 
-                                               // Arrays
-                                               PawnPhalanxBonus.tunableSize +
-                                               ConnectedRooksBonus.tunableSize +
-                                               PawnIslandsBonus.tunableSize +
-                                               BadBishop_SameColorPawnsPenalty.tunableSize +
-                                               BadBishop_BlockedCentralPawnsPenalty.tunableSize +
-                                               SafeCheckBonus.tunableSize +
-                                               UnsafeCheckBonus.tunableSize +
-                                               FriendlyKingDistanceToPassedPawnBonus.tunableSize + // 7, removing start
-                                               EnemyKingDistanceToPassedPawnPenalty.tunableSize +  // 7, removing start
-                                               VirtualKingMobilityBonus.tunableSize +              // 28
-                                               KnightMobilityBonus.tunableSize +                   // 9
-                                               BishopMobilityBonus.tunableSize +                   // 14, removing end
-                                               RookMobilityBonus.tunableSize +                     // 15
-                                               QueenMobilityBonus.tunableSize +
-                                               KnightThreatsBonus.tunableSize +
-                                               KnightThreatsBonus_Defended.tunableSize +
-                                               BishopThreatsBonus.tunableSize +
-                                               BishopThreatsBonus_Defended.tunableSize +
-                                               RookThreatsBonus.tunableSize +
-                                               RookThreatsBonus_Defended.tunableSize +
-                                               QueenThreatsBonus.tunableSize +
-                                               QueenThreatsBonus_Defended.tunableSize +
-                                               KingThreatsBonus.tunableSize +
-                                               KingThreatsBonus_Defended.tunableSize +
+                                    // Arrays
+                                    PawnPhalanxBonus.tunableSize +
+                                    ConnectedRooksBonus.tunableSize +
+                                    PawnIslandsBonus.tunableSize +
+                                    BadBishop_SameColorPawnsPenalty.tunableSize +
+                                    BadBishop_BlockedCentralPawnsPenalty.tunableSize +
+                                    SafeCheckBonus.tunableSize +
+                                    UnsafeCheckBonus.tunableSize +
+                                    FriendlyKingDistanceToPassedPawnBonus.tunableSize + // 7, removing start
+                                    EnemyKingDistanceToPassedPawnPenalty.tunableSize +  // 7, removing start
+                                    VirtualKingMobilityBonus.tunableSize +              // 28
+                                    KnightMobilityBonus.tunableSize +                   // 9
+                                    BishopMobilityBonus.tunableSize +                   // 14, removing end
+                                    RookMobilityBonus.tunableSize +                     // 15
+                                    QueenMobilityBonus.tunableSize +
+                                    KnightThreatsBonus.tunableSize +
+                                    KnightThreatsBonus_Defended.tunableSize +
+                                    BishopThreatsBonus.tunableSize +
+                                    BishopThreatsBonus_Defended.tunableSize +
+                                    RookThreatsBonus.tunableSize +
+                                    RookThreatsBonus_Defended.tunableSize +
+                                    QueenThreatsBonus.tunableSize +
+                                    QueenThreatsBonus_Defended.tunableSize +
+                                    KingThreatsBonus.tunableSize +
+                                    KingThreatsBonus_Defended.tunableSize +
 
-                                               // Bucketed arrays
-                                               PassedPawnBonus.size +                         // PSQTBucketCount * 6, removing 1 rank values
-                                               PassedPawnEnemyBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
-                                               PassedPawnBonusNoEnemiesAheadBonus.size +      // PSQTBucketCount * 6, removing 1 rank values
-                                               PassedPawnBonusNoEnemiesAheadEnemyBonus.size + // PSQTBucketCount * 6, removing 1 rank values
-                                               PieceProtectedByPawnBonus.size;                // PSQTBucketCount * 6, removing 1 rank values
+                                    // Bucketed arrays
+                                    PassedPawnBonus.size +                         // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnEnemyBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnBonusNoEnemiesAheadBonus.size +      // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnBonusNoEnemiesAheadEnemyBonus.size + // PSQTBucketCount * 6, removing 1 rank values
+                                    PieceProtectedByPawnBonus.size;                // PSQTBucketCount * 6, removing 1 rank values
 
 class Lynx
 {
@@ -128,6 +129,7 @@ public:
         BishopPairBonus.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
+        DoubleAttacksBonus.add(result);
 
         // Arrays
         PawnPhalanxBonus.add(result);
@@ -311,6 +313,9 @@ public:
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
+        name = NAME(DoubleAttacksBonus);
+        DoubleAttacksBonus.to_csharp(parameters, ss, name);
+
         // Arrays
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_csharp(parameters, ss, name);
@@ -453,6 +458,9 @@ public:
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(DoubleAttacksBonus);
+        DoubleAttacksBonus.to_cpp(parameters, ss, name);
 
         // Arrays
         name = NAME(PawnPhalanxBonus);
@@ -866,14 +874,13 @@ int PawnIslands(const u64 bitboard)
     return islandCount;
 }
 
-std::array<u64, 12> CalculateAttacks(const chess::Board &board)
+std::array<u64, 12> CalculateAttacks(const chess::Board &board, std::array<u64, 12> &pieceAttacks, std::array<u64, 2> &attacksBySide, std::array<u64, 2> &doubleAttacksBySide)
 {
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
 
-    std::array<u64, 12> pieceAttacks = {};
-
     for (auto color : {chess::Color::WHITE, chess::Color::BLACK})
     {
+        const auto colorInt = static_cast<int>(color);
         const auto offset = color == chess::Color::WHITE ? 0 : 6;
 
         auto pawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
@@ -885,6 +892,8 @@ std::array<u64, 12> CalculateAttacks(const chess::Board &board)
             // Using oppositeColor here instead of color because of little/big endian
             const auto attacks = chess::attacks::pawn(~color, static_cast<chess::Square>(pieceSquareIndex)).getBits();
             pieceAttacks[static_cast<int>(chess::PieceType::PAWN) + offset] |= attacks;
+            doubleAttacksBySide[colorInt] |= (attacks & attacksBySide[colorInt]);
+            attacksBySide[colorInt] |= attacks;
         }
 
         auto knights = GetPieceSwappingEndianness(board, chess::PieceType::KNIGHT, color);
@@ -895,6 +904,8 @@ std::array<u64, 12> CalculateAttacks(const chess::Board &board)
 
             const auto attacks = chess::attacks::knight(static_cast<chess::Square>(pieceSquareIndex)).getBits();
             pieceAttacks[static_cast<int>(chess::PieceType::KNIGHT) + offset] |= attacks;
+            doubleAttacksBySide[colorInt] |= (attacks & attacksBySide[colorInt]);
+            attacksBySide[colorInt] |= attacks;
         }
 
         auto bishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, color);
@@ -905,6 +916,8 @@ std::array<u64, 12> CalculateAttacks(const chess::Board &board)
 
             const auto attacks = chess::attacks::bishop(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
             pieceAttacks[static_cast<int>(chess::PieceType::BISHOP) + offset] |= attacks;
+            doubleAttacksBySide[colorInt] |= (attacks & attacksBySide[colorInt]);
+            attacksBySide[colorInt] |= attacks;
         }
 
         auto rooks = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, color);
@@ -915,6 +928,8 @@ std::array<u64, 12> CalculateAttacks(const chess::Board &board)
 
             const auto attacks = chess::attacks::rook(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
             pieceAttacks[static_cast<int>(chess::PieceType::ROOK) + offset] |= attacks;
+            doubleAttacksBySide[colorInt] |= (attacks & attacksBySide[colorInt]);
+            attacksBySide[colorInt] |= attacks;
         }
 
         auto queens = GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, color);
@@ -925,6 +940,8 @@ std::array<u64, 12> CalculateAttacks(const chess::Board &board)
 
             const auto attacks = chess::attacks::queen(static_cast<chess::Square>(pieceSquareIndex), occupancy).getBits();
             pieceAttacks[static_cast<int>(chess::PieceType::QUEEN) + offset] |= attacks;
+            doubleAttacksBySide[colorInt] |= (attacks & attacksBySide[colorInt]);
+            attacksBySide[colorInt] |= attacks;
         }
 
         auto kings = GetPieceSwappingEndianness(board, chess::PieceType::KING, color);
@@ -935,29 +952,12 @@ std::array<u64, 12> CalculateAttacks(const chess::Board &board)
 
             const auto attacks = chess::attacks::king(static_cast<chess::Square>(pieceSquareIndex)).getBits();
             pieceAttacks[static_cast<int>(chess::PieceType::KING) + offset] |= attacks;
+            doubleAttacksBySide[colorInt] |= (attacks & attacksBySide[colorInt]);
+            attacksBySide[colorInt] |= attacks;
         }
     }
 
     return pieceAttacks;
-}
-
-std::array<u64, 2> CalculateSideAttacks(const std::array<u64, 12> &attacks)
-{
-    std::array<u64, 2> sideAttacks = {0, 0};
-    for (auto color : {chess::Color::WHITE, chess::Color::BLACK})
-    {
-        const auto offset = color == chess::Color::WHITE ? 0 : 6;
-
-        sideAttacks[static_cast<int>(color)] |=
-            attacks[0 + offset] |
-            attacks[1 + offset] |
-            attacks[2 + offset] |
-            attacks[3 + offset] |
-            attacks[4 + offset] |
-            attacks[5 + offset];
-    }
-
-    return sideAttacks;
 }
 
 int Threats(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients, const std::array<u64, 12> &attacks)
@@ -1135,6 +1135,26 @@ int Checks(const chess::Board &board, const chess::Color &color, coefficients_t 
         packedBonus += UnsafeCheckBonus.packed[pieceIndex] * unsafeChecksCount;
         IncrementCoefficients(coefficients, UnsafeCheckBonus.index + pieceIndex - UnsafeCheckBonus.start, color, unsafeChecksCount);
     }
+
+    return packedBonus;
+}
+
+int DoubleAttacks(const chess::Board &board, coefficients_t &coefficients, const std::array<u64, 2> &doubleAttacksBySide)
+{
+    int packedBonus = 0;
+
+    const auto whiteDoubleAttacks = doubleAttacksBySide[0];
+    const auto blackDoubleAttacks = doubleAttacksBySide[1];
+
+    // White double attacks
+    const auto whiteDoubleAttacksCount = chess::builtin::popcount(doubleAttacksBySide[static_cast<int>(chess::Color::WHITE)]);
+    packedBonus += DoubleAttacksBonus.packed * whiteDoubleAttacksCount;
+    IncrementCoefficients(coefficients, DoubleAttacksBonus.index, chess::Color::WHITE, whiteDoubleAttacksCount);
+
+    // Black double attacks
+    const auto blackDoubleAttacksCount = chess::builtin::popcount(doubleAttacksBySide[static_cast<int>(chess::Color::BLACK)]);
+    packedBonus -= DoubleAttacksBonus.packed * blackDoubleAttacksCount;
+    IncrementCoefficients(coefficients, DoubleAttacksBonus.index, chess::Color::BLACK, blackDoubleAttacksCount);
 
     return packedBonus;
 }
@@ -1364,8 +1384,11 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + whitePawnIslands - PawnIslandsBonus.start, chess::Color::WHITE);
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
 
-    const auto attacks = CalculateAttacks(board);
-    const auto attacksBySide = CalculateSideAttacks(attacks);
+    std::array<u64, 12> pieceAttacks = {};
+    std::array<u64, 2> attacksBySide = {};
+    std::array<u64, 2> doubleAttacksBySide = {};
+
+    const auto attacks = CalculateAttacks(board, pieceAttacks, attacksBySide, doubleAttacksBySide);
 
     // Threats
     packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks);
@@ -1374,6 +1397,9 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     // Checks
     packedScore += Checks(board, chess::Color::WHITE, coefficients, attacks, attacksBySide);
     packedScore -= Checks(board, chess::Color::BLACK, coefficients, attacks, attacksBySide);
+
+    // Double attacks
+    packedScore += DoubleAttacks(board, coefficients, doubleAttacksBySide);
 
     // Debugging eval
     // return EvalResult{
