@@ -1143,16 +1143,17 @@ int DoubleAttacks(const chess::Board &board, coefficients_t &coefficients, const
 {
     int packedBonus = 0;
 
-    const auto whiteDoubleAttacks = doubleAttacksBySide[0];
-    const auto blackDoubleAttacks = doubleAttacksBySide[1];
-
     // White double attacks
-    const auto whiteDoubleAttacksCount = chess::builtin::popcount(doubleAttacksBySide[static_cast<int>(chess::Color::WHITE)]);
+    const auto whiteDoubleAttacks = doubleAttacksBySide[static_cast<int>(chess::Color::WHITE)] & __builtin_bswap64(board.them(chess::Color::WHITE).getBits());
+    const auto whiteDoubleAttacksCount = chess::builtin::popcount(whiteDoubleAttacks);
+
     packedBonus += DoubleAttacksBonus.packed * whiteDoubleAttacksCount;
     IncrementCoefficients(coefficients, DoubleAttacksBonus.index, chess::Color::WHITE, whiteDoubleAttacksCount);
 
     // Black double attacks
-    const auto blackDoubleAttacksCount = chess::builtin::popcount(doubleAttacksBySide[static_cast<int>(chess::Color::BLACK)]);
+    const auto blackDoubleAttacks = doubleAttacksBySide[static_cast<int>(chess::Color::BLACK)] & __builtin_bswap64(board.them(chess::Color::BLACK).getBits());
+    const auto blackDoubleAttacksCount = chess::builtin::popcount(blackDoubleAttacks);
+
     packedBonus -= DoubleAttacksBonus.packed * blackDoubleAttacksCount;
     IncrementCoefficients(coefficients, DoubleAttacksBonus.index, chess::Color::BLACK, blackDoubleAttacksCount);
 
