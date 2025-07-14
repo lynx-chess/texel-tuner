@@ -1179,25 +1179,6 @@ int Checks(const chess::Board &board, const chess::Color &color, coefficients_t 
         IncrementCoefficients(coefficients, UnsafeCheckBonus.index + pieceIndex - UnsafeCheckBonus.start, color, unsafeChecksCount);
     }
 
-    // while (kingThreats != 0)
-    // {
-    //     const auto pieceSquareIndex = chess::builtin::lsb(kingThreats).index();
-    //     ResetLS1B(kingThreats);
-
-    //     const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
-
-    //     if (GetBit(defendedSquares, pieceSquareIndex))
-    //     {
-    //         packedBonus += KingThreatsBonus_Defended.packed[attackedPiece];
-    //         IncrementCoefficients(coefficients, KingThreatsBonus_Defended.index + attackedPiece, color);
-    //     }
-    //     else
-    //     {
-    //         packedBonus += KingThreatsBonus.packed[attackedPiece];
-    //         IncrementCoefficients(coefficients, KingThreatsBonus.index + attackedPiece, color);
-    //     }
-    // }
-
     return packedBonus;
 }
 
