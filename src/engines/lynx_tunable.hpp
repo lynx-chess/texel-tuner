@@ -146,7 +146,7 @@ public:
     }
 
     TunableArray(chess::PieceType piece, const std::vector<i32> mg, const std::vector<i32> eg, i32 start, i32 end)
-        : pieceIndex(static_cast<int>(piece)), _mg(mg), _eg(eg), start(start), end(end)
+        : _mg(mg), _eg(eg), pieceIndex(static_cast<int>(piece)), start(start), end(end)
     {
         for (int b = 0; b < PSQTBucketCount; ++b)
         {
@@ -429,7 +429,7 @@ public:
     }
 
     TunableArrayBucketed(chess::PieceType piece, const std::array<std::vector<i32>, PSQTBucketCount> mg, const std::array<std::vector<i32>, PSQTBucketCount> eg, i32 start)
-        : pieceIndex(static_cast<int>(piece)), _mg(mg), _eg(eg), start(start)
+        : _mg(mg), _eg(eg), _packed(), _index(0), pieceIndex(static_cast<int>(piece)), size(0), bucketSize(0), bucketTunableSize(0), start(start)
     {
         for (auto b = 0; b < PSQTBucketCount; ++b)
         {
@@ -437,7 +437,7 @@ public:
         }
 
         assert(mg.size() == eg.size());
-        for (auto i = 0; i < mg.size(); ++i)
+        for (size_t i = 0; i < mg.size(); ++i)
         {
             assert(mg[i].size() == eg[i].size());
         }
