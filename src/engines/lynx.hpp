@@ -26,9 +26,9 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopPairBonus.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
                                     PieceAttackedByPawnPenalty.size +
-                                    DoubleAttacksBonus.size +
 
                                     // Arrays
+                                    DoubleAttacksBonus.tunableSize +
                                     PawnPhalanxBonus.tunableSize +
                                     ConnectedRooksBonus.tunableSize +
                                     PawnIslandsBonus.tunableSize +
@@ -129,9 +129,9 @@ public:
         BishopPairBonus.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
-        DoubleAttacksBonus.add(result);
 
         // Arrays
+        DoubleAttacksBonus.add(result);
         PawnPhalanxBonus.add(result);
         ConnectedRooksBonus.add(result);
         PawnIslandsBonus.add(result);
@@ -313,10 +313,10 @@ public:
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
+        // Arrays
         name = NAME(DoubleAttacksBonus);
         DoubleAttacksBonus.to_csharp(parameters, ss, name);
 
-        // Arrays
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_csharp(parameters, ss, name);
 
@@ -459,10 +459,11 @@ public:
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
 
+        // Arrays
         name = NAME(DoubleAttacksBonus);
         DoubleAttacksBonus.to_cpp(parameters, ss, name);
+        ss << "\n";
 
-        // Arrays
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_cpp(parameters, ss, name);
         ss << "\n";
@@ -1144,18 +1145,28 @@ int DoubleAttacks(const chess::Board &board, coefficients_t &coefficients, const
     int packedBonus = 0;
 
     // White double attacks
-    const auto whiteDoubleAttacks = doubleAttacksBySide[static_cast<int>(chess::Color::WHITE)] & __builtin_bswap64(board.them(chess::Color::WHITE).getBits());
-    const auto whiteDoubleAttacksCount = chess::builtin::popcount(whiteDoubleAttacks);
+    auto whiteDoubleAttacks = doubleAttacksBySide[static_cast<int>(chess::Color::WHITE)] & __builtin_bswap64(board.them(chess::Color::WHITE).getBits());
+    while (whiteDoubleAttacks != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(whiteDoubleAttacks).index();
+        ResetLS1B(whiteDoubleAttacks);
 
-    packedBonus += DoubleAttacksBonus.packed * whiteDoubleAttacksCount;
-    IncrementCoefficients(coefficients, DoubleAttacksBonus.index, chess::Color::WHITE, whiteDoubleAttacksCount);
+        const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
+        packedBonus += DoubleAttacksBonus.packed[attackedPiece];
+        IncrementCoefficients(coefficients, DoubleAttacksBonus.index - DoubleAttacksBonus.start + attackedPiece, chess::Color::WHITE);
+    }
 
     // Black double attacks
-    const auto blackDoubleAttacks = doubleAttacksBySide[static_cast<int>(chess::Color::BLACK)] & __builtin_bswap64(board.them(chess::Color::BLACK).getBits());
-    const auto blackDoubleAttacksCount = chess::builtin::popcount(blackDoubleAttacks);
+    auto blackDoubleAttacks = doubleAttacksBySide[static_cast<int>(chess::Color::BLACK)] & __builtin_bswap64(board.them(chess::Color::BLACK).getBits());
+    while (blackDoubleAttacks != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(blackDoubleAttacks).index();
+        ResetLS1B(blackDoubleAttacks);
 
-    packedBonus -= DoubleAttacksBonus.packed * blackDoubleAttacksCount;
-    IncrementCoefficients(coefficients, DoubleAttacksBonus.index, chess::Color::BLACK, blackDoubleAttacksCount);
+        const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
+        packedBonus -= DoubleAttacksBonus.packed[attackedPiece];
+        IncrementCoefficients(coefficients, DoubleAttacksBonus.index - DoubleAttacksBonus.start + attackedPiece, chess::Color::BLACK);
+    }
 
     return packedBonus;
 }
