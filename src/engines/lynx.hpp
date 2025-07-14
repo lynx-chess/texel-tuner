@@ -1140,32 +1140,27 @@ int Checks(const chess::Board &board, const chess::Color &color, coefficients_t 
     return packedBonus;
 }
 
-int DoubleAttacks(const chess::Board &board, coefficients_t &coefficients, const std::array<u64, 2> &doubleAttacksBySide)
+int DoubleAttacks(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients, const std::array<u64, 12> &attacks, const std::array<u64, 2> &doubleAttacksBySide)
 {
     int packedBonus = 0;
 
+    const auto offset = color == chess::Color::WHITE ? 0 : 6;
+    const auto oppositeSideoffset = 6 - offset;
+    const auto defendedSquares = attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset];
+
     // White double attacks
-    auto whiteDoubleAttacks = doubleAttacksBySide[static_cast<int>(chess::Color::WHITE)] & __builtin_bswap64(board.them(chess::Color::WHITE).getBits());
-    while (whiteDoubleAttacks != 0)
+    auto doubleAttacks = doubleAttacksBySide[static_cast<int>(color)] &
+        __builtin_bswap64(board.them(color).getBits()) &
+        (~defendedSquares);
+
+    while (doubleAttacks != 0)
     {
-        const auto pieceSquareIndex = chess::builtin::lsb(whiteDoubleAttacks).index();
-        ResetLS1B(whiteDoubleAttacks);
+        const auto pieceSquareIndex = chess::builtin::lsb(doubleAttacks).index();
+        ResetLS1B(doubleAttacks);
 
         const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
         packedBonus += DoubleAttacksBonus.packed[attackedPiece];
-        IncrementCoefficients(coefficients, DoubleAttacksBonus.index - DoubleAttacksBonus.start + attackedPiece, chess::Color::WHITE);
-    }
-
-    // Black double attacks
-    auto blackDoubleAttacks = doubleAttacksBySide[static_cast<int>(chess::Color::BLACK)] & __builtin_bswap64(board.them(chess::Color::BLACK).getBits());
-    while (blackDoubleAttacks != 0)
-    {
-        const auto pieceSquareIndex = chess::builtin::lsb(blackDoubleAttacks).index();
-        ResetLS1B(blackDoubleAttacks);
-
-        const auto attackedPiece = static_cast<int>(board.at(pieceSquareIndex ^ 56).type());
-        packedBonus -= DoubleAttacksBonus.packed[attackedPiece];
-        IncrementCoefficients(coefficients, DoubleAttacksBonus.index - DoubleAttacksBonus.start + attackedPiece, chess::Color::BLACK);
+        IncrementCoefficients(coefficients, DoubleAttacksBonus.index - DoubleAttacksBonus.start + attackedPiece, color);
     }
 
     return packedBonus;
@@ -1411,7 +1406,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     packedScore -= Checks(board, chess::Color::BLACK, coefficients, attacks, attacksBySide);
 
     // Double attacks
-    packedScore += DoubleAttacks(board, coefficients, doubleAttacksBySide);
+    packedScore += DoubleAttacks(board, chess::Color::WHITE, coefficients, attacks, doubleAttacksBySide);
+    packedScore -= DoubleAttacks(board, chess::Color::BLACK, coefficients, attacks, doubleAttacksBySide);
 
     // Debugging eval
     // return EvalResult{
