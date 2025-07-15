@@ -5912,7 +5912,7 @@ TunableSingle OpenFileKingPenalty(-57, -0);
 TunableSingle KingShieldBonus(23, 0);
 TunableSingle BishopPairBonus(28, 68);
 TunableSingle BishopInUnblockedLongDiagonalBonus(19, 13);
-TunableSingle PieceAttackedByPawnPenalty(-50, -32);
+
 TunableArray PieceProtectedByPawnBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{19, -1, 6, 8, -9},
@@ -6015,6 +6015,20 @@ TunableArray QueenMobilityBonus(
 	chess::PieceType::QUEEN,
 	std::vector<int>{0, 1, -2, 1, 4, 8, 10, 12, 16, 17, 20, 23, 25, 26, 27, 28, 29, 36, 44, 60, 64, 110, 119, 134, 215, 222, 45, -60},
 	std::vector<int>{0, 204, 312, 349, 368, 382, 400, 411, 418, 423, 430, 433, 435, 440, 442, 445, 450, 440, 435, 420, 414, 382, 372, 351, 314, 286, 385, 410},
+	0,
+	0);
+
+TunableArray PawnThreatsBonus(
+	chess::PieceType::PAWN,
+	std::vector<int>{-12, -1, 27, 61, 24, 58},
+	std::vector<int>{11, 54, 23, -16, -51, 5},
+	0,
+	0);
+
+TunableArray PawnThreatsBonus_Defended(
+	chess::PieceType::PAWN,
+	std::vector<int>{-12, 3, 28, 42, 22, -39},
+	std::vector<int>{-7, 60, 28, 7, -9, 42},
 	0,
 	0);
 
