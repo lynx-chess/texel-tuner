@@ -16,49 +16,49 @@ using u64 = uint64_t;
 
 constexpr int enemyKingBaseIndex = psqtIndexCount / 2;
 const static size_t numParameters = psqtIndexCount +
-                                               // DoubledPawnPenalty.size
-                                               IsolatedPawnPenalty.size +
-                                               OpenFileRookBonus.size +
-                                               SemiOpenFileRookBonus.size +
-                                               SemiOpenFileKingPenalty.size +
-                                               OpenFileKingPenalty.size +
-                                               KingShieldBonus.size +
-                                               BishopPairBonus.size +
-                                               BishopInUnblockedLongDiagonalBonus.size +
-                                               PieceAttackedByPawnPenalty.size +
+                                    // DoubledPawnPenalty.size
+                                    IsolatedPawnPenalty.size +
+                                    OpenFileRookBonus.size +
+                                    SemiOpenFileRookBonus.size +
+                                    SemiOpenFileKingPenalty.size +
+                                    OpenFileKingPenalty.size +
+                                    KingShieldBonus.size +
+                                    BishopPairBonus.size +
+                                    BishopInUnblockedLongDiagonalBonus.size +
+                                    PieceAttackedByPawnPenalty.size +
 
-                                               // Arrays
-                                               PawnPhalanxBonus.tunableSize +
-                                               ConnectedRooksBonus.tunableSize +
-                                               PawnIslandsBonus.tunableSize +
-                                               BadBishop_SameColorPawnsPenalty.tunableSize +
-                                               BadBishop_BlockedCentralPawnsPenalty.tunableSize +
-                                               SafeCheckBonus.tunableSize +
-                                               UnsafeCheckBonus.tunableSize +
-                                               FriendlyKingDistanceToPassedPawnBonus.tunableSize + // 7, removing start
-                                               EnemyKingDistanceToPassedPawnPenalty.tunableSize +  // 7, removing start
-                                               VirtualKingMobilityBonus.tunableSize +              // 28
-                                               KnightMobilityBonus.tunableSize +                   // 9
-                                               BishopMobilityBonus.tunableSize +                   // 14, removing end
-                                               RookMobilityBonus.tunableSize +                     // 15
-                                               QueenMobilityBonus.tunableSize +
-                                               KnightThreatsBonus.tunableSize +
-                                               KnightThreatsBonus_Defended.tunableSize +
-                                               BishopThreatsBonus.tunableSize +
-                                               BishopThreatsBonus_Defended.tunableSize +
-                                               RookThreatsBonus.tunableSize +
-                                               RookThreatsBonus_Defended.tunableSize +
-                                               QueenThreatsBonus.tunableSize +
-                                               QueenThreatsBonus_Defended.tunableSize +
-                                               KingThreatsBonus.tunableSize +
-                                               KingThreatsBonus_Defended.tunableSize +
+                                    // Arrays
+                                    PieceProtectedByPawnBonus.tunableSize + // 5, removing king
+                                    PawnPhalanxBonus.tunableSize +
+                                    ConnectedRooksBonus.tunableSize +
+                                    PawnIslandsBonus.tunableSize +
+                                    BadBishop_SameColorPawnsPenalty.tunableSize +
+                                    BadBishop_BlockedCentralPawnsPenalty.tunableSize +
+                                    SafeCheckBonus.tunableSize +
+                                    UnsafeCheckBonus.tunableSize +
+                                    FriendlyKingDistanceToPassedPawnBonus.tunableSize + // 7, removing start
+                                    EnemyKingDistanceToPassedPawnPenalty.tunableSize +  // 7, removing start
+                                    VirtualKingMobilityBonus.tunableSize +              // 28
+                                    KnightMobilityBonus.tunableSize +                   // 9
+                                    BishopMobilityBonus.tunableSize +                   // 14, removing end
+                                    RookMobilityBonus.tunableSize +                     // 15
+                                    QueenMobilityBonus.tunableSize +
+                                    KnightThreatsBonus.tunableSize +
+                                    KnightThreatsBonus_Defended.tunableSize +
+                                    BishopThreatsBonus.tunableSize +
+                                    BishopThreatsBonus_Defended.tunableSize +
+                                    RookThreatsBonus.tunableSize +
+                                    RookThreatsBonus_Defended.tunableSize +
+                                    QueenThreatsBonus.tunableSize +
+                                    QueenThreatsBonus_Defended.tunableSize +
+                                    KingThreatsBonus.tunableSize +
+                                    KingThreatsBonus_Defended.tunableSize +
 
-                                               // Bucketed arrays
-                                               PassedPawnBonus.size +                         // PSQTBucketCount * 6, removing 1 rank values
-                                               PassedPawnEnemyBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
-                                               PassedPawnBonusNoEnemiesAheadBonus.size +      // PSQTBucketCount * 6, removing 1 rank values
-                                               PassedPawnBonusNoEnemiesAheadEnemyBonus.size + // PSQTBucketCount * 6, removing 1 rank values
-                                               PieceProtectedByPawnBonus.size;                // PSQTBucketCount * 6, removing 1 rank values
+                                    // Bucketed arrays
+                                    PassedPawnBonus.size +                        // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnEnemyBonus.size +                   // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnBonusNoEnemiesAheadBonus.size +     // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnBonusNoEnemiesAheadEnemyBonus.size; // PSQTBucketCount * 6, removing 1 rank values
 
 class Lynx
 {
@@ -130,6 +130,7 @@ public:
         PieceAttackedByPawnPenalty.add(result);
 
         // Arrays
+        PieceProtectedByPawnBonus.add(result);
         PawnPhalanxBonus.add(result);
         ConnectedRooksBonus.add(result);
         PawnIslandsBonus.add(result);
@@ -161,13 +162,12 @@ public:
         PassedPawnEnemyBonus.add(result);
         PassedPawnBonusNoEnemiesAheadBonus.add(result);
         PassedPawnBonusNoEnemiesAheadEnemyBonus.add(result);
-        PieceProtectedByPawnBonus.add(result);
 
         assert(PassedPawnBonus.bucketTunableSize == 6);
         assert(PassedPawnEnemyBonus.bucketTunableSize == 6);
         assert(PassedPawnBonusNoEnemiesAheadBonus.bucketTunableSize == 6);
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
-        assert(PieceProtectedByPawnBonus.bucketTunableSize == 5);
+        assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
@@ -312,6 +312,9 @@ public:
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
         // Arrays
+        name = NAME(PieceProtectedByPawnBonus);
+        PieceProtectedByPawnBonus.to_csharp(parameters, ss, name);
+
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_csharp(parameters, ss, name);
 
@@ -397,9 +400,6 @@ public:
         name = NAME(PassedPawnBonusNoEnemiesAheadEnemyBonus);
         PassedPawnBonusNoEnemiesAheadEnemyBonus.to_csharp(parameters, ss, name);
 
-        name = NAME(PieceProtectedByPawnBonus);
-        PieceProtectedByPawnBonus.to_csharp(parameters, ss, name);
-
         if (isFinal)
         {
             std::cout << ss.str() << std::endl;
@@ -455,6 +455,10 @@ public:
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
 
         // Arrays
+        name = NAME(PieceProtectedByPawnBonus);
+        PieceProtectedByPawnBonus.to_cpp(parameters, ss, name);
+        ss << "\n";
+
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_cpp(parameters, ss, name);
         ss << "\n";
@@ -546,9 +550,6 @@ public:
 
         name = NAME(PassedPawnBonusNoEnemiesAheadEnemyBonus);
         PassedPawnBonusNoEnemiesAheadEnemyBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(PieceProtectedByPawnBonus);
-        PieceProtectedByPawnBonus.to_cpp(parameters, ss, name);
 
         if (isFinal)
         {
@@ -1210,8 +1211,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
 
         // Pieces protected by pawns bonus
         const auto protectedPiecesByWhitePawns = chess::builtin::popcount(whitePawnAttacks & bitboard);
-        packedScore += (PieceProtectedByPawnBonus.packed(whiteBucket, pieceIndex) * protectedPiecesByWhitePawns);
-        IncrementCoefficients(coefficients, PieceProtectedByPawnBonus.index(whiteBucket, pieceIndex), chess::Color::WHITE, protectedPiecesByWhitePawns);
+        packedScore += (PieceProtectedByPawnBonus.packed[pieceIndex] * protectedPiecesByWhitePawns);
+        IncrementCoefficients(coefficients, PieceProtectedByPawnBonus.index - PieceProtectedByPawnBonus.start + pieceIndex, chess::Color::WHITE, protectedPiecesByWhitePawns);
 
         while (bitboard != 0)
         {
@@ -1261,8 +1262,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
 
         // Pieces protected by pawns bonus
         const auto protectedPiecesByBlackPawns = chess::builtin::popcount(blackPawnAttacks & bitboard);
-        packedScore -= (PieceProtectedByPawnBonus.packed(blackBucket, tunerPieceIndex) * protectedPiecesByBlackPawns);
-        IncrementCoefficients(coefficients, PieceProtectedByPawnBonus.index(blackBucket, tunerPieceIndex), chess::Color::BLACK, protectedPiecesByBlackPawns);
+        packedScore -= (PieceProtectedByPawnBonus.packed[tunerPieceIndex] * protectedPiecesByBlackPawns);
+        IncrementCoefficients(coefficients, PieceProtectedByPawnBonus.index - PieceProtectedByPawnBonus.start + tunerPieceIndex, chess::Color::BLACK, protectedPiecesByBlackPawns);
 
         while (bitboard != 0)
         {
