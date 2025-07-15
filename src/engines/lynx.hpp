@@ -1368,8 +1368,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     const auto attacksBySide = CalculateSideAttacks(attacks);
 
     // Threats
-    packedScore += Threats(board, chess::Color::WHITE, whiteBucket, coefficients, attacks);
-    packedScore -= Threats(board, chess::Color::BLACK, blackBucket, coefficients, attacks);
+    packedScore += Threats(board, chess::Color::WHITE, blackBucket, coefficients, attacks);
+    packedScore -= Threats(board, chess::Color::BLACK, whiteBucket, coefficients, attacks);
 
     // Checks
     packedScore += Checks(board, chess::Color::WHITE, coefficients, attacks, attacksBySide);
