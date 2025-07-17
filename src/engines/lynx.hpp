@@ -34,8 +34,6 @@ const static size_t numParameters = psqtIndexCount +
                                     PawnIslandsBonus.tunableSize +
                                     BadBishop_SameColorPawnsPenalty.tunableSize +
                                     BadBishop_BlockedCentralPawnsPenalty.tunableSize +
-                                    SafeCheckBonus.tunableSize +
-                                    UnsafeCheckBonus.tunableSize +
                                     FriendlyKingDistanceToPassedPawnBonus.tunableSize + // 7, removing start
                                     EnemyKingDistanceToPassedPawnPenalty.tunableSize +  // 7, removing start
                                     VirtualKingMobilityBonus.tunableSize +              // 28
@@ -55,10 +53,12 @@ const static size_t numParameters = psqtIndexCount +
                                     KingThreatsBonus_Defended.tunableSize +
 
                                     // Bucketed arrays
-                                    PassedPawnBonus.size +                        // PSQTBucketCount * 6, removing 1 rank values
-                                    PassedPawnEnemyBonus.size +                   // PSQTBucketCount * 6, removing 1 rank values
-                                    PassedPawnBonusNoEnemiesAheadBonus.size +     // PSQTBucketCount * 6, removing 1 rank values
-                                    PassedPawnBonusNoEnemiesAheadEnemyBonus.size; // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnBonus.size +                         // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnEnemyBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnBonusNoEnemiesAheadBonus.size +      // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnBonusNoEnemiesAheadEnemyBonus.size + // PSQTBucketCount * 6, removing 1 rank values
+                                    SafeCheckBonus.size +
+                                    UnsafeCheckBonus.size;
 
 class Lynx
 {
@@ -136,8 +136,6 @@ public:
         PawnIslandsBonus.add(result);
         BadBishop_SameColorPawnsPenalty.add(result);
         BadBishop_BlockedCentralPawnsPenalty.add(result);
-        SafeCheckBonus.add(result);
-        UnsafeCheckBonus.add(result);
 
         FriendlyKingDistanceToPassedPawnBonus.add(result);
         EnemyKingDistanceToPassedPawnPenalty.add(result);
@@ -156,6 +154,8 @@ public:
         QueenThreatsBonus_Defended.add(result);
         KingThreatsBonus.add(result);
         KingThreatsBonus_Defended.add(result);
+        SafeCheckBonus.add(result);
+        UnsafeCheckBonus.add(result);
 
         // Bucketed arrays
         PassedPawnBonus.add(result);
@@ -330,12 +330,6 @@ public:
         name = NAME(BadBishop_BlockedCentralPawnsPenalty);
         BadBishop_BlockedCentralPawnsPenalty.to_csharp(parameters, ss, name);
 
-        name = NAME(SafeCheckBonus);
-        SafeCheckBonus.to_csharp(parameters, ss, name);
-
-        name = NAME(UnsafeCheckBonus);
-        UnsafeCheckBonus.to_csharp(parameters, ss, name);
-
         name = NAME(FriendlyKingDistanceToPassedPawnBonus);
         FriendlyKingDistanceToPassedPawnBonus.to_csharp(parameters, ss, name);
 
@@ -399,6 +393,12 @@ public:
 
         name = NAME(PassedPawnBonusNoEnemiesAheadEnemyBonus);
         PassedPawnBonusNoEnemiesAheadEnemyBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(SafeCheckBonus);
+        SafeCheckBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(UnsafeCheckBonus);
+        UnsafeCheckBonus.to_csharp(parameters, ss, name);
 
         if (isFinal)
         {
@@ -479,14 +479,6 @@ public:
         BadBishop_BlockedCentralPawnsPenalty.to_cpp(parameters, ss, name);
         ss << "\n";
 
-        name = NAME(SafeCheckBonus);
-        SafeCheckBonus.to_cpp(parameters, ss, name);
-        ss << "\n";
-
-        name = NAME(UnsafeCheckBonus);
-        UnsafeCheckBonus.to_cpp(parameters, ss, name);
-        ss << "\n";
-
         name = NAME(FriendlyKingDistanceToPassedPawnBonus);
         FriendlyKingDistanceToPassedPawnBonus.to_cpp(parameters, ss, name);
 
@@ -550,6 +542,12 @@ public:
 
         name = NAME(PassedPawnBonusNoEnemiesAheadEnemyBonus);
         PassedPawnBonusNoEnemiesAheadEnemyBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(SafeCheckBonus);
+        SafeCheckBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(UnsafeCheckBonus);
+        UnsafeCheckBonus.to_cpp(parameters, ss, name);
 
         if (isFinal)
         {
@@ -1103,7 +1101,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     return packedBonus;
 }
 
-int Checks(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients, const std::array<u64, 12> &attacks, const std::array<u64, 2> &attacksBySide)
+int Checks(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients, const std::array<u64, 12> &attacks, const std::array<u64, 2> &attacksBySide, u64 oppositeSideKingBucket)
 {
     int packedBonus = 0;
 
@@ -1130,11 +1128,11 @@ int Checks(const chess::Board &board, const chess::Color &color, coefficients_t 
         const auto unsafeChecksCount = chess::builtin::popcount(checks & oppositeSideAttacks);
         const auto safeChecksCount = checkThreatsCount - unsafeChecksCount;
 
-        packedBonus += SafeCheckBonus.packed[pieceIndex] * safeChecksCount;
-        IncrementCoefficients(coefficients, SafeCheckBonus.index + pieceIndex - SafeCheckBonus.start, color, safeChecksCount);
+        packedBonus += SafeCheckBonus.packed(oppositeSideKingBucket, pieceIndex) * safeChecksCount;
+        IncrementCoefficients(coefficients, SafeCheckBonus.index(oppositeSideKingBucket, pieceIndex), color, safeChecksCount);
 
-        packedBonus += UnsafeCheckBonus.packed[pieceIndex] * unsafeChecksCount;
-        IncrementCoefficients(coefficients, UnsafeCheckBonus.index + pieceIndex - UnsafeCheckBonus.start, color, unsafeChecksCount);
+        packedBonus += UnsafeCheckBonus.packed(oppositeSideKingBucket, pieceIndex) * unsafeChecksCount;
+        IncrementCoefficients(coefficients, UnsafeCheckBonus.index(oppositeSideKingBucket, pieceIndex), color, unsafeChecksCount);
     }
 
     return packedBonus;
@@ -1373,8 +1371,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     packedScore -= Threats(board, chess::Color::BLACK, coefficients, attacks);
 
     // Checks
-    packedScore += Checks(board, chess::Color::WHITE, coefficients, attacks, attacksBySide);
-    packedScore -= Checks(board, chess::Color::BLACK, coefficients, attacks, attacksBySide);
+    packedScore += Checks(board, chess::Color::WHITE, coefficients, attacks, attacksBySide, blackBucket);
+    packedScore -= Checks(board, chess::Color::BLACK, coefficients, attacks, attacksBySide, whiteBucket);
 
     // Debugging eval
     // return EvalResult{
