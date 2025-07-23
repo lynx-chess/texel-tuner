@@ -1401,7 +1401,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     const int totalPawnsCount = board.pieces(chess::PieceType::PAWN, chess::Color::WHITE).count() +
                                 board.pieces(chess::PieceType::PAWN, chess::Color::BLACK).count();
 
-    if (gamePhase <= 3)
+    if (gamePhase <= 5)
     {
         // Pawnless endgames with few pieces
         if (totalPawnsCount == 0)
@@ -1419,14 +1419,23 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
 
                 break;
             }
-            // case 4:
-            //     {
-            //         // Rook vs 2 minors should be a draw
+            case 4:
+            {
+                // Rook vs 2 minors and R vs r should be a draw
+                if (
+                    (pieceCount[static_cast<int>(chess::PieceType::ROOK)] != 0 &&
+                     (pieceCount[static_cast<int>(chess::PieceType::BISHOP)] + pieceCount[static_cast<int>(chess::PieceType::KNIGHT)] == 0)) ||
+                    ((pieceCount[static_cast<int>(chess::PieceType::ROOK) + 6] != 0 &&
+                      (pieceCount[static_cast<int>(chess::PieceType::BISHOP) + 6] + pieceCount[static_cast<int>(chess::PieceType::KNIGHT) + 6] == 0))))
+                {
+                    eval >>= 1; // /2
+                }
 
-            //    }
+                break;
+            }
             case 3:
             {
-                const auto winningSideOffset = PieceOffset(packedScore >= 0);
+                const auto winningSideOffset = PieceOffset(eval >= 0);
 
                 if (pieceCount[1 + winningSideOffset] == 2) // NN vs N, NN vs B
                 {
@@ -1463,17 +1472,32 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
             }
             }
         }
-
-        if (gamePhase == 2)
+        else
         {
-            const auto whiteBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::WHITE);
-            const auto blackBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::BLACK);
+            const auto winningSide = eval >= 0 ? chess::Color::WHITE : chess::Color::BLACK;
 
-            // Opposite color bishop endgame with pawns
-            if (whiteBishops > 0 && blackBishops > 0 &&
-                DarkSquares[chess::builtin::lsb(whiteBishops).index()] != DarkSquares[chess::builtin::lsb(blackBishops).index()])
+            if (gamePhase == 1)
             {
-                eval >>= 1; // /2
+                // Bishop vs A/H pawns: if the defending king reaches the corner, and the corner is the opposite color of the bishop, it's a draw
+                // TODO implement that
+                // For now, we reduce all endgames that only have one bishop and A/H pawns
+                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0
+                    && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
+                {
+                    eval >>= 1; // /2
+                }
+            }
+            else if (gamePhase == 2)
+            {
+                const auto whiteBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::WHITE);
+                const auto blackBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::BLACK);
+
+                // Opposite color bishop endgame with pawns
+                if (whiteBishops > 0 && blackBishops > 0 &&
+                    DarkSquares[chess::builtin::lsb(whiteBishops).index()] != DarkSquares[chess::builtin::lsb(blackBishops).index()])
+                {
+                    eval >>= 1; // /2
+                }
             }
         }
     }

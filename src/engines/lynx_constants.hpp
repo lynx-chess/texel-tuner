@@ -259,6 +259,8 @@ constexpr u64 CentralFiles = 0x3c3c3c3c3c3c3c3c;
 
 constexpr u64 CentralSquares = 0x1818000000;
 
+constexpr u64 NotAorH = 0x7e7e7e7e7e7e00;
+
 constexpr u64 LongDiagonals = 0x8142241818244281;
 
 constexpr int PositiveCheckmateDetectionLimit = 27000;
