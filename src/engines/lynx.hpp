@@ -169,8 +169,8 @@ public:
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
-        assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
-        assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
+        assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 8);
+        assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 8);
         assert(VirtualKingMobilityBonus.tunableSize == 28);
         assert(KnightMobilityBonus.tunableSize == 9);
         assert(BishopMobilityBonus.tunableSize == 14);
@@ -606,6 +606,7 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     auto oppositeSidePieces = blackPieces;
     auto passedPawnMask = WhitePassedPawnMasks[squareIndex];
     auto rank = Rank[squareIndex];
+    auto pushSquare = squareIndex - 8;
 
     if (color == chess::Color::BLACK)
     {
@@ -614,6 +615,7 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
         oppositeSidePieces = whitePieces;
         passedPawnMask = BlackPassedPawnMasks[squareIndex];
         rank = 7 - rank;
+        pushSquare = squareIndex + 8;
     }
 
     // Isolated pawn
@@ -642,13 +644,13 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
             IncrementCoefficients(coefficients, PassedPawnBonusNoEnemiesAheadEnemyBonus.index(oppositeSideBucket, rank - PassedPawnBonusNoEnemiesAheadEnemyBonus.start), color); // There's no coefficient for rank 0
         }
 
-        // King distance to passed pawn
-        const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, squareIndex);
+        // King distance to passed pawn - using square in front of it
+        const auto friendlyKingDistance = ChebyshevDistance(sameSideKingSquare, pushSquare);
         packedBonus += FriendlyKingDistanceToPassedPawnBonus.packed[friendlyKingDistance];
         IncrementCoefficients(coefficients, FriendlyKingDistanceToPassedPawnBonus.index + friendlyKingDistance - FriendlyKingDistanceToPassedPawnBonus.start, color);
 
-        // Enemy king distance to passed pawn
-        const auto enemyKingDistance = ChebyshevDistance(oppositeSideKingSquare, squareIndex);
+        // Enemy king distance to passed pawn - using square in front of it
+        const auto enemyKingDistance = ChebyshevDistance(oppositeSideKingSquare, pushSquare);
         packedBonus += EnemyKingDistanceToPassedPawnPenalty.packed[enemyKingDistance];
         IncrementCoefficients(coefficients, EnemyKingDistanceToPassedPawnPenalty.index + enemyKingDistance - EnemyKingDistanceToPassedPawnPenalty.start, color);
     }
@@ -1481,8 +1483,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                 // Bishop vs A/H pawns: if the defending king reaches the corner, and the corner is the opposite color of the bishop, it's a draw
                 // TODO implement that
                 // For now, we reduce all endgames that only have one bishop and A/H pawns
-                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0
-                    && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
+                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
                 {
                     eval >>= 1; // /2
                 }
