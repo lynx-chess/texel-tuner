@@ -38,6 +38,8 @@ const static size_t numParameters = psqtIndexCount +
                                     UnsafeCheckBonus.tunableSize +
                                     FriendlyKingDistanceToPassedPawnBonus.tunableSize + // 7, removing start
                                     EnemyKingDistanceToPassedPawnPenalty.tunableSize +  // 7, removing start
+                                    FriendlyKingDistanceToPassedPromotionSquareBonus.tunableSize +
+                                    EnemyKingDistanceToPassedPromotionSquarePenalty.tunableSize +
                                     VirtualKingMobilityBonus.tunableSize +              // 28
                                     KnightMobilityBonus.tunableSize +                   // 9
                                     BishopMobilityBonus.tunableSize +                   // 14, removing end
@@ -141,6 +143,8 @@ public:
 
         FriendlyKingDistanceToPassedPawnBonus.add(result);
         EnemyKingDistanceToPassedPawnPenalty.add(result);
+        FriendlyKingDistanceToPassedPromotionSquareBonus.add(result);
+        EnemyKingDistanceToPassedPromotionSquarePenalty.add(result);
         VirtualKingMobilityBonus.add(result);
         KnightMobilityBonus.add(result);
         BishopMobilityBonus.add(result);
@@ -171,6 +175,8 @@ public:
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
+        assert(FriendlyKingDistanceToPassedPromotionSquareBonus.tunableSize == 8);
+        assert(EnemyKingDistanceToPassedPromotionSquarePenalty.tunableSize == 8);
         assert(VirtualKingMobilityBonus.tunableSize == 28);
         assert(KnightMobilityBonus.tunableSize == 9);
         assert(BishopMobilityBonus.tunableSize == 14);
@@ -342,6 +348,12 @@ public:
         name = NAME(EnemyKingDistanceToPassedPawnPenalty);
         EnemyKingDistanceToPassedPawnPenalty.to_csharp(parameters, ss, name);
 
+        name = NAME(FriendlyKingDistanceToPassedPromotionSquareBonus);
+        FriendlyKingDistanceToPassedPromotionSquareBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(EnemyKingDistanceToPassedPromotionSquarePenalty);
+        EnemyKingDistanceToPassedPromotionSquarePenalty.to_csharp(parameters, ss, name);
+
         name = NAME(VirtualKingMobilityBonus);
         VirtualKingMobilityBonus.to_csharp(parameters, ss, name);
 
@@ -492,6 +504,12 @@ public:
 
         name = NAME(EnemyKingDistanceToPassedPawnPenalty);
         EnemyKingDistanceToPassedPawnPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(FriendlyKingDistanceToPassedPromotionSquareBonus);
+        FriendlyKingDistanceToPassedPromotionSquareBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(EnemyKingDistanceToPassedPromotionSquarePenalty);
+        EnemyKingDistanceToPassedPromotionSquarePenalty.to_cpp(parameters, ss, name);
 
         name = NAME(VirtualKingMobilityBonus);
         VirtualKingMobilityBonus.to_cpp(parameters, ss, name);
@@ -651,6 +669,20 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
         const auto enemyKingDistance = ChebyshevDistance(oppositeSideKingSquare, squareIndex);
         packedBonus += EnemyKingDistanceToPassedPawnPenalty.packed[enemyKingDistance];
         IncrementCoefficients(coefficients, EnemyKingDistanceToPassedPawnPenalty.index + enemyKingDistance - EnemyKingDistanceToPassedPawnPenalty.start, color);
+
+        const auto pawnDistanceToPromotionSquare = 7 - rank;
+        const auto promotionSquare = squareIndex +
+                                     (color == chess::Color::BLACK
+                                          ? +(8 * pawnDistanceToPromotionSquare)
+                                          : -(8 * pawnDistanceToPromotionSquare));
+
+        const auto friendlyKingPromotionSquareDistance = ChebyshevDistance(sameSideKingSquare, promotionSquare);
+        packedBonus += FriendlyKingDistanceToPassedPromotionSquareBonus.packed[friendlyKingPromotionSquareDistance];
+        IncrementCoefficients(coefficients, FriendlyKingDistanceToPassedPromotionSquareBonus.index + friendlyKingPromotionSquareDistance - FriendlyKingDistanceToPassedPromotionSquareBonus.start, color);
+
+        const auto enemyKingPromotionSquareDistance = ChebyshevDistance(oppositeSideKingSquare, promotionSquare);
+        packedBonus += EnemyKingDistanceToPassedPromotionSquarePenalty.packed[enemyKingPromotionSquareDistance];
+        IncrementCoefficients(coefficients, EnemyKingDistanceToPassedPromotionSquarePenalty.index + enemyKingPromotionSquareDistance - EnemyKingDistanceToPassedPromotionSquarePenalty.start, color);
     }
 
     if (File[squareIndex] != 7 && GetBit(sameSidePawns, squareIndex + 1))
@@ -1481,8 +1513,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                 // Bishop vs A/H pawns: if the defending king reaches the corner, and the corner is the opposite color of the bishop, it's a draw
                 // TODO implement that
                 // For now, we reduce all endgames that only have one bishop and A/H pawns
-                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0
-                    && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
+                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
                 {
                     eval >>= 1; // /2
                 }
