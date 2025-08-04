@@ -38,6 +38,8 @@ const static size_t numParameters = psqtIndexCount +
                                     UnsafeCheckBonus.tunableSize +
                                     FriendlyKingDistanceToPassedPawnBonus.tunableSize + // 7, removing start
                                     EnemyKingDistanceToPassedPawnPenalty.tunableSize +  // 7, removing start
+                                    FriendlyKingDistanceToPassedPawnEGBonus.tunableSize + // 7, removing start
+                                    EnemyKingDistanceToPassedPawnEGPenalty.tunableSize +  // 7, removing start
                                     VirtualKingMobilityBonus.tunableSize +              // 28
                                     KnightMobilityBonus.tunableSize +                   // 9
                                     BishopMobilityBonus.tunableSize +                   // 14, removing end
@@ -141,6 +143,8 @@ public:
 
         FriendlyKingDistanceToPassedPawnBonus.add(result);
         EnemyKingDistanceToPassedPawnPenalty.add(result);
+        FriendlyKingDistanceToPassedPawnEGBonus.add(result);
+        EnemyKingDistanceToPassedPawnEGPenalty.add(result);
         VirtualKingMobilityBonus.add(result);
         KnightMobilityBonus.add(result);
         BishopMobilityBonus.add(result);
@@ -171,6 +175,8 @@ public:
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 8);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 8);
+        assert(FriendlyKingDistanceToPassedPawnEGBonus.tunableSize == 8);
+        assert(EnemyKingDistanceToPassedPawnEGPenalty.tunableSize == 8);
         assert(VirtualKingMobilityBonus.tunableSize == 28);
         assert(KnightMobilityBonus.tunableSize == 9);
         assert(BishopMobilityBonus.tunableSize == 14);
@@ -342,6 +348,12 @@ public:
         name = NAME(EnemyKingDistanceToPassedPawnPenalty);
         EnemyKingDistanceToPassedPawnPenalty.to_csharp(parameters, ss, name);
 
+        name = NAME(FriendlyKingDistanceToPassedPawnEGBonus);
+        FriendlyKingDistanceToPassedPawnEGBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(EnemyKingDistanceToPassedPawnEGPenalty);
+        EnemyKingDistanceToPassedPawnEGPenalty.to_csharp(parameters, ss, name);
+
         name = NAME(VirtualKingMobilityBonus);
         VirtualKingMobilityBonus.to_csharp(parameters, ss, name);
 
@@ -492,6 +504,12 @@ public:
 
         name = NAME(EnemyKingDistanceToPassedPawnPenalty);
         EnemyKingDistanceToPassedPawnPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(FriendlyKingDistanceToPassedEGPawnBonus);
+        FriendlyKingDistanceToPassedPawnEGBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(EnemyKingDistanceToPassedEGPawnPenalty);
+        EnemyKingDistanceToPassedPawnEGPenalty.to_cpp(parameters, ss, name);
 
         name = NAME(VirtualKingMobilityBonus);
         VirtualKingMobilityBonus.to_cpp(parameters, ss, name);
