@@ -32,7 +32,7 @@ constexpr int PieceOffset(bool isWhite)
 
 std::array<int, 6> phaseValues = {0, 1, 1, 2, 4, 0};
 
-constexpr static int EvalNormalizationCoefficient = 126;
+constexpr static int EvalNormalizationCoefficient = 106;
 
 constexpr static std::array<std::array<std::array<std::array<int, 64>, PSQTBucketCount>, 6>, 2> MiddleGamePositionalWhiteTables = {{
 
@@ -258,6 +258,8 @@ constexpr u64 DarkSquaresBitBoard = 0x55AA55AA55AA55AAUL;
 constexpr u64 CentralFiles = 0x3c3c3c3c3c3c3c3c;
 
 constexpr u64 CentralSquares = 0x1818000000;
+
+constexpr u64 NotAorH = 0x7e7e7e7e7e7e00;
 
 constexpr u64 LongDiagonals = 0x8142241818244281;
 
