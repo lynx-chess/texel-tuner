@@ -163,10 +163,10 @@ public:
         PassedPawnBonusNoEnemiesAheadBonus.add(result);
         PassedPawnBonusNoEnemiesAheadEnemyBonus.add(result);
 
-        assert(PassedPawnBonus.bucketTunableSize == 4);
-        assert(PassedPawnEnemyBonus.bucketTunableSize == 4);
-        assert(PassedPawnBonusNoEnemiesAheadBonus.bucketTunableSize == 4);
-        assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 4);
+        assert(PassedPawnBonus.bucketTunableSize == 5);
+        assert(PassedPawnEnemyBonus.bucketTunableSize == 5);
+        assert(PassedPawnBonusNoEnemiesAheadBonus.bucketTunableSize == 5);
+        assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 5);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
@@ -625,7 +625,7 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
 
     // Passed pawn
     if ((opposideSidePawns & passedPawnMask) == 0 &&
-        rank >= 3)
+        rank >= 2)
     {
         packedBonus += PassedPawnBonus.packed(bucket, rank);
         IncrementCoefficients(coefficients, PassedPawnBonus.index(bucket, rank - PassedPawnBonus.start), color); // There's no coefficient for rank 0
