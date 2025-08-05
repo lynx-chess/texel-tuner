@@ -163,10 +163,10 @@ public:
         PassedPawnBonusNoEnemiesAheadBonus.add(result);
         PassedPawnBonusNoEnemiesAheadEnemyBonus.add(result);
 
-        assert(PassedPawnBonus.bucketTunableSize == 6);
-        assert(PassedPawnEnemyBonus.bucketTunableSize == 6);
-        assert(PassedPawnBonusNoEnemiesAheadBonus.bucketTunableSize == 6);
-        assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
+        assert(PassedPawnBonus.bucketTunableSize == 4);
+        assert(PassedPawnEnemyBonus.bucketTunableSize == 4);
+        assert(PassedPawnBonusNoEnemiesAheadBonus.bucketTunableSize == 4);
+        assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 4);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
@@ -624,7 +624,8 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     }
 
     // Passed pawn
-    if ((opposideSidePawns & passedPawnMask) == 0)
+    if ((opposideSidePawns & passedPawnMask) == 0 &&
+        rank >= 3)
     {
         packedBonus += PassedPawnBonus.packed(bucket, rank);
         IncrementCoefficients(coefficients, PassedPawnBonus.index(bucket, rank - PassedPawnBonus.start), color); // There's no coefficient for rank 0
@@ -1481,8 +1482,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                 // Bishop vs A/H pawns: if the defending king reaches the corner, and the corner is the opposite color of the bishop, it's a draw
                 // TODO implement that
                 // For now, we reduce all endgames that only have one bishop and A/H pawns
-                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0
-                    && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
+                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
                 {
                     eval >>= 1; // /2
                 }
