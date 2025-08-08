@@ -739,10 +739,10 @@ int RookAdditonalEvaluation(int squareIndex, const u64 opponentPawnAttacks, cons
     }
 
     // King ring defenders
-    const auto oppositeSideKingRingDefenders = attacks & oppositeSideKingRing;
-    const auto oppositeSideKingRingDefendersCount = chess::builtin::popcount(oppositeSideKingRingDefenders);
-    packedBonus += KingRingAttackerBonus_Rook.packed * oppositeSideKingRingDefendersCount;
-    IncrementCoefficients(coefficients, KingRingAttackerBonus_Rook.index, color, oppositeSideKingRingDefendersCount);
+    const auto oppositeSideKingRingAttackers = attacks & oppositeSideKingRing;
+    const auto oppositeSideKingRingAttackersCount = chess::builtin::popcount(oppositeSideKingRingAttackers);
+    packedBonus += KingRingAttackerBonus_Rook.packed * oppositeSideKingRingAttackersCount;
+    IncrementCoefficients(coefficients, KingRingAttackerBonus_Rook.index, color, oppositeSideKingRingAttackersCount);
 
     return packedBonus;
 }
@@ -761,10 +761,10 @@ int KnightAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, c
     IncrementCoefficients(coefficients, KnightMobilityBonus.index + mobilityCount, color);
 
     // King ring defenders
-    const auto oppositeSideKingRingDefenders = attacks & oppositeSideKingRing;
-    const auto oppositeSideKingRingDefendersCount = chess::builtin::popcount(oppositeSideKingRingDefenders);
-    packedBonus+= KingRingAttackerBonus_Knight.packed * oppositeSideKingRingDefendersCount;
-    IncrementCoefficients(coefficients, KingRingAttackerBonus_Knight.index, color, oppositeSideKingRingDefendersCount);
+    const auto oppositeSideKingRingAttackers = attacks & oppositeSideKingRing;
+    const auto oppositeSideKingRingAttackersCount = chess::builtin::popcount(oppositeSideKingRingAttackers);
+    packedBonus+= KingRingAttackerBonus_Knight.packed * oppositeSideKingRingAttackersCount;
+    IncrementCoefficients(coefficients, KingRingAttackerBonus_Knight.index, color, oppositeSideKingRingAttackersCount);
 
     return packedBonus;
 }
@@ -813,10 +813,10 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
     }
 
     // King ring defenders
-    const auto oppositeSideKingRingDefenders = attacks & oppositeSideKingRing;
-    const auto oppositeSideKingRingDefendersCount = chess::builtin::popcount(oppositeSideKingRingDefenders);
-    packedBonus += KingRingAttackerBonus_Bishop.packed * oppositeSideKingRingDefendersCount;
-    IncrementCoefficients(coefficients, KingRingAttackerBonus_Bishop.index, color, oppositeSideKingRingDefendersCount);
+    const auto oppositeSideKingRingAttackers = attacks & oppositeSideKingRing;
+    const auto oppositeSideKingRingAttackersCount = chess::builtin::popcount(oppositeSideKingRingAttackers);
+    packedBonus += KingRingAttackerBonus_Bishop.packed * oppositeSideKingRingAttackersCount;
+    IncrementCoefficients(coefficients, KingRingAttackerBonus_Bishop.index, color, oppositeSideKingRingAttackersCount);
 
     return packedBonus;
 }
@@ -836,10 +836,10 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, co
     IncrementCoefficients(coefficients, QueenMobilityBonus.index + mobilityCount, color);
 
     // King ring defenders
-    const auto oppositeSideKingRingDefenders = attacks & oppositeSideKingRing;
-    const auto oppositeSideKingRingDefendersCount = chess::builtin::popcount(oppositeSideKingRingDefenders);
-    packedBonus += KingRingAttackerBonus_Queen.packed * oppositeSideKingRingDefendersCount;
-    IncrementCoefficients(coefficients, KingRingAttackerBonus_Queen.index, color, oppositeSideKingRingDefendersCount);
+    const auto oppositeSideKingRingAttackers = attacks & oppositeSideKingRing;
+    const auto oppositeSideKingRingAttackersCount = chess::builtin::popcount(oppositeSideKingRingAttackers);
+    packedBonus += KingRingAttackerBonus_Queen.packed * oppositeSideKingRingAttackersCount;
+    IncrementCoefficients(coefficients, KingRingAttackerBonus_Queen.index, color, oppositeSideKingRingAttackersCount);
 
     return packedBonus;
 }
