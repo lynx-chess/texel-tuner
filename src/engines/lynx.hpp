@@ -22,12 +22,12 @@ const static size_t numParameters = psqtIndexCount +
                                     SemiOpenFileRookBonus.size +
                                     SemiOpenFileKingPenalty.size +
                                     OpenFileKingPenalty.size +
-                                    KingShieldBonus.size +
                                     BishopPairBonus.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
                                     PieceAttackedByPawnPenalty.size +
 
                                     // Arrays
+                                    KingShieldBonus.tunableSize +
                                     PieceProtectedByPawnBonus.tunableSize + // 5, removing king
                                     PawnPhalanxBonus.tunableSize +
                                     ConnectedRooksBonus.tunableSize +
@@ -124,12 +124,12 @@ public:
         SemiOpenFileRookBonus.add(result);
         SemiOpenFileKingPenalty.add(result);
         OpenFileKingPenalty.add(result);
-        KingShieldBonus.add(result);
         BishopPairBonus.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
 
         // Arrays
+        KingShieldBonus.add(result);
         PieceProtectedByPawnBonus.add(result);
         PawnPhalanxBonus.add(result);
         ConnectedRooksBonus.add(result);
@@ -163,6 +163,7 @@ public:
         PassedPawnBonusNoEnemiesAheadBonus.add(result);
         PassedPawnBonusNoEnemiesAheadEnemyBonus.add(result);
 
+        assert(KingShieldBonus.tunableSize == 9);
         assert(PassedPawnBonus.bucketTunableSize == 6);
         assert(PassedPawnEnemyBonus.bucketTunableSize == 6);
         assert(PassedPawnBonusNoEnemiesAheadBonus.bucketTunableSize == 6);
@@ -299,9 +300,6 @@ public:
         name = NAME(OpenFileKingPenalty);
         OpenFileKingPenalty.to_csharp(parameters, ss, name);
 
-        name = NAME(KingShieldBonus);
-        KingShieldBonus.to_csharp(parameters, ss, name);
-
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
@@ -312,6 +310,9 @@ public:
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
         // Arrays
+        name = NAME(KingShieldBonus);
+        KingShieldBonus.to_csharp(parameters, ss, name);
+
         name = NAME(PieceProtectedByPawnBonus);
         PieceProtectedByPawnBonus.to_csharp(parameters, ss, name);
 
@@ -442,9 +443,6 @@ public:
         name = NAME(OpenFileKingPenalty);
         OpenFileKingPenalty.to_cpp(parameters, ss, name);
 
-        name = NAME(KingShieldBonus);
-        KingShieldBonus.to_cpp(parameters, ss, name);
-
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
 
@@ -455,6 +453,12 @@ public:
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
 
         // Arrays
+        ss << "\n";
+
+        name = NAME(KingShieldBonus);
+        KingShieldBonus.to_cpp(parameters, ss, name);
+        ss << "\n";
+
         name = NAME(PieceProtectedByPawnBonus);
         PieceProtectedByPawnBonus.to_cpp(parameters, ss, name);
         ss << "\n";
@@ -826,9 +830,10 @@ int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, che
         chess::attacks::king(static_cast<chess::Square>(squareIndex)).getBits() &
         GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide));
 
-    IncrementCoefficients(coefficients, KingShieldBonus.index, kingSide, ownPawnsAroundCount);
+    packedBonus += KingShieldBonus.packed[ownPawnsAroundCount];
+    IncrementCoefficients(coefficients, KingShieldBonus.index - KingShieldBonus.start + ownPawnsAroundCount, kingSide);
 
-    return packedBonus + KingShieldBonus.packed * ownPawnsAroundCount;
+    return packedBonus;
 }
 
 int PawnIslands(const u64 bitboard)
@@ -1481,8 +1486,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                 // Bishop vs A/H pawns: if the defending king reaches the corner, and the corner is the opposite color of the bishop, it's a draw
                 // TODO implement that
                 // For now, we reduce all endgames that only have one bishop and A/H pawns
-                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0
-                    && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
+                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
                 {
                     eval >>= 1; // /2
                 }
