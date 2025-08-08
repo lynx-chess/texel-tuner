@@ -5913,10 +5913,10 @@ TunableSingle KingShieldBonus(24, 0);
 TunableSingle BishopPairBonus(28, 68);
 TunableSingle BishopInUnblockedLongDiagonalBonus(19, 13);
 TunableSingle PieceAttackedByPawnPenalty(-49, -32);
-TunableSingle KingRingDefenders_Knight(27, -9);
-TunableSingle KingRingDefenders_Bishop(16, -1);
-TunableSingle KingRingDefenders_Rook(13, -1);
-TunableSingle KingRingDefenders_Queen(3, 2);
+TunableSingle KingRingAttackerBonus_Knight(27, -9);
+TunableSingle KingRingAttackerBonus_Bishop(16, -1);
+TunableSingle KingRingAttackerBonus_Rook(13, -1);
+TunableSingle KingRingAttackerBonus_Queen(3, 2);
 TunableArray PieceProtectedByPawnBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{20, -1, 5, 8, -9},
