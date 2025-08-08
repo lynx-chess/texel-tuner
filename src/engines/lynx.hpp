@@ -978,6 +978,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     auto kingThreats = attacks[static_cast<int>(chess::PieceType::KING) + offset] & them;
 
     const auto defendedSquares = attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset];
+    auto totalDefendedThreats = 0;
 
     // Calculate bonus
     auto defendedKnightThreats = knightThreats & defendedSquares;
@@ -990,6 +991,8 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
         packedBonus += KnightThreatsBonus_Defended.packed[attackedPiece];
         IncrementCoefficients(coefficients, KnightThreatsBonus_Defended.index - KnightThreatsBonus_Defended.start + attackedPiece, color);
+
+        ++totalDefendedThreats;
     }
 
     auto undefendedKnightThreats = knightThreats & (~defendedSquares);
@@ -1014,6 +1017,8 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
         packedBonus += BishopThreatsBonus_Defended.packed[attackedPiece];
         IncrementCoefficients(coefficients, BishopThreatsBonus_Defended.index - BishopThreatsBonus_Defended.start + attackedPiece, color);
+
+        ++totalDefendedThreats;
     }
 
     auto undefendedBishopThreats = bishopThreats & (~defendedSquares);
@@ -1038,6 +1043,8 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
         packedBonus += RookThreatsBonus_Defended.packed[attackedPiece];
         IncrementCoefficients(coefficients, RookThreatsBonus_Defended.index - RookThreatsBonus_Defended.start + attackedPiece, color);
+
+        ++totalDefendedThreats;
     }
 
     auto undefendedRookThreats = rookThreats & (~defendedSquares);
@@ -1062,6 +1069,8 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
         packedBonus += QueenThreatsBonus_Defended.packed[attackedPiece];
         IncrementCoefficients(coefficients, QueenThreatsBonus_Defended.index - QueenThreatsBonus_Defended.start + attackedPiece, color);
+
+        ++totalDefendedThreats;
     }
 
     auto undefendedQueenThreats = queenThreats & (~defendedSquares);
@@ -1086,6 +1095,8 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
         packedBonus += KingThreatsBonus_Defended.packed[attackedPiece];
         IncrementCoefficients(coefficients, KingThreatsBonus_Defended.index - KingThreatsBonus_Defended.start + attackedPiece, color);
+
+        ++totalDefendedThreats;
     }
 
     auto undefendedKingThreats = kingThreats & (~defendedSquares);
@@ -1099,6 +1110,10 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         packedBonus += KingThreatsBonus.packed[attackedPiece];
         IncrementCoefficients(coefficients, KingThreatsBonus.index - KingThreatsBonus.start + attackedPiece, color);
     }
+
+    const auto totalDefendedThreatsCount = std::min(totalDefendedThreats, 7);
+    packedBonus += TotalThreats_Defended.packed[totalDefendedThreatsCount];
+    IncrementCoefficients(coefficients, TotalThreats_Defended.index, color, totalDefendedThreatsCount);
 
     return packedBonus;
 }
@@ -1481,8 +1496,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                 // Bishop vs A/H pawns: if the defending king reaches the corner, and the corner is the opposite color of the bishop, it's a draw
                 // TODO implement that
                 // For now, we reduce all endgames that only have one bishop and A/H pawns
-                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0
-                    && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
+                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
                 {
                     eval >>= 1; // /2
                 }
