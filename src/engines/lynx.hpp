@@ -53,7 +53,7 @@ const static size_t numParameters = psqtIndexCount +
                                     QueenThreatsBonus_Defended.tunableSize +
                                     KingThreatsBonus.tunableSize +
                                     KingThreatsBonus_Defended.tunableSize +
-                                    TotalThreats_Defended.tunableSize +
+                                    TotalThreats_Undefended.tunableSize +
 
                                     // Bucketed arrays
                                     PassedPawnBonus.size +                        // PSQTBucketCount * 6, removing 1 rank values
@@ -157,7 +157,7 @@ public:
         QueenThreatsBonus_Defended.add(result);
         KingThreatsBonus.add(result);
         KingThreatsBonus_Defended.add(result);
-        TotalThreats_Defended.add(result);
+        TotalThreats_Undefended.add(result);
 
         // Bucketed arrays
         PassedPawnBonus.add(result);
@@ -188,7 +188,7 @@ public:
         assert(QueenThreatsBonus_Defended.tunableSize == 6);
         assert(KingThreatsBonus.tunableSize == 6);
         assert(KingThreatsBonus_Defended.tunableSize == 6);
-        assert(TotalThreats_Defended.tunableSize == 8);
+        assert(TotalThreats_Undefended.tunableSize == 8);
 
         std::cout << result.size() << " == " << numParameters << std::endl;
         assert(result.size() == numParameters);
@@ -390,8 +390,8 @@ public:
         name = NAME(KingThreatsBonus_Defended);
         KingThreatsBonus_Defended.to_csharp(parameters, ss, name);
 
-        name = NAME(TotalThreats_Defended);
-        TotalThreats_Defended.to_csharp(parameters, ss, name);
+        name = NAME(TotalThreats_Undefended);
+        TotalThreats_Undefended.to_csharp(parameters, ss, name);
 
         // Bucketed arrays
         name = NAME(PassedPawnBonus);
@@ -544,8 +544,8 @@ public:
         name = NAME(KingThreatsBonus_Defended);
         KingThreatsBonus_Defended.to_cpp(parameters, ss, name);
 
-        name = NAME(TotalThreats_Defended);
-        TotalThreats_Defended.to_cpp(parameters, ss, name);
+        name = NAME(TotalThreats_Undefended);
+        TotalThreats_Undefended.to_cpp(parameters, ss, name);
 
         // Bucketed arrays
         name = NAME(PassedPawnBonus);
@@ -987,7 +987,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     auto kingThreats = attacks[static_cast<int>(chess::PieceType::KING) + offset] & them;
 
     const auto defendedSquares = attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset];
-    auto totalDefendedThreats = 0;
+    auto totalUndefendedThreats = 0;
 
     // Calculate bonus
     auto defendedKnightThreats = knightThreats & defendedSquares;
@@ -1000,8 +1000,6 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
         packedBonus += KnightThreatsBonus_Defended.packed[attackedPiece];
         IncrementCoefficients(coefficients, KnightThreatsBonus_Defended.index - KnightThreatsBonus_Defended.start + attackedPiece, color);
-
-        ++totalDefendedThreats;
     }
 
     auto undefendedKnightThreats = knightThreats & (~defendedSquares);
@@ -1014,6 +1012,8 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
         packedBonus += KnightThreatsBonus.packed[attackedPiece];
         IncrementCoefficients(coefficients, KnightThreatsBonus.index - KnightThreatsBonus.start + attackedPiece, color);
+
+        ++totalUndefendedThreats;
     }
 
     auto defendedBishopThreats = bishopThreats & defendedSquares;
@@ -1026,8 +1026,6 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
         packedBonus += BishopThreatsBonus_Defended.packed[attackedPiece];
         IncrementCoefficients(coefficients, BishopThreatsBonus_Defended.index - BishopThreatsBonus_Defended.start + attackedPiece, color);
-
-        ++totalDefendedThreats;
     }
 
     auto undefendedBishopThreats = bishopThreats & (~defendedSquares);
@@ -1040,6 +1038,8 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
         packedBonus += BishopThreatsBonus.packed[attackedPiece];
         IncrementCoefficients(coefficients, BishopThreatsBonus.index - BishopThreatsBonus.start + attackedPiece, color);
+
+        ++totalUndefendedThreats;
     }
 
     auto defendedRookThreats = rookThreats & defendedSquares;
@@ -1052,8 +1052,6 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
         packedBonus += RookThreatsBonus_Defended.packed[attackedPiece];
         IncrementCoefficients(coefficients, RookThreatsBonus_Defended.index - RookThreatsBonus_Defended.start + attackedPiece, color);
-
-        ++totalDefendedThreats;
     }
 
     auto undefendedRookThreats = rookThreats & (~defendedSquares);
@@ -1066,6 +1064,8 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
         packedBonus += RookThreatsBonus.packed[attackedPiece];
         IncrementCoefficients(coefficients, RookThreatsBonus.index - RookThreatsBonus.start + attackedPiece, color);
+
+        ++totalUndefendedThreats;
     }
 
     auto defendedQueenThreats = queenThreats & defendedSquares;
@@ -1078,8 +1078,6 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
         packedBonus += QueenThreatsBonus_Defended.packed[attackedPiece];
         IncrementCoefficients(coefficients, QueenThreatsBonus_Defended.index - QueenThreatsBonus_Defended.start + attackedPiece, color);
-
-        ++totalDefendedThreats;
     }
 
     auto undefendedQueenThreats = queenThreats & (~defendedSquares);
@@ -1092,6 +1090,8 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
         packedBonus += QueenThreatsBonus.packed[attackedPiece];
         IncrementCoefficients(coefficients, QueenThreatsBonus.index - QueenThreatsBonus.start + attackedPiece, color);
+
+        ++totalUndefendedThreats;
     }
 
     auto defendedKingThreats = kingThreats & defendedSquares;
@@ -1104,8 +1104,6 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
         packedBonus += KingThreatsBonus_Defended.packed[attackedPiece];
         IncrementCoefficients(coefficients, KingThreatsBonus_Defended.index - KingThreatsBonus_Defended.start + attackedPiece, color);
-
-        ++totalDefendedThreats;
     }
 
     auto undefendedKingThreats = kingThreats & (~defendedSquares);
@@ -1118,11 +1116,13 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
         packedBonus += KingThreatsBonus.packed[attackedPiece];
         IncrementCoefficients(coefficients, KingThreatsBonus.index - KingThreatsBonus.start + attackedPiece, color);
+
+        ++totalUndefendedThreats;
     }
 
-    const auto totalDefendedThreatsCount = std::min(totalDefendedThreats, 7);
-    packedBonus += TotalThreats_Defended.packed[totalDefendedThreatsCount];
-    IncrementCoefficients(coefficients, TotalThreats_Defended.index - TotalThreats_Defended.start + totalDefendedThreatsCount, color);
+    const auto totalUndefendedThreatsCount = std::min(totalUndefendedThreats, 7);
+    packedBonus += TotalThreats_Undefended.packed[totalUndefendedThreatsCount];
+    IncrementCoefficients(coefficients, TotalThreats_Undefended.index - TotalThreats_Undefended.start + totalUndefendedThreatsCount, color);
 
     return packedBonus;
 }

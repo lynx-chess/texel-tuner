@@ -6088,7 +6088,7 @@ TunableArray KingThreatsBonus_Defended(
 	0,
 	0);
 
-TunableArray TotalThreats_Defended(
+TunableArray TotalThreats_Undefended(
 	chess::PieceType::KING,
 	std::vector<int>{15, 5, -2, -10, -15, -20, -15, -20},
 	std::vector<int>{-7, -2, -3, -2, 2, 12, 2, 55},
