@@ -1122,7 +1122,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
     const auto totalDefendedThreatsCount = std::min(totalDefendedThreats, 7);
     packedBonus += TotalThreats_Defended.packed[totalDefendedThreatsCount];
-    IncrementCoefficients(coefficients, TotalThreats_Defended.index, color, totalDefendedThreatsCount);
+    IncrementCoefficients(coefficients, TotalThreats_Defended.index - TotalThreats_Defended.start + totalDefendedThreatsCount, color);
 
     return packedBonus;
 }
