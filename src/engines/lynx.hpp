@@ -53,6 +53,7 @@ const static size_t numParameters = psqtIndexCount +
                                     QueenThreatsBonus_Defended.tunableSize +
                                     KingThreatsBonus.tunableSize +
                                     KingThreatsBonus_Defended.tunableSize +
+                                    TotalThreats_Defended.tunableSize +
 
                                     // Bucketed arrays
                                     PassedPawnBonus.size +                        // PSQTBucketCount * 6, removing 1 rank values
@@ -156,6 +157,7 @@ public:
         QueenThreatsBonus_Defended.add(result);
         KingThreatsBonus.add(result);
         KingThreatsBonus_Defended.add(result);
+        TotalThreats_Defended.add(result);
 
         // Bucketed arrays
         PassedPawnBonus.add(result);
@@ -186,6 +188,7 @@ public:
         assert(QueenThreatsBonus_Defended.tunableSize == 6);
         assert(KingThreatsBonus.tunableSize == 6);
         assert(KingThreatsBonus_Defended.tunableSize == 6);
+        assert(TotalThreats_Defended.tunableSize == 8);
 
         std::cout << result.size() << " == " << numParameters << std::endl;
         assert(result.size() == numParameters);
@@ -387,6 +390,9 @@ public:
         name = NAME(KingThreatsBonus_Defended);
         KingThreatsBonus_Defended.to_csharp(parameters, ss, name);
 
+        name = NAME(TotalThreats_Defended);
+        TotalThreats_Defended.to_csharp(parameters, ss, name);
+
         // Bucketed arrays
         name = NAME(PassedPawnBonus);
         PassedPawnBonus.to_csharp(parameters, ss, name);
@@ -537,6 +543,9 @@ public:
 
         name = NAME(KingThreatsBonus_Defended);
         KingThreatsBonus_Defended.to_cpp(parameters, ss, name);
+
+        name = NAME(TotalThreats_Defended);
+        TotalThreats_Defended.to_cpp(parameters, ss, name);
 
         // Bucketed arrays
         name = NAME(PassedPawnBonus);
