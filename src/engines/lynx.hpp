@@ -740,9 +740,12 @@ int RookAdditonalEvaluation(int squareIndex, const u64 opponentPawnAttacks, cons
 
     // King ring defenders
     const auto oppositeSideKingRingAttackers = attacks & oppositeSideKingRing;
-    const auto oppositeSideKingRingAttackersCount = chess::builtin::popcount(oppositeSideKingRingAttackers);
-    packedBonus += KingRingAttackerBonus_Rook.packed * oppositeSideKingRingAttackersCount;
-    IncrementCoefficients(coefficients, KingRingAttackerBonus_Rook.index, color, oppositeSideKingRingAttackersCount);
+
+    if (oppositeSideKingRingAttackers != 0)
+    {
+        packedBonus += KingRingAttackerBonus_Rook.packed;
+        IncrementCoefficients(coefficients, KingRingAttackerBonus_Rook.index, color);
+    }
 
     return packedBonus;
 }
@@ -762,9 +765,12 @@ int KnightAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, c
 
     // King ring defenders
     const auto oppositeSideKingRingAttackers = attacks & oppositeSideKingRing;
-    const auto oppositeSideKingRingAttackersCount = chess::builtin::popcount(oppositeSideKingRingAttackers);
-    packedBonus+= KingRingAttackerBonus_Knight.packed * oppositeSideKingRingAttackersCount;
-    IncrementCoefficients(coefficients, KingRingAttackerBonus_Knight.index, color, oppositeSideKingRingAttackersCount);
+
+    if (oppositeSideKingRingAttackers != 0)
+    {
+        packedBonus += KingRingAttackerBonus_Knight.packed;
+        IncrementCoefficients(coefficients, KingRingAttackerBonus_Knight.index, color);
+    }
 
     return packedBonus;
 }
@@ -814,9 +820,11 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
 
     // King ring defenders
     const auto oppositeSideKingRingAttackers = attacks & oppositeSideKingRing;
-    const auto oppositeSideKingRingAttackersCount = chess::builtin::popcount(oppositeSideKingRingAttackers);
-    packedBonus += KingRingAttackerBonus_Bishop.packed * oppositeSideKingRingAttackersCount;
-    IncrementCoefficients(coefficients, KingRingAttackerBonus_Bishop.index, color, oppositeSideKingRingAttackersCount);
+    if (oppositeSideKingRingAttackers != 0)
+    {
+        packedBonus += KingRingAttackerBonus_Bishop.packed;
+        IncrementCoefficients(coefficients, KingRingAttackerBonus_Bishop.index, color);
+    }
 
     return packedBonus;
 }
@@ -837,9 +845,12 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, co
 
     // King ring defenders
     const auto oppositeSideKingRingAttackers = attacks & oppositeSideKingRing;
-    const auto oppositeSideKingRingAttackersCount = chess::builtin::popcount(oppositeSideKingRingAttackers);
-    packedBonus += KingRingAttackerBonus_Queen.packed * oppositeSideKingRingAttackersCount;
-    IncrementCoefficients(coefficients, KingRingAttackerBonus_Queen.index, color, oppositeSideKingRingAttackersCount);
+
+    if (oppositeSideKingRingAttackers != 0)
+    {
+        packedBonus += KingRingAttackerBonus_Queen.packed;
+        IncrementCoefficients(coefficients, KingRingAttackerBonus_Queen.index, color);
+    }
 
     return packedBonus;
 }
@@ -1542,8 +1553,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                 // Bishop vs A/H pawns: if the defending king reaches the corner, and the corner is the opposite color of the bishop, it's a draw
                 // TODO implement that
                 // For now, we reduce all endgames that only have one bishop and A/H pawns
-                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0
-                    && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
+                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
                 {
                     eval >>= 1; // /2
                 }
