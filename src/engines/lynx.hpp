@@ -23,6 +23,7 @@ const static size_t numParameters = psqtIndexCount +
                                     SemiOpenFileKingPenalty.size +
                                     OpenFileKingPenalty.size +
                                     KingShieldBonus.size +
+                                    KingShieldBonus_Defended.size +
                                     BishopPairBonus.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
                                     PieceAttackedByPawnPenalty.size +
@@ -125,6 +126,7 @@ public:
         SemiOpenFileKingPenalty.add(result);
         OpenFileKingPenalty.add(result);
         KingShieldBonus.add(result);
+        KingShieldBonus_Defended.add(result);
         BishopPairBonus.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
@@ -302,6 +304,9 @@ public:
         name = NAME(KingShieldBonus);
         KingShieldBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(KingShieldBonus_Defended);
+        KingShieldBonus_Defended.to_csharp(parameters, ss, name);
+
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
@@ -444,6 +449,9 @@ public:
 
         name = NAME(KingShieldBonus);
         KingShieldBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(KingShieldBonus_Defended);
+        KingShieldBonus_Defended.to_cpp(parameters, ss, name);
 
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
@@ -788,7 +796,7 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, co
     return packedBonus;
 }
 
-int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const int pieceCount[], coefficients_t &coefficients)
+int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const std::array<u64, 12> &attacks, const std::array<u64, 2> &doubleAttacksBySide, const int pieceCount[], coefficients_t &coefficients)
 {
     // Virtual mobility (as if Queen)
     const auto mobilityCount = chess::builtin::popcount(
@@ -822,13 +830,28 @@ int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, che
     }
 
     // King shield
-    const auto ownPawnsAroundCount = chess::builtin::popcount(
-        chess::attacks::king(static_cast<chess::Square>(squareIndex)).getBits() &
-        GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide));
 
-    IncrementCoefficients(coefficients, KingShieldBonus.index, kingSide, ownPawnsAroundCount);
+    const auto kingAttacks = chess::attacks::king(static_cast<chess::Square>(squareIndex)).getBits();
 
-    return packedBonus + KingShieldBonus.packed * ownPawnsAroundCount;
+    const auto ownPawnsAround =
+        kingAttacks &
+        GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide);
+
+    const auto ownPawnsAroundCount = chess::builtin::popcount(ownPawnsAround);
+
+    const auto defendedPawnsCount = chess::builtin::popcount(
+        ownPawnsAround &
+        doubleAttacksBySide[kingSide]);
+
+    const auto undefendedPawnsCount = ownPawnsAroundCount - defendedPawnsCount;
+
+    packedBonus += KingShieldBonus.packed * undefendedPawnsCount;
+    IncrementCoefficients(coefficients, KingShieldBonus.index, kingSide, undefendedPawnsCount);
+
+    packedBonus += KingShieldBonus_Defended.packed * defendedPawnsCount;
+    IncrementCoefficients(coefficients, KingShieldBonus_Defended.index, kingSide, defendedPawnsCount);
+
+    return packedBonus;
 }
 
 int PawnIslands(const u64 bitboard)
@@ -867,7 +890,7 @@ int PawnIslands(const u64 bitboard)
     return islandCount;
 }
 
-std::array<u64, 12> CalculateAttacks(const chess::Board &board, std::array<u64, 12> &pieceAttacks, std::array<u64, 2> &attacksBySide, std::array<u64, 2> &doubleAttacksBySide)
+void CalculateAttacks(const chess::Board &board, std::array<u64, 12> &pieceAttacks, std::array<u64, 2> &attacksBySide, std::array<u64, 2> &doubleAttacksBySide)
 {
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
 
@@ -949,8 +972,6 @@ std::array<u64, 12> CalculateAttacks(const chess::Board &board, std::array<u64, 
             attacksBySide[colorInt] |= attacks;
         }
     }
-
-    return pieceAttacks;
 }
 
 int Threats(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients, const std::array<u64, 12> &attacks)
@@ -1295,13 +1316,19 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
         }
     }
 
+    std::array<u64, 12> attacks = {};
+    std::array<u64, 2> attacksBySide = {};
+    std::array<u64, 2> doubleAttacksBySide = {};
+
+    CalculateAttacks(board, attacks, attacksBySide, doubleAttacksBySide);
+
     // Kings
     packedScore += PackedPositionalTables(0, whiteBucket, 5, whiteKing) +
                    PackedPositionalTables(0, blackBucket, 11, blackKing) +
                    PackedPositionalTables(1, blackBucket, 5, whiteKing) +
                    PackedPositionalTables(1, whiteBucket, 11, blackKing) +
-                   KingAdditionalEvaluation(whiteKing, blackPawnAttacks, chess::Color::WHITE, board, pieceCount, coefficients) -
-                   KingAdditionalEvaluation(blackKing, whitePawnAttacks, chess::Color::BLACK, board, pieceCount, coefficients);
+                   KingAdditionalEvaluation(whiteKing, blackPawnAttacks, chess::Color::WHITE, board, attacks, attacksBySide, pieceCount, coefficients) -
+                   KingAdditionalEvaluation(blackKing, whitePawnAttacks, chess::Color::BLACK, board, attacks, attacksBySide, pieceCount, coefficients);
 
     IncrementCoefficients(
         coefficients,
@@ -1356,12 +1383,6 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     packedScore += PawnIslandsBonus.packed[whitePawnIslands] - PawnIslandsBonus.packed[blackPawnIslands];
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + whitePawnIslands - PawnIslandsBonus.start, chess::Color::WHITE);
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
-
-    std::array<u64, 12> pieceAttacks = {};
-    std::array<u64, 2> attacksBySide = {};
-    std::array<u64, 2> doubleAttacksBySide = {};
-
-    const auto attacks = CalculateAttacks(board, pieceAttacks, attacksBySide, doubleAttacksBySide);
 
     // Threats
     packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks);
