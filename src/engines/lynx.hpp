@@ -1327,8 +1327,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                    PackedPositionalTables(0, blackBucket, 11, blackKing) +
                    PackedPositionalTables(1, blackBucket, 5, whiteKing) +
                    PackedPositionalTables(1, whiteBucket, 11, blackKing) +
-                   KingAdditionalEvaluation(whiteKing, blackPawnAttacks, chess::Color::WHITE, board, attacksBySide, pieceCount, coefficients) -
-                   KingAdditionalEvaluation(blackKing, whitePawnAttacks, chess::Color::BLACK, board, attacksBySide, pieceCount, coefficients);
+                   KingAdditionalEvaluation(whiteKing, blackPawnAttacks, chess::Color::WHITE, board, doubleAttacksBySide, pieceCount, coefficients) -
+                   KingAdditionalEvaluation(blackKing, whitePawnAttacks, chess::Color::BLACK, board, doubleAttacksBySide, pieceCount, coefficients);
 
     IncrementCoefficients(
         coefficients,
