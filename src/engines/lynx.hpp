@@ -796,7 +796,7 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, co
     return packedBonus;
 }
 
-int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const std::array<u64, 12> &attacks, const std::array<u64, 2> &doubleAttacksBySide, const int pieceCount[], coefficients_t &coefficients)
+int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const std::array<u64, 2> &doubleAttacksBySide, const int pieceCount[], coefficients_t &coefficients)
 {
     // Virtual mobility (as if Queen)
     const auto mobilityCount = chess::builtin::popcount(
@@ -1327,8 +1327,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                    PackedPositionalTables(0, blackBucket, 11, blackKing) +
                    PackedPositionalTables(1, blackBucket, 5, whiteKing) +
                    PackedPositionalTables(1, whiteBucket, 11, blackKing) +
-                   KingAdditionalEvaluation(whiteKing, blackPawnAttacks, chess::Color::WHITE, board, attacks, attacksBySide, pieceCount, coefficients) -
-                   KingAdditionalEvaluation(blackKing, whitePawnAttacks, chess::Color::BLACK, board, attacks, attacksBySide, pieceCount, coefficients);
+                   KingAdditionalEvaluation(whiteKing, blackPawnAttacks, chess::Color::WHITE, board, attacksBySide, pieceCount, coefficients) -
+                   KingAdditionalEvaluation(blackKing, whitePawnAttacks, chess::Color::BLACK, board, attacksBySide, pieceCount, coefficients);
 
     IncrementCoefficients(
         coefficients,
@@ -1497,8 +1497,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                 // Bishop vs A/H pawns: if the defending king reaches the corner, and the corner is the opposite color of the bishop, it's a draw
                 // TODO implement that
                 // For now, we reduce all endgames that only have one bishop and A/H pawns
-                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0
-                    && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
+                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
                 {
                     eval >>= 1; // /2
                 }
