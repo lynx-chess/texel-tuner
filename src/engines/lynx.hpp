@@ -796,7 +796,7 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, co
     return packedBonus;
 }
 
-int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const std::array<u64, 2> &doubleAttacksBySide, const int pieceCount[], coefficients_t &coefficients)
+int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const std::array<u64, 2> &attacksBySide, const int pieceCount[], coefficients_t &coefficients)
 {
     // Virtual mobility (as if Queen)
     const auto mobilityCount = chess::builtin::popcount(
@@ -839,17 +839,16 @@ int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, che
 
     const auto ownPawnsAroundCount = chess::builtin::popcount(ownPawnsAround);
 
-    const auto defendedPawnsCount = chess::builtin::popcount(
+    packedBonus += KingShieldBonus.packed * ownPawnsAroundCount;
+    IncrementCoefficients(coefficients, KingShieldBonus.index, kingSide, ownPawnsAroundCount);
+
+    const auto oppositeSide = static_cast<int>(kingSide) ^ 1;
+    const auto notAttackedPawnsCount = chess::builtin::popcount(
         ownPawnsAround &
-        doubleAttacksBySide[kingSide]);
+        ~attacksBySide[oppositeSide]);
 
-    const auto undefendedPawnsCount = ownPawnsAroundCount - defendedPawnsCount;
-
-    packedBonus += KingShieldBonus.packed * undefendedPawnsCount;
-    IncrementCoefficients(coefficients, KingShieldBonus.index, kingSide, undefendedPawnsCount);
-
-    packedBonus += KingShieldBonus_Defended.packed * defendedPawnsCount;
-    IncrementCoefficients(coefficients, KingShieldBonus_Defended.index, kingSide, defendedPawnsCount);
+    packedBonus += KingShieldBonus_Defended.packed * notAttackedPawnsCount;
+    IncrementCoefficients(coefficients, KingShieldBonus_Defended.index, kingSide, notAttackedPawnsCount);
 
     return packedBonus;
 }
@@ -1327,8 +1326,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                    PackedPositionalTables(0, blackBucket, 11, blackKing) +
                    PackedPositionalTables(1, blackBucket, 5, whiteKing) +
                    PackedPositionalTables(1, whiteBucket, 11, blackKing) +
-                   KingAdditionalEvaluation(whiteKing, blackPawnAttacks, chess::Color::WHITE, board, doubleAttacksBySide, pieceCount, coefficients) -
-                   KingAdditionalEvaluation(blackKing, whitePawnAttacks, chess::Color::BLACK, board, doubleAttacksBySide, pieceCount, coefficients);
+                   KingAdditionalEvaluation(whiteKing, blackPawnAttacks, chess::Color::WHITE, board, attacksBySide, pieceCount, coefficients) -
+                   KingAdditionalEvaluation(blackKing, whitePawnAttacks, chess::Color::BLACK, board, attacksBySide, pieceCount, coefficients);
 
     IncrementCoefficients(
         coefficients,
