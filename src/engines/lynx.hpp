@@ -653,6 +653,7 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
         IncrementCoefficients(coefficients, EnemyKingDistanceToPassedPawnPenalty.index + enemyKingDistance - EnemyKingDistanceToPassedPawnPenalty.start, color);
     }
 
+    // Pawn phalanx
     if (File[squareIndex] != 7 && GetBit(sameSidePawns, squareIndex + 1))
     {
         packedBonus += PawnPhalanxBonus.packed[rank];
