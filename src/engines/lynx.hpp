@@ -38,7 +38,7 @@ const static size_t numParameters = psqtIndexCount +
                                     UnsafeCheckBonus.tunableSize +
                                     FriendlyKingDistanceToPassedPawnBonus.tunableSize + // 7, removing start
                                     EnemyKingDistanceToPassedPawnPenalty.tunableSize +  // 7, removing start
-                                    BackwardsPawnBonus.tunableSize +  // 7, removing start
+                                    BackwardsPawnBonus.tunableSize +                    // 7, removing start
                                     VirtualKingMobilityBonus.tunableSize +              // 28
                                     KnightMobilityBonus.tunableSize +                   // 9
                                     BishopMobilityBonus.tunableSize +                   // 14, removing end
@@ -635,6 +635,13 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
         packedBonus += IsolatedPawnPenalty.packed;
         IncrementCoefficients(coefficients, IsolatedPawnPenalty.index, color);
     }
+    // Backwards pawn
+    else if (!GetBit(attacks[pieceIndex], squareIndex) &&
+             GetBit(oppositeSidePawns, pushSquare))
+    {
+        packedBonus += BackwardsPawnBonus.packed[rank];
+        IncrementCoefficients(coefficients, BackwardsPawnBonus.index - BackwardsPawnBonus.start + rank, color);
+    }
 
     // Passed pawn
     if ((oppositeSidePawns & passedPawnMask) == 0)
@@ -664,14 +671,6 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
         const auto enemyKingDistance = ChebyshevDistance(oppositeSideKingSquare, squareIndex);
         packedBonus += EnemyKingDistanceToPassedPawnPenalty.packed[enemyKingDistance];
         IncrementCoefficients(coefficients, EnemyKingDistanceToPassedPawnPenalty.index + enemyKingDistance - EnemyKingDistanceToPassedPawnPenalty.start, color);
-    }
-
-    // Backwards pawn
-    if (!GetBit(attacks[pieceIndex], squareIndex) &&
-        GetBit(oppositeSidePawns, pushSquare))
-    {
-        packedBonus += BackwardsPawnBonus.packed[rank];
-        IncrementCoefficients(coefficients, BackwardsPawnBonus.index - BackwardsPawnBonus.start + rank, color);
     }
 
     // Pawn phalanx
