@@ -38,7 +38,7 @@ const static size_t numParameters = psqtIndexCount +
                                     UnsafeCheckBonus.tunableSize +
                                     FriendlyKingDistanceToPassedPawnBonus.tunableSize + // 7, removing start
                                     EnemyKingDistanceToPassedPawnPenalty.tunableSize +  // 7, removing start
-                                    BackwardsPawnPenalty.tunableSize +                    // 7, removing start
+                                    BackwardsPawnPenalty.tunableSize +                  // 7, removing start
                                     VirtualKingMobilityBonus.tunableSize +              // 28
                                     KnightMobilityBonus.tunableSize +                   // 9
                                     BishopMobilityBonus.tunableSize +                   // 14, removing end
@@ -641,8 +641,13 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     }
     // Backwards pawn
     else if (!GetBit(attacks[pieceIndex], squareIndex) &&
-             GetBit(oppositeSidePawns, pushSquare))
+             (GetBit(oppositeSidePawns, pushSquare) ||      // Blocked
+              GetBit(attacks[6 - pieceIndex], pushSquare))) // Push square attacked by opponent pawns
     {
+        if (GetBit(attacks[6 - pieceIndex], pushSquare))
+        {
+            std::cout << "";
+        }
         packedBonus += BackwardsPawnPenalty.packed[rank];
         IncrementCoefficients(coefficients, BackwardsPawnPenalty.index - BackwardsPawnPenalty.start + rank, color);
     }
