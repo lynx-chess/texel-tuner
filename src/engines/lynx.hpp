@@ -615,6 +615,7 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     auto oppositeSidePawns = blackPawns;
     auto oppositeSidePieces = blackPieces;
     auto passedPawnMask = WhitePassedPawnMasks[squareIndex];
+    auto oppositeSidePassedPawnMask = BlackPassedPawnMasks[squareIndex];
     auto rank = Rank[squareIndex];
     auto pushSquare = squareIndex - 8;
 
@@ -625,6 +626,7 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
         oppositeSidePawns = whitePawns;
         oppositeSidePieces = whitePieces;
         passedPawnMask = BlackPassedPawnMasks[squareIndex];
+        oppositeSidePassedPawnMask = WhitePassedPawnMasks[squareIndex];
         rank = 7 - rank;
         pushSquare = squareIndex + 8;
     }
@@ -637,7 +639,8 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     }
     // Backwards pawn
     else if (!GetBit(attacks[pieceIndex], squareIndex) &&
-             GetBit(oppositeSidePawns, pushSquare))
+             GetBit(oppositeSidePawns, pushSquare) &&
+             (sameSidePawns & oppositeSidePassedPawnMask) == 0)
     {
         packedBonus += BackwardsPawnBonus.packed[rank];
         IncrementCoefficients(coefficients, BackwardsPawnBonus.index - BackwardsPawnBonus.start + rank, color);
