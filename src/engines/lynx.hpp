@@ -644,10 +644,6 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
              (GetBit(oppositeSidePawns, pushSquare) ||      // Blocked
               GetBit(attacks[6 - pieceIndex], pushSquare))) // Push square attacked by opponent pawns
     {
-        if (GetBit(attacks[6 - pieceIndex], pushSquare))
-        {
-            std::cout << "";
-        }
         packedBonus += BackwardsPawnPenalty.packed[rank];
         IncrementCoefficients(coefficients, BackwardsPawnPenalty.index - BackwardsPawnPenalty.start + rank, color);
     }
