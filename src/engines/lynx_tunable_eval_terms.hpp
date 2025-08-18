@@ -5983,6 +5983,13 @@ TunableArray EnemyKingDistanceToPassedPawnPenalty(
 	1,
 	0);
 
+TunableArray BackwardsPawnBonus(
+	chess::PieceType::PAWN,
+	std::vector<int>{0, -27, -10, 8, 18, 30, 34, 45},
+	std::vector<int>{0, -13, -6, 7, 20, 35, 53, 50},
+	1,
+	0);
+
 TunableArray VirtualKingMobilityBonus(
 	chess::PieceType::QUEEN,
 	std::vector<int>{-14, -10, -9, -7, -6, -4, -2, -0, 6, 2, 0, -1, -3, -6, -2, -3, 6, 8, 30, 43, 36, 59, 58, 63, 71, 111, 126, 163},
