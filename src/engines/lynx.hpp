@@ -17,7 +17,6 @@ using u64 = uint64_t;
 constexpr int enemyKingBaseIndex = psqtIndexCount / 2;
 const static size_t numParameters = psqtIndexCount +
                                     // DoubledPawnPenalty.size
-                                    IsolatedPawnPenalty.size +
                                     OpenFileRookBonus.size +
                                     SemiOpenFileRookBonus.size +
                                     SemiOpenFileKingPenalty.size +
@@ -29,7 +28,8 @@ const static size_t numParameters = psqtIndexCount +
 
                                     // Arrays
                                     PieceProtectedByPawnBonus.tunableSize + // 5, removing king
-                                    PawnPhalanxBonus.tunableSize +
+                                    IsolatedPawnPenalty.tunableSize +       // 8, files
+                                    PawnPhalanxBonus.tunableSize +          // 6
                                     ConnectedRooksBonus.tunableSize +
                                     PawnIslandsBonus.tunableSize +
                                     BadBishop_SameColorPawnsPenalty.tunableSize +
@@ -119,7 +119,6 @@ public:
         add_piece_values(5, 0, 64, 0); // Kings
 
         // DoubledPawnPenalty.add(result);
-        IsolatedPawnPenalty.add(result);
         OpenFileRookBonus.add(result);
         SemiOpenFileRookBonus.add(result);
         SemiOpenFileKingPenalty.add(result);
@@ -131,6 +130,7 @@ public:
 
         // Arrays
         PieceProtectedByPawnBonus.add(result);
+        IsolatedPawnPenalty.add(result);
         PawnPhalanxBonus.add(result);
         ConnectedRooksBonus.add(result);
         PawnIslandsBonus.add(result);
@@ -169,6 +169,8 @@ public:
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
+        assert(IsolatedPawnPenalty.tunableSize == 8);
+        assert(PawnPhalanxBonus.tunableSize == 6);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
         assert(VirtualKingMobilityBonus.tunableSize == 28);
@@ -284,9 +286,6 @@ public:
         ss << "public static class EvaluationParams" << std::endl
            << "{" << std::endl;
 
-        name = NAME(IsolatedPawnPenalty);
-        IsolatedPawnPenalty.to_csharp(parameters, ss, name);
-
         name = NAME(OpenFileRookBonus);
         OpenFileRookBonus.to_csharp(parameters, ss, name);
 
@@ -314,6 +313,9 @@ public:
         // Arrays
         name = NAME(PieceProtectedByPawnBonus);
         PieceProtectedByPawnBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(IsolatedPawnPenalty);
+        IsolatedPawnPenalty.to_csharp(parameters, ss, name);
 
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_csharp(parameters, ss, name);
@@ -427,9 +429,6 @@ public:
         // name = NAME(DoubledPawnPenalty);
         // DoubledPawnPenalty.to_json(parameters, ss, name);
 
-        name = NAME(IsolatedPawnPenalty);
-        IsolatedPawnPenalty.to_cpp(parameters, ss, name);
-
         name = NAME(OpenFileRookBonus);
         OpenFileRookBonus.to_cpp(parameters, ss, name);
 
@@ -457,6 +456,10 @@ public:
         // Arrays
         name = NAME(PieceProtectedByPawnBonus);
         PieceProtectedByPawnBonus.to_cpp(parameters, ss, name);
+        ss << "\n";
+
+        name = NAME(IsolatedPawnPenalty);
+        IsolatedPawnPenalty.to_cpp(parameters, ss, name);
         ss << "\n";
 
         name = NAME(PawnPhalanxBonus);
@@ -619,8 +622,9 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     // Isolated pawn
     if ((sameSidePawns & IsolatedPawnMasks[squareIndex]) == 0) // isIsolatedPawn
     {
-        packedBonus += IsolatedPawnPenalty.packed;
-        IncrementCoefficients(coefficients, IsolatedPawnPenalty.index, color);
+        const auto file = File[squareIndex];
+        packedBonus += IsolatedPawnPenalty.packed[file];
+        IncrementCoefficients(coefficients, IsolatedPawnPenalty.index - IsolatedPawnPenalty.start + file, color);
     }
 
     // Passed pawn
@@ -1482,8 +1486,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                 // Bishop vs A/H pawns: if the defending king reaches the corner, and the corner is the opposite color of the bishop, it's a draw
                 // TODO implement that
                 // For now, we reduce all endgames that only have one bishop and A/H pawns
-                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0
-                    && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
+                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
                 {
                     eval >>= 1; // /2
                 }
