@@ -5904,8 +5904,6 @@ constexpr static std::array<std::array<int, 64>, PSQTBucketCount> EndGameEnemyKi
 		},
 	}};
 
-TunableSingle OpenFileRookBonus(36, 0);
-TunableSingle SemiOpenFileRookBonus(21, 0);
 TunableSingle SemiOpenFileKingPenalty(-21, 3);
 TunableSingle OpenFileKingPenalty(-59, 0);
 TunableSingle KingShieldBonus(23, 0);
@@ -5973,6 +5971,20 @@ TunableArray UnsafeCheckBonus(
 	std::vector<int>{0, 3, 18, 28, 9},
 	std::vector<int>{0, -1, 12, 1, 12},
 	1,
+	0);
+
+TunableArray OpenFileRookBonus(
+	chess::PieceType::PAWN,
+	std::vector<int>{-0, -2, -8, -2, -8, -3, -4, -2},
+	std::vector<int>{-18, -19, -22, -30, -30, -20, -14, -21},
+	0,
+	0);
+
+TunableArray SemiOpenFileRookBonus(
+	chess::PieceType::PAWN,
+	std::vector<int>{-18, -19, -22, -30, -30, -20, -14, -21},
+	std::vector<int>{-0, -2, -8, -2, -8, -3, -4, -2},
+	0,
 	0);
 
 TunableArray FriendlyKingDistanceToPassedPawnBonus(
