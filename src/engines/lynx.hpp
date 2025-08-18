@@ -38,7 +38,7 @@ const static size_t numParameters = psqtIndexCount +
                                     UnsafeCheckBonus.tunableSize +
                                     FriendlyKingDistanceToPassedPawnBonus.tunableSize + // 7, removing start
                                     EnemyKingDistanceToPassedPawnPenalty.tunableSize +  // 7, removing start
-                                    BackwardsPawnBonus.tunableSize +                    // 7, removing start
+                                    BackwardsPawnPenalty.tunableSize +                    // 7, removing start
                                     VirtualKingMobilityBonus.tunableSize +              // 28
                                     KnightMobilityBonus.tunableSize +                   // 9
                                     BishopMobilityBonus.tunableSize +                   // 14, removing end
@@ -142,7 +142,7 @@ public:
 
         FriendlyKingDistanceToPassedPawnBonus.add(result);
         EnemyKingDistanceToPassedPawnPenalty.add(result);
-        BackwardsPawnBonus.add(result);
+        BackwardsPawnPenalty.add(result);
         VirtualKingMobilityBonus.add(result);
         KnightMobilityBonus.add(result);
         BishopMobilityBonus.add(result);
@@ -175,7 +175,7 @@ public:
         assert(PawnPhalanxBonus.tunableSize == 6);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
-        assert(BackwardsPawnBonus.tunableSize == 7);
+        assert(BackwardsPawnPenalty.tunableSize == 7);
         assert(VirtualKingMobilityBonus.tunableSize == 28);
         assert(KnightMobilityBonus.tunableSize == 9);
         assert(BishopMobilityBonus.tunableSize == 14);
@@ -347,8 +347,8 @@ public:
         name = NAME(EnemyKingDistanceToPassedPawnPenalty);
         EnemyKingDistanceToPassedPawnPenalty.to_csharp(parameters, ss, name);
 
-        name = NAME(BackwardsPawnBonus);
-        BackwardsPawnBonus.to_csharp(parameters, ss, name);
+        name = NAME(BackwardsPawnPenalty);
+        BackwardsPawnPenalty.to_csharp(parameters, ss, name);
 
         name = NAME(VirtualKingMobilityBonus);
         VirtualKingMobilityBonus.to_csharp(parameters, ss, name);
@@ -502,8 +502,8 @@ public:
         name = NAME(EnemyKingDistanceToPassedPawnPenalty);
         EnemyKingDistanceToPassedPawnPenalty.to_cpp(parameters, ss, name);
 
-        name = NAME(BackwardsPawnBonus);
-        BackwardsPawnBonus.to_cpp(parameters, ss, name);
+        name = NAME(BackwardsPawnPenalty);
+        BackwardsPawnPenalty.to_cpp(parameters, ss, name);
 
         name = NAME(VirtualKingMobilityBonus);
         VirtualKingMobilityBonus.to_cpp(parameters, ss, name);
@@ -643,8 +643,8 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     else if (!GetBit(attacks[pieceIndex], squareIndex) &&
              GetBit(oppositeSidePawns, pushSquare))
     {
-        packedBonus += BackwardsPawnBonus.packed[rank];
-        IncrementCoefficients(coefficients, BackwardsPawnBonus.index - BackwardsPawnBonus.start + rank, color);
+        packedBonus += BackwardsPawnPenalty.packed[rank];
+        IncrementCoefficients(coefficients, BackwardsPawnPenalty.index - BackwardsPawnPenalty.start + rank, color);
     }
 
     // Passed pawn

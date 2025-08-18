@@ -5989,7 +5989,7 @@ TunableArray EnemyKingDistanceToPassedPawnPenalty(
 	1,
 	0);
 
-TunableArray BackwardsPawnBonus(
+TunableArray BackwardsPawnPenalty(
 	chess::PieceType::PAWN,
 	std::vector<int>{0, -27, -10, 8, 18, 30, 34, 0},
 	std::vector<int>{0, -13, -5, 8, 20, 33, 50, 0},
