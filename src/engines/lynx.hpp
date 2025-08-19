@@ -34,8 +34,6 @@ const static size_t numParameters = psqtIndexCount +
                                     BadBishop_BlockedCentralPawnsPenalty.tunableSize +
                                     SafeCheckBonus.tunableSize +
                                     UnsafeCheckBonus.tunableSize +
-                                    OpenFileRookBonus.tunableSize +
-                                    SemiOpenFileRookBonus.tunableSize +
                                     FriendlyKingDistanceToPassedPawnBonus.tunableSize + // 7, removing start
                                     EnemyKingDistanceToPassedPawnPenalty.tunableSize +  // 7, removing start
                                     VirtualKingMobilityBonus.tunableSize +              // 28
@@ -58,7 +56,9 @@ const static size_t numParameters = psqtIndexCount +
                                     PassedPawnBonus.size +                        // PSQTBucketCount * 6, removing 1 rank values
                                     PassedPawnEnemyBonus.size +                   // PSQTBucketCount * 6, removing 1 rank values
                                     PassedPawnBonusNoEnemiesAheadBonus.size +     // PSQTBucketCount * 6, removing 1 rank values
-                                    PassedPawnBonusNoEnemiesAheadEnemyBonus.size; // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnBonusNoEnemiesAheadEnemyBonus.size +// PSQTBucketCount * 6, removing 1 rank values
+                                    OpenFileRookBonus.size +
+                                    SemiOpenFileRookBonus.size;
 
 class Lynx
 {
@@ -136,9 +136,7 @@ public:
         BadBishop_BlockedCentralPawnsPenalty.add(result);
         SafeCheckBonus.add(result);
         UnsafeCheckBonus.add(result);
-        OpenFileRookBonus.add(result);
-        SemiOpenFileRookBonus.add(result);
-
+        
         FriendlyKingDistanceToPassedPawnBonus.add(result);
         EnemyKingDistanceToPassedPawnPenalty.add(result);
         VirtualKingMobilityBonus.add(result);
@@ -162,17 +160,19 @@ public:
         PassedPawnEnemyBonus.add(result);
         PassedPawnBonusNoEnemiesAheadBonus.add(result);
         PassedPawnBonusNoEnemiesAheadEnemyBonus.add(result);
+        OpenFileRookBonus.add(result);
+        SemiOpenFileRookBonus.add(result);
 
         assert(PassedPawnBonus.bucketTunableSize == 6);
         assert(PassedPawnEnemyBonus.bucketTunableSize == 6);
         assert(PassedPawnBonusNoEnemiesAheadBonus.bucketTunableSize == 6);
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
+        assert(OpenFileRookBonus.bucketTunableSize == 8);
+        assert(SemiOpenFileRookBonus.bucketTunableSize == 8);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(IsolatedPawnPenalty.tunableSize == 8);
         assert(PawnPhalanxBonus.tunableSize == 6);
-        assert(OpenFileRookBonus.tunableSize == 8);
-        assert(SemiOpenFileRookBonus.tunableSize == 8);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
         assert(VirtualKingMobilityBonus.tunableSize == 28);
@@ -669,7 +669,7 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     return packedBonus;
 }
 
-int RookAdditonalEvaluation(int squareIndex, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+int RookAdditonalEvaluation(int squareIndex, int bucket, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
     const auto attacks = chess::attacks::rook(static_cast<chess::Square>(squareIndex), occupancy).getBits();
@@ -688,8 +688,8 @@ int RookAdditonalEvaluation(int squareIndex, const u64 opponentPawnAttacks, cons
     {
         const auto file = File[squareIndex];
 
-        packedBonus += OpenFileRookBonus.packed[file];
-        IncrementCoefficients(coefficients, OpenFileRookBonus.index - OpenFileRookBonus.start + file, color);
+        packedBonus += OpenFileRookBonus.packed(bucket, file);
+        IncrementCoefficients(coefficients, OpenFileRookBonus.index(bucket, file), color);
     }
     else
     {
@@ -698,8 +698,8 @@ int RookAdditonalEvaluation(int squareIndex, const u64 opponentPawnAttacks, cons
         {
             const auto file = File[squareIndex];
 
-            packedBonus += SemiOpenFileRookBonus.packed[file];
-            IncrementCoefficients(coefficients, SemiOpenFileRookBonus.index - SemiOpenFileRookBonus.start + file, color);
+            packedBonus += SemiOpenFileRookBonus.packed(bucket, file);
+            IncrementCoefficients(coefficients, SemiOpenFileRookBonus.index(bucket, file), color);
         }
     }
 
@@ -1164,7 +1164,7 @@ int AdditionalPieceEvaluation(int pieceSquareIndex, int pieceIndex, int bucket, 
 
     case 3:
     case 9:
-        return RookAdditonalEvaluation(pieceSquareIndex, opponentPawnAttacks, board, color, coefficients);
+        return RookAdditonalEvaluation(pieceSquareIndex, bucket, opponentPawnAttacks, board, color, coefficients);
 
     case 2:
     case 8:
