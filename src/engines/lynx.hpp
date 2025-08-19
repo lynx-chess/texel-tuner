@@ -17,8 +17,6 @@ using u64 = uint64_t;
 constexpr int enemyKingBaseIndex = psqtIndexCount / 2;
 const static size_t numParameters = psqtIndexCount +
                                     // DoubledPawnPenalty.size
-                                    OpenFileRookBonus.size +
-                                    SemiOpenFileRookBonus.size +
                                     SemiOpenFileKingPenalty.size +
                                     OpenFileKingPenalty.size +
                                     KingShieldBonus.size +
@@ -36,6 +34,8 @@ const static size_t numParameters = psqtIndexCount +
                                     BadBishop_BlockedCentralPawnsPenalty.tunableSize +
                                     SafeCheckBonus.tunableSize +
                                     UnsafeCheckBonus.tunableSize +
+                                    OpenFileRookBonus.tunableSize +
+                                    SemiOpenFileRookBonus.tunableSize +
                                     FriendlyKingDistanceToPassedPawnBonus.tunableSize + // 7, removing start
                                     EnemyKingDistanceToPassedPawnPenalty.tunableSize +  // 7, removing start
                                     BackwardsPawnPenalty.tunableSize +                  // 7, removing start
@@ -120,8 +120,6 @@ public:
         add_piece_values(5, 0, 64, 0); // Kings
 
         // DoubledPawnPenalty.add(result);
-        OpenFileRookBonus.add(result);
-        SemiOpenFileRookBonus.add(result);
         SemiOpenFileKingPenalty.add(result);
         OpenFileKingPenalty.add(result);
         KingShieldBonus.add(result);
@@ -139,6 +137,8 @@ public:
         BadBishop_BlockedCentralPawnsPenalty.add(result);
         SafeCheckBonus.add(result);
         UnsafeCheckBonus.add(result);
+        OpenFileRookBonus.add(result);
+        SemiOpenFileRookBonus.add(result);
 
         FriendlyKingDistanceToPassedPawnBonus.add(result);
         EnemyKingDistanceToPassedPawnPenalty.add(result);
@@ -173,6 +173,8 @@ public:
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(IsolatedPawnPenalty.tunableSize == 8);
         assert(PawnPhalanxBonus.tunableSize == 6);
+        assert(OpenFileRookBonus.tunableSize == 8);
+        assert(SemiOpenFileRookBonus.tunableSize == 8);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
         assert(BackwardsPawnPenalty.tunableSize == 7);
@@ -289,12 +291,6 @@ public:
         ss << "public static class EvaluationParams" << std::endl
            << "{" << std::endl;
 
-        name = NAME(OpenFileRookBonus);
-        OpenFileRookBonus.to_csharp(parameters, ss, name);
-
-        name = NAME(SemiOpenFileRookBonus);
-        SemiOpenFileRookBonus.to_csharp(parameters, ss, name);
-
         name = NAME(SemiOpenFileKingPenalty);
         SemiOpenFileKingPenalty.to_csharp(parameters, ss, name);
 
@@ -340,6 +336,12 @@ public:
 
         name = NAME(UnsafeCheckBonus);
         UnsafeCheckBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(OpenFileRookBonus);
+        OpenFileRookBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(SemiOpenFileRookBonus);
+        SemiOpenFileRookBonus.to_csharp(parameters, ss, name);
 
         name = NAME(FriendlyKingDistanceToPassedPawnBonus);
         FriendlyKingDistanceToPassedPawnBonus.to_csharp(parameters, ss, name);
@@ -435,12 +437,6 @@ public:
         // name = NAME(DoubledPawnPenalty);
         // DoubledPawnPenalty.to_json(parameters, ss, name);
 
-        name = NAME(OpenFileRookBonus);
-        OpenFileRookBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(SemiOpenFileRookBonus);
-        SemiOpenFileRookBonus.to_cpp(parameters, ss, name);
-
         name = NAME(SemiOpenFileKingPenalty);
         SemiOpenFileKingPenalty.to_cpp(parameters, ss, name);
 
@@ -495,6 +491,12 @@ public:
         name = NAME(UnsafeCheckBonus);
         UnsafeCheckBonus.to_cpp(parameters, ss, name);
         ss << "\n";
+
+        name = NAME(OpenFileRookBonus);
+        OpenFileRookBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(SemiOpenFileRookBonus);
+        SemiOpenFileRookBonus.to_cpp(parameters, ss, name);
 
         name = NAME(FriendlyKingDistanceToPassedPawnBonus);
         FriendlyKingDistanceToPassedPawnBonus.to_cpp(parameters, ss, name);
@@ -705,17 +707,20 @@ int RookAdditonalEvaluation(int squareIndex, const u64 opponentPawnAttacks, cons
     // Open file
     if (((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) & FileMasks[squareIndex]) == 0)
     {
-        // std::cout << "OpenFileRookBonus" << std::endl;
-        IncrementCoefficients(coefficients, OpenFileRookBonus.index, color);
-        packedBonus += OpenFileRookBonus.packed;
+        const auto file = File[squareIndex];
+
+        packedBonus += OpenFileRookBonus.packed[file];
+        IncrementCoefficients(coefficients, OpenFileRookBonus.index - OpenFileRookBonus.start + file, color);
     }
     else
     {
         // Semi-open file
         if ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color) & FileMasks[squareIndex]) == 0)
         {
-            packedBonus += SemiOpenFileRookBonus.packed;
-            IncrementCoefficients(coefficients, SemiOpenFileRookBonus.index, color);
+            const auto file = File[squareIndex];
+
+            packedBonus += SemiOpenFileRookBonus.packed[file];
+            IncrementCoefficients(coefficients, SemiOpenFileRookBonus.index - SemiOpenFileRookBonus.start + file, color);
         }
     }
 
