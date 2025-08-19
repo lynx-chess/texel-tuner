@@ -5904,8 +5904,6 @@ constexpr static std::array<std::array<int, 64>, PSQTBucketCount> EndGameEnemyKi
 		},
 	}};
 
-TunableSingle SemiOpenFileKingPenalty(-21, 4);
-TunableSingle OpenFileKingPenalty(-59, 0);
 TunableSingle KingShieldBonus(23, 0);
 TunableSingle BishopPairBonus(28, 68);
 TunableSingle BishopInUnblockedLongDiagonalBonus(19, 13);
@@ -6330,7 +6328,7 @@ TunableArrayBucketed PassedPawnBonusNoEnemiesAheadEnemyBonus(
 	}},
 	1);
 
-	TunableArrayBucketed OpenFileKingPenalty(
+TunableArrayBucketed OpenFileKingPenalty(
 	chess::PieceType::PAWN,
 	std::array<std::vector<int>, PSQTBucketCount>{{
 		std::vector<int>{0, -17, -17, 23, 42, 74, 25, 7},
