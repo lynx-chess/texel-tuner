@@ -5904,8 +5904,6 @@ constexpr static std::array<std::array<int, 64>, PSQTBucketCount> EndGameEnemyKi
 		},
 	}};
 
-TunableSingle SemiOpenFileKingPenalty(-21, 4);
-TunableSingle OpenFileKingPenalty(-59, 0);
 TunableSingle KingShieldBonus(23, 0);
 TunableSingle BishopPairBonus(28, 68);
 TunableSingle BishopInUnblockedLongDiagonalBonus(19, 13);
@@ -5929,6 +5927,20 @@ TunableArray PawnPhalanxBonus(
 	std::vector<int>{0, 2, 20, 28, 61, 215, -49},
 	std::vector<int>{0, 5, 11, 26, 77, 197, 399},
 	1,
+	0);
+
+TunableArray SemiOpenFileKingPenalty(
+	chess::PieceType::KING,
+	std::vector<int>{-45, -23, 0, 6, -11, 9, -28, -34, -27, -3, -8, -17, -37, -28, -40, -41, -64, -47, -36, -57, -102, -50, -90},
+	std::vector<int>{5, 3, -7, -15, -5, -13, -5, 10, 11, -3, -4, 0, 6, 18, 16, -8, -19, -15, 3, 13, 11, -10, 13},
+	0,
+	0);
+
+TunableArray OpenFileKingPenalty(
+	chess::PieceType::PAWN,
+	std::vector<int>{-113, -63, -33, -40, -41, -35, -67, -75, -86, -38, -67, -70, -88, -65, -66, -94, -49, -53, -38, -7, -109, -38, -2},
+	std::vector<int>{8, -15, -15, 2, -1, -5, -18, 9, 8, -11, -4, 1, 10, -0, 14, 22, -11, -4, 13, 10, 18, -9, 37},
+	0,
 	0);
 
 TunableArray ConnectedRooksBonus(
