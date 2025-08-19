@@ -334,12 +334,6 @@ public:
         name = NAME(UnsafeCheckBonus);
         UnsafeCheckBonus.to_csharp(parameters, ss, name);
 
-        name = NAME(OpenFileRookBonus);
-        OpenFileRookBonus.to_csharp(parameters, ss, name);
-
-        name = NAME(SemiOpenFileRookBonus);
-        SemiOpenFileRookBonus.to_csharp(parameters, ss, name);
-
         name = NAME(FriendlyKingDistanceToPassedPawnBonus);
         FriendlyKingDistanceToPassedPawnBonus.to_csharp(parameters, ss, name);
 
@@ -404,6 +398,12 @@ public:
         name = NAME(PassedPawnBonusNoEnemiesAheadEnemyBonus);
         PassedPawnBonusNoEnemiesAheadEnemyBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(OpenFileRookBonus);
+        OpenFileRookBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(SemiOpenFileRookBonus);
+        SemiOpenFileRookBonus.to_csharp(parameters, ss, name);
+        
         if (isFinal)
         {
             std::cout << ss.str() << std::endl;
@@ -486,12 +486,6 @@ public:
         UnsafeCheckBonus.to_cpp(parameters, ss, name);
         ss << "\n";
 
-        name = NAME(OpenFileRookBonus);
-        OpenFileRookBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(SemiOpenFileRookBonus);
-        SemiOpenFileRookBonus.to_cpp(parameters, ss, name);
-
         name = NAME(FriendlyKingDistanceToPassedPawnBonus);
         FriendlyKingDistanceToPassedPawnBonus.to_cpp(parameters, ss, name);
 
@@ -555,6 +549,12 @@ public:
 
         name = NAME(PassedPawnBonusNoEnemiesAheadEnemyBonus);
         PassedPawnBonusNoEnemiesAheadEnemyBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(OpenFileRookBonus);
+        OpenFileRookBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(SemiOpenFileRookBonus);
+        SemiOpenFileRookBonus.to_cpp(parameters, ss, name);
 
         if (isFinal)
         {
