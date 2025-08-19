@@ -171,8 +171,8 @@ public:
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(IsolatedPawnPenalty.tunableSize == 8);
         assert(PawnPhalanxBonus.tunableSize == 6);
-        assert(OpenFileKingPenalty.tunableSize == 8);
-        assert(SemiOpenFileKingPenalty.tunableSize == 8);
+        assert(OpenFileKingPenalty.tunableSize == PSQTBucketCount);
+        assert(SemiOpenFileKingPenalty.tunableSize == PSQTBucketCount);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
         assert(VirtualKingMobilityBonus.tunableSize == 28);
@@ -797,7 +797,7 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, co
     return packedBonus;
 }
 
-int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const int pieceCount[], coefficients_t &coefficients)
+int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const int pieceCount[], coefficients_t &coefficients)
 {
     // Virtual mobility (as if Queen)
     const auto mobilityCount = chess::builtin::popcount(
@@ -817,18 +817,14 @@ int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, che
         // King on open file
         if (((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) & FileMasks[squareIndex]) == 0) // isOpenFile
         {
-            const auto file = File[squareIndex];
-
-            packedBonus += OpenFileKingPenalty.packed[file];
-            IncrementCoefficients(coefficients, OpenFileKingPenalty.index - OpenFileKingPenalty.start + file, kingSide);
+            packedBonus += OpenFileKingPenalty.packed[bucket];
+            IncrementCoefficients(coefficients, OpenFileKingPenalty.index - OpenFileKingPenalty.start + bucket, kingSide);
         }
         // King on semi-open file
         else if ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide) & FileMasks[squareIndex]) == 0) // isSemiOpenFile
         {
-            const auto file = File[squareIndex];
-
-            packedBonus += SemiOpenFileKingPenalty.packed[file];
-            IncrementCoefficients(coefficients, SemiOpenFileKingPenalty.index - SemiOpenFileKingPenalty.start + file, kingSide);
+            packedBonus += SemiOpenFileKingPenalty.packed[bucket];
+            IncrementCoefficients(coefficients, SemiOpenFileKingPenalty.index - SemiOpenFileKingPenalty.start + bucket, kingSide);
         }
     }
 
@@ -1319,8 +1315,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                    PackedPositionalTables(0, blackBucket, 11, blackKing) +
                    PackedPositionalTables(1, blackBucket, 5, whiteKing) +
                    PackedPositionalTables(1, whiteBucket, 11, blackKing) +
-                   KingAdditionalEvaluation(whiteKing, blackPawnAttacks, chess::Color::WHITE, board, pieceCount, coefficients) -
-                   KingAdditionalEvaluation(blackKing, whitePawnAttacks, chess::Color::BLACK, board, pieceCount, coefficients);
+                   KingAdditionalEvaluation(whiteKing, whiteBucket, blackPawnAttacks, chess::Color::WHITE, board, pieceCount, coefficients) -
+                   KingAdditionalEvaluation(blackKing, blackBucket, whitePawnAttacks, chess::Color::BLACK, board, pieceCount, coefficients);
 
     IncrementCoefficients(
         coefficients,

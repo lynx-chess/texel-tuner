@@ -5932,21 +5932,21 @@ TunableArray PawnPhalanxBonus(
 	0);
 
 TunableArray SemiOpenFileKingPenalty(
-	chess::PieceType::PAWN,
-	std::vector<int>{-42, -24, -0, -1, -13, -12, -32, -37},
-	std::vector<int>{-1, 5, -5, -5, 0, -0, 8, 14},
+	chess::PieceType::KING,
+	std::vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 , 21, 22},
+	std::vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 , 21, 22},
 	0,
 	0);
 
 TunableArray OpenFileKingPenalty(
 	chess::PieceType::PAWN,
-	std::vector<int>{-117, -71, -35, -51, -44, -60, -71, -73},
-	std::vector<int>{19, -1, -11, -3, -2, 5, -5, 20},
+	std::vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 , 21, 22},
+	std::vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 , 21, 22},
 	0,
 	0);
 
 TunableArray ConnectedRooksBonus(
-	chess::PieceType::PAWN,
+	chess::PieceType::ROOK,
 	std::vector<int>{-2, 22, 20, 21, 29, 32, 22, 28},
 	std::vector<int>{5, 6, 9, 9, -1, 5, 25, 0},
 	0,
@@ -5960,14 +5960,14 @@ TunableArray PawnIslandsBonus(
 	0);
 
 TunableArray BadBishop_SameColorPawnsPenalty(
-	chess::PieceType::PAWN,
+	chess::PieceType::BISHOP,
 	std::vector<int>{140, 141, 139, 133, 126, 120, 114, 106, 103},
 	std::vector<int>{164, 160, 146, 136, 128, 118, 109, 97, 85},
 	0,
 	0);
 
 TunableArray BadBishop_BlockedCentralPawnsPenalty(
-	chess::PieceType::PAWN,
+	chess::PieceType::BISHOP,
 	std::vector<int>{138, 135, 130, 127, 123, 119, 0, 0, 0},
 	std::vector<int>{155, 142, 119, 97, 89, 101, 0, 0, 0},
 	0,
