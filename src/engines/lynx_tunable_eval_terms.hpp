@@ -5931,20 +5931,6 @@ TunableArray PawnPhalanxBonus(
 	1,
 	0);
 
-TunableArray SemiOpenFileKingPenalty(
-	chess::PieceType::PAWN,
-	std::vector<int>{-42, -24, -0, -1, -13, -12, -32, -37},
-	std::vector<int>{-1, 5, -5, -5, 0, -0, 8, 14},
-	0,
-	0);
-
-TunableArray OpenFileKingPenalty(
-	chess::PieceType::PAWN,
-	std::vector<int>{-117, -71, -35, -51, -44, -60, -71, -73},
-	std::vector<int>{19, -1, -11, -3, -2, 5, -5, 20},
-	0,
-	0);
-
 TunableArray ConnectedRooksBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{-2, 22, 20, 21, 29, 32, 22, 28},
@@ -6329,3 +6315,115 @@ TunableArrayBucketed PassedPawnBonusNoEnemiesAheadEnemyBonus(
 
 	}},
 	1);
+
+TunableArrayBucketed OpenFileKingPenalty(
+	chess::PieceType::PAWN,
+	std::array<std::vector<int>, PSQTBucketCount>{{
+		std::vector<int>{0, -17, -17, 23, 42, 74, 25, 7},
+		std::vector<int>{0, -3, 4, 16, 18, 85, 96, 7},
+		std::vector<int>{0, -1, -14, -6, 6, 73, 25, 7},
+		std::vector<int>{0, -4, 8, 4, 14, 40, 65, 7},
+		std::vector<int>{0, 7, 6, 15, -4, 62, 49, 7},
+		std::vector<int>{0, -20, -15, 13, 8, 39, 41, 7},
+		std::vector<int>{0, 8, -1, 9, 8, 68, 130, 7},
+		std::vector<int>{0, -2, 6, -1, 16, 72, 100, 7},
+		std::vector<int>{0, -8, 1, -0, 21, 31, -4, 7},
+		std::vector<int>{0, 3, 5, 17, 22, 20, 30, 7},
+		std::vector<int>{0, 2, 11, 15, 26, 12, 39, 7},
+		std::vector<int>{0, 10, 11, 20, 25, 15, 38, 7},
+		std::vector<int>{0, 2, 7, 10, 13, 15, -6, 7},
+		std::vector<int>{0, 1, -10, 2, 16, 34, 27, 7},
+		std::vector<int>{0, 2, -7, 6, 22, 46, 50, 7},
+		std::vector<int>{0, -3, -6, 37, 67, 84, 54, 7},
+		std::vector<int>{0, 2, -15, 24, 50, 83, 39, 7},
+		std::vector<int>{0, -1, 19, 13, 60, 76, 40, 7},
+		std::vector<int>{0, 26, -1, 14, 73, 84, 48, 7},
+		std::vector<int>{0, 49, 21, 32, 63, 94, 64, 7},
+		std::vector<int>{0, 40, 21, 22, 30, 77, 36, 7},
+		std::vector<int>{0, 22, -8, 14, 60, 68, 44, 7},
+		std::vector<int>{0, -13, -3, 28, 49, 94, 54, 7},
+
+	}},
+	std::array<std::vector<int>, PSQTBucketCount>{{
+		std::vector<int>{0, -17, -17, 23, 42, 74, 25, 7},
+		std::vector<int>{0, -3, 4, 16, 18, 85, 96, 7},
+		std::vector<int>{0, -1, -14, -6, 6, 73, 25, 7},
+		std::vector<int>{0, -4, 8, 4, 14, 40, 65, 7},
+		std::vector<int>{0, 7, 6, 15, -4, 62, 49, 7},
+		std::vector<int>{0, -20, -15, 13, 8, 39, 41, 7},
+		std::vector<int>{0, 8, -1, 9, 8, 68, 130, 7},
+		std::vector<int>{0, -2, 6, -1, 16, 72, 100, 7},
+		std::vector<int>{0, -8, 1, -0, 21, 31, -4, 7},
+		std::vector<int>{0, 3, 5, 17, 22, 20, 30, 7},
+		std::vector<int>{0, 2, 11, 15, 26, 12, 39, 7},
+		std::vector<int>{0, 10, 11, 20, 25, 15, 38, 7},
+		std::vector<int>{0, 2, 7, 10, 13, 15, -6, 7},
+		std::vector<int>{0, 1, -10, 2, 16, 34, 27, 7},
+		std::vector<int>{0, 2, -7, 6, 22, 46, 50, 7},
+		std::vector<int>{0, -3, -6, 37, 67, 84, 54, 7},
+		std::vector<int>{0, 2, -15, 24, 50, 83, 39, 7},
+		std::vector<int>{0, -1, 19, 13, 60, 76, 40, 7},
+		std::vector<int>{0, 26, -1, 14, 73, 84, 48, 7},
+		std::vector<int>{0, 49, 21, 32, 63, 94, 64, 7},
+		std::vector<int>{0, 40, 21, 22, 30, 77, 36, 7},
+		std::vector<int>{0, 22, -8, 14, 60, 68, 44, 7},
+		std::vector<int>{0, -13, -3, 28, 49, 94, 54, 7},
+
+	}},
+	0);
+
+TunableArrayBucketed SemiOpenFileKingPenalty(
+	chess::PieceType::PAWN,
+	std::array<std::vector<int>, PSQTBucketCount>{{
+		std::vector<int>{0, -17, -17, 23, 42, 74, 25, 7},
+		std::vector<int>{0, -3, 4, 16, 18, 85, 96, 7},
+		std::vector<int>{0, -1, -14, -6, 6, 73, 25, 7},
+		std::vector<int>{0, -4, 8, 4, 14, 40, 65, 7},
+		std::vector<int>{0, 7, 6, 15, -4, 62, 49, 7},
+		std::vector<int>{0, -20, -15, 13, 8, 39, 41, 7},
+		std::vector<int>{0, 8, -1, 9, 8, 68, 130, 7},
+		std::vector<int>{0, -2, 6, -1, 16, 72, 100, 7},
+		std::vector<int>{0, -8, 1, -0, 21, 31, -4, 7},
+		std::vector<int>{0, 3, 5, 17, 22, 20, 30, 7},
+		std::vector<int>{0, 2, 11, 15, 26, 12, 39, 7},
+		std::vector<int>{0, 10, 11, 20, 25, 15, 38, 7},
+		std::vector<int>{0, 2, 7, 10, 13, 15, -6, 7},
+		std::vector<int>{0, 1, -10, 2, 16, 34, 27, 7},
+		std::vector<int>{0, 2, -7, 6, 22, 46, 50, 7},
+		std::vector<int>{0, -3, -6, 37, 67, 84, 54, 7},
+		std::vector<int>{0, 2, -15, 24, 50, 83, 39, 7},
+		std::vector<int>{0, -1, 19, 13, 60, 76, 40, 7},
+		std::vector<int>{0, 26, -1, 14, 73, 84, 48, 7},
+		std::vector<int>{0, 49, 21, 32, 63, 94, 64, 7},
+		std::vector<int>{0, 40, 21, 22, 30, 77, 36, 7},
+		std::vector<int>{0, 22, -8, 14, 60, 68, 44, 7},
+		std::vector<int>{0, -13, -3, 28, 49, 94, 54, 7},
+
+	}},
+	std::array<std::vector<int>, PSQTBucketCount>{{
+		std::vector<int>{0, -17, -17, 23, 42, 74, 25, 7},
+		std::vector<int>{0, -3, 4, 16, 18, 85, 96, 7},
+		std::vector<int>{0, -1, -14, -6, 6, 73, 25, 7},
+		std::vector<int>{0, -4, 8, 4, 14, 40, 65, 7},
+		std::vector<int>{0, 7, 6, 15, -4, 62, 49, 7},
+		std::vector<int>{0, -20, -15, 13, 8, 39, 41, 7},
+		std::vector<int>{0, 8, -1, 9, 8, 68, 130, 7},
+		std::vector<int>{0, -2, 6, -1, 16, 72, 100, 7},
+		std::vector<int>{0, -8, 1, -0, 21, 31, -4, 7},
+		std::vector<int>{0, 3, 5, 17, 22, 20, 30, 7},
+		std::vector<int>{0, 2, 11, 15, 26, 12, 39, 7},
+		std::vector<int>{0, 10, 11, 20, 25, 15, 38, 7},
+		std::vector<int>{0, 2, 7, 10, 13, 15, -6, 7},
+		std::vector<int>{0, 1, -10, 2, 16, 34, 27, 7},
+		std::vector<int>{0, 2, -7, 6, 22, 46, 50, 7},
+		std::vector<int>{0, -3, -6, 37, 67, 84, 54, 7},
+		std::vector<int>{0, 2, -15, 24, 50, 83, 39, 7},
+		std::vector<int>{0, -1, 19, 13, 60, 76, 40, 7},
+		std::vector<int>{0, 26, -1, 14, 73, 84, 48, 7},
+		std::vector<int>{0, 49, 21, 32, 63, 94, 64, 7},
+		std::vector<int>{0, 40, 21, 22, 30, 77, 36, 7},
+		std::vector<int>{0, 22, -8, 14, 60, 68, 44, 7},
+		std::vector<int>{0, -13, -3, 28, 49, 94, 54, 7},
+
+	}},
+	0);
