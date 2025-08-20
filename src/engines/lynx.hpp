@@ -58,7 +58,9 @@ const static size_t numParameters = psqtIndexCount +
                                     PassedPawnBonusNoEnemiesAheadBonus.size +     // PSQTBucketCount * 6, removing 1 rank values
                                     PassedPawnBonusNoEnemiesAheadEnemyBonus.size +// PSQTBucketCount * 6, removing 1 rank values
                                     OpenFileRookBonus.size +
-                                    SemiOpenFileRookBonus.size;
+                                    SemiOpenFileRookBonus.size +  
+                                    OpenFileRookEnemyBonus.size +
+                                    SemiOpenFileRookEnemyBonus.size;
 
 class Lynx
 {
@@ -162,6 +164,8 @@ public:
         PassedPawnBonusNoEnemiesAheadEnemyBonus.add(result);
         OpenFileRookBonus.add(result);
         SemiOpenFileRookBonus.add(result);
+        OpenFileRookEnemyBonus.add(result);
+        SemiOpenFileRookEnemyBonus.add(result);
 
         assert(PassedPawnBonus.bucketTunableSize == 6);
         assert(PassedPawnEnemyBonus.bucketTunableSize == 6);
@@ -169,6 +173,8 @@ public:
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
         assert(OpenFileRookBonus.bucketTunableSize == 8);
         assert(SemiOpenFileRookBonus.bucketTunableSize == 8);
+        assert(OpenFileRookEnemyBonus.bucketTunableSize == 8);
+        assert(SemiOpenFileRookEnemyBonus.bucketTunableSize == 8);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(IsolatedPawnPenalty.tunableSize == 8);
@@ -403,7 +409,13 @@ public:
 
         name = NAME(SemiOpenFileRookBonus);
         SemiOpenFileRookBonus.to_csharp(parameters, ss, name);
-        
+
+        name = NAME(OpenFileRookEnemyBonus);
+        OpenFileRookEnemyBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(SemiOpenFileRookEnemyBonus);
+        SemiOpenFileRookEnemyBonus.to_csharp(parameters, ss, name);
+
         if (isFinal)
         {
             std::cout << ss.str() << std::endl;
@@ -556,6 +568,12 @@ public:
         name = NAME(SemiOpenFileRookBonus);
         SemiOpenFileRookBonus.to_cpp(parameters, ss, name);
 
+        name = NAME(OpenFileRookEnemyBonus);
+        OpenFileRookEnemyBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(SemiOpenFileRookEnemyBonus);
+        SemiOpenFileRookEnemyBonus.to_cpp(parameters, ss, name);
+
         if (isFinal)
         {
             std::cout << ss.str() << std::endl;
@@ -669,7 +687,7 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     return packedBonus;
 }
 
-int RookAdditonalEvaluation(int squareIndex, int bucket, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+int RookAdditonalEvaluation(int squareIndex, int bucket, int oppositeSideBucket, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
     const auto attacks = chess::attacks::rook(static_cast<chess::Square>(squareIndex), occupancy).getBits();
@@ -690,6 +708,9 @@ int RookAdditonalEvaluation(int squareIndex, int bucket, const u64 opponentPawnA
 
         packedBonus += OpenFileRookBonus.packed(bucket, file);
         IncrementCoefficients(coefficients, OpenFileRookBonus.index(bucket, file), color);
+
+        packedBonus += OpenFileRookEnemyBonus.packed(oppositeSideBucket, file);
+        IncrementCoefficients(coefficients, OpenFileRookEnemyBonus.index(oppositeSideBucket, file), color);
     }
     else
     {
@@ -700,6 +721,9 @@ int RookAdditonalEvaluation(int squareIndex, int bucket, const u64 opponentPawnA
 
             packedBonus += SemiOpenFileRookBonus.packed(bucket, file);
             IncrementCoefficients(coefficients, SemiOpenFileRookBonus.index(bucket, file), color);
+
+            packedBonus += SemiOpenFileRookEnemyBonus.packed(oppositeSideBucket, file);
+            IncrementCoefficients(coefficients, SemiOpenFileRookEnemyBonus.index(oppositeSideBucket, file), color);
         }
     }
 
@@ -1164,7 +1188,7 @@ int AdditionalPieceEvaluation(int pieceSquareIndex, int pieceIndex, int bucket, 
 
     case 3:
     case 9:
-        return RookAdditonalEvaluation(pieceSquareIndex, bucket, opponentPawnAttacks, board, color, coefficients);
+        return RookAdditonalEvaluation(pieceSquareIndex, bucket, oppositeSideBucket, opponentPawnAttacks, board, color, coefficients);
 
     case 2:
     case 8:
