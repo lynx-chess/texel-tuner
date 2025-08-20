@@ -39,7 +39,6 @@ const static size_t numParameters = psqtIndexCount +
                                     FriendlyKingDistanceToPassedPawnBonus.tunableSize + // 7, removing start
                                     EnemyKingDistanceToPassedPawnPenalty.tunableSize +  // 7, removing start
                                     BackwardsPawnPenalty.tunableSize +                  // 7, removing start
-                                    VirtualKingMobilityBonus.tunableSize +              // 28
                                     KnightMobilityBonus.tunableSize +                   // 9
                                     BishopMobilityBonus.tunableSize +                   // 14, removing end
                                     RookMobilityBonus.tunableSize +                     // 15
@@ -56,6 +55,7 @@ const static size_t numParameters = psqtIndexCount +
                                     KingThreatsBonus_Defended.tunableSize +
 
                                     // Bucketed arrays
+                                    VirtualKingMobilityBonus.size +               // 28
                                     PassedPawnBonus.size +                        // PSQTBucketCount * 6, removing 1 rank values
                                     PassedPawnEnemyBonus.size +                   // PSQTBucketCount * 6, removing 1 rank values
                                     PassedPawnBonusNoEnemiesAheadBonus.size +     // PSQTBucketCount * 6, removing 1 rank values
@@ -143,7 +143,6 @@ public:
         FriendlyKingDistanceToPassedPawnBonus.add(result);
         EnemyKingDistanceToPassedPawnPenalty.add(result);
         BackwardsPawnPenalty.add(result);
-        VirtualKingMobilityBonus.add(result);
         KnightMobilityBonus.add(result);
         BishopMobilityBonus.add(result);
         RookMobilityBonus.add(result);
@@ -160,11 +159,13 @@ public:
         KingThreatsBonus_Defended.add(result);
 
         // Bucketed arrays
+        VirtualKingMobilityBonus.add(result);
         PassedPawnBonus.add(result);
         PassedPawnEnemyBonus.add(result);
         PassedPawnBonusNoEnemiesAheadBonus.add(result);
         PassedPawnBonusNoEnemiesAheadEnemyBonus.add(result);
 
+        assert(VirtualKingMobilityBonus.bucketTunableSize == 28);
         assert(PassedPawnBonus.bucketTunableSize == 6);
         assert(PassedPawnEnemyBonus.bucketTunableSize == 6);
         assert(PassedPawnBonusNoEnemiesAheadBonus.bucketTunableSize == 6);
@@ -178,7 +179,6 @@ public:
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
         assert(BackwardsPawnPenalty.tunableSize == 7);
-        assert(VirtualKingMobilityBonus.tunableSize == 28);
         assert(KnightMobilityBonus.tunableSize == 9);
         assert(BishopMobilityBonus.tunableSize == 14);
         assert(RookMobilityBonus.tunableSize == 15);
@@ -352,9 +352,6 @@ public:
         name = NAME(BackwardsPawnPenalty);
         BackwardsPawnPenalty.to_csharp(parameters, ss, name);
 
-        name = NAME(VirtualKingMobilityBonus);
-        VirtualKingMobilityBonus.to_csharp(parameters, ss, name);
-
         name = NAME(KnightMobilityBonus);
         KnightMobilityBonus.to_csharp(parameters, ss, name, mobilityPieceValues);
 
@@ -398,6 +395,9 @@ public:
         KingThreatsBonus_Defended.to_csharp(parameters, ss, name);
 
         // Bucketed arrays
+        name = NAME(VirtualKingMobilityBonus);
+        VirtualKingMobilityBonus.to_csharp(parameters, ss, name);
+
         name = NAME(PassedPawnBonus);
         PassedPawnBonus.to_csharp(parameters, ss, name);
 
@@ -507,9 +507,6 @@ public:
         name = NAME(BackwardsPawnPenalty);
         BackwardsPawnPenalty.to_cpp(parameters, ss, name);
 
-        name = NAME(VirtualKingMobilityBonus);
-        VirtualKingMobilityBonus.to_cpp(parameters, ss, name);
-
         name = NAME(KnightMobilityBonus);
         KnightMobilityBonus.to_cpp(parameters, ss, name, mobilityPieceValues);
 
@@ -553,6 +550,9 @@ public:
         KingThreatsBonus_Defended.to_cpp(parameters, ss, name);
 
         // Bucketed arrays
+        name = NAME(VirtualKingMobilityBonus);
+        VirtualKingMobilityBonus.to_cpp(parameters, ss, name);
+
         name = NAME(PassedPawnBonus);
         PassedPawnBonus.to_cpp(parameters, ss, name);
 
@@ -819,7 +819,7 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, co
     return packedBonus;
 }
 
-int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const int pieceCount[], coefficients_t &coefficients)
+int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const int pieceCount[], coefficients_t &coefficients)
 {
     // Virtual mobility (as if Queen)
     const auto mobilityCount = chess::builtin::popcount(
@@ -827,9 +827,9 @@ int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, che
         (~__builtin_bswap64(board.us(kingSide).getBits())) &
         (~opponentPawnAttacks));
 
-    IncrementCoefficients(coefficients, VirtualKingMobilityBonus.index + mobilityCount, kingSide);
+    IncrementCoefficients(coefficients, VirtualKingMobilityBonus.index(bucket, mobilityCount), kingSide);
 
-    int packedBonus = VirtualKingMobilityBonus.packed[mobilityCount];
+    int packedBonus = VirtualKingMobilityBonus.packed(bucket, mobilityCount);
 
     const auto kingSideOffset = kingSide == chess::Color::WHITE ? 0 : 6;
 
@@ -1342,8 +1342,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                    PackedPositionalTables(0, blackBucket, 11, blackKing) +
                    PackedPositionalTables(1, blackBucket, 5, whiteKing) +
                    PackedPositionalTables(1, whiteBucket, 11, blackKing) +
-                   KingAdditionalEvaluation(whiteKing, blackPawnAttacks, chess::Color::WHITE, board, pieceCount, coefficients) -
-                   KingAdditionalEvaluation(blackKing, whitePawnAttacks, chess::Color::BLACK, board, pieceCount, coefficients);
+                   KingAdditionalEvaluation(whiteKing, whiteBucket, blackPawnAttacks, chess::Color::WHITE, board, pieceCount, coefficients) -
+                   KingAdditionalEvaluation(blackKing, blackBucket, whitePawnAttacks, chess::Color::BLACK, board, pieceCount, coefficients);
 
     IncrementCoefficients(
         coefficients,
