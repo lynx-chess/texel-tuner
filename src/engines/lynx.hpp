@@ -26,6 +26,7 @@ const static size_t numParameters = psqtIndexCount +
 
                                     // Arrays
                                     PieceProtectedByPawnBonus.tunableSize + // 5, removing king
+                                    CentralPawnControlBonus.tunableSize +        // 8, files
                                     IsolatedPawnPenalty.tunableSize +       // 8, files
                                     PawnPhalanxBonus.tunableSize +          // 6
                                     ConnectedRooksBonus.tunableSize +
@@ -129,6 +130,7 @@ public:
 
         // Arrays
         PieceProtectedByPawnBonus.add(result);
+        CentralPawnControlBonus.add(result);
         IsolatedPawnPenalty.add(result);
         PawnPhalanxBonus.add(result);
         ConnectedRooksBonus.add(result);
@@ -171,6 +173,7 @@ public:
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
+        assert(CentralPawnControlBonus.tunableSize == 9);
         assert(IsolatedPawnPenalty.tunableSize == 8);
         assert(PawnPhalanxBonus.tunableSize == 6);
         assert(OpenFileRookBonus.tunableSize == 8);
@@ -312,6 +315,9 @@ public:
         // Arrays
         name = NAME(PieceProtectedByPawnBonus);
         PieceProtectedByPawnBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(CentralPawnControlBonus);
+        CentralPawnControlBonus.to_csharp(parameters, ss, name);
 
         name = NAME(IsolatedPawnPenalty);
         IsolatedPawnPenalty.to_csharp(parameters, ss, name);
@@ -458,6 +464,10 @@ public:
         // Arrays
         name = NAME(PieceProtectedByPawnBonus);
         PieceProtectedByPawnBonus.to_cpp(parameters, ss, name);
+        ss << "\n";
+
+        name = NAME(CentralPawnControlBonus);
+        CentralPawnControlBonus.to_cpp(parameters, ss, name);
         ss << "\n";
 
         name = NAME(IsolatedPawnPenalty);
@@ -819,7 +829,7 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, co
     return packedBonus;
 }
 
-int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const int pieceCount[], coefficients_t &coefficients)
+int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, const chess::Color kingSide, const chess::Board &board, const int pieceCount[], coefficients_t &coefficients)
 {
     // Virtual mobility (as if Queen)
     const auto mobilityCount = chess::builtin::popcount(
@@ -896,6 +906,17 @@ int PawnIslands(const u64 bitboard)
     }
 
     return islandCount;
+}
+
+int CentralPawnControl(const chess::Board &board, const std::array<u64, 12> &attacks, coefficients_t &coefficients)
+{
+    const auto whiteCentralPawnCount = ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | attacks[static_cast<int>(chess::PieceType::PAWN) + 0]) & CentralSquaresControl_WhitePawns) % 9;
+    const auto blackCentralPawnCount = ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK) | attacks[static_cast<int>(chess::PieceType::PAWN) + 6]) & CentralSquaresControl_BlackPawns) % 9;
+
+    IncrementCoefficients(coefficients, CentralPawnControlBonus.index - CentralPawnControlBonus.start + whiteCentralPawnCount, chess::Color::WHITE);
+    IncrementCoefficients(coefficients, CentralPawnControlBonus.index - CentralPawnControlBonus.start + blackCentralPawnCount, chess::Color::BLACK);
+
+    return CentralPawnControlBonus.packed[whiteCentralPawnCount] - CentralPawnControlBonus.packed[blackCentralPawnCount];
 }
 
 std::array<u64, 12> CalculateAttacks(const chess::Board &board)
@@ -1398,6 +1419,9 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     packedScore += PawnIslandsBonus.packed[whitePawnIslands] - PawnIslandsBonus.packed[blackPawnIslands];
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + whitePawnIslands - PawnIslandsBonus.start, chess::Color::WHITE);
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
+
+    // Central pawn control
+    packedScore += CentralPawnControl(board, attacks, coefficients);
 
     // Threats
     packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks);
