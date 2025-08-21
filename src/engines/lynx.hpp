@@ -17,8 +17,6 @@ using u64 = uint64_t;
 constexpr int enemyKingBaseIndex = psqtIndexCount / 2;
 const static size_t numParameters = psqtIndexCount +
                                     // DoubledPawnPenalty.size
-                                    SemiOpenFileKingPenalty.size +
-                                    OpenFileKingPenalty.size +
                                     KingShieldBonus.size +
                                     BishopPairBonus.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
@@ -57,10 +55,12 @@ const static size_t numParameters = psqtIndexCount +
                                     KingThreatsBonus_Defended.tunableSize +
 
                                     // Bucketed arrays
-                                    PassedPawnBonus.size +                        // PSQTBucketCount * 6, removing 1 rank values
-                                    PassedPawnEnemyBonus.size +                   // PSQTBucketCount * 6, removing 1 rank values
-                                    PassedPawnBonusNoEnemiesAheadBonus.size +     // PSQTBucketCount * 6, removing 1 rank values
-                                    PassedPawnBonusNoEnemiesAheadEnemyBonus.size; // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnBonus.size +                         // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnEnemyBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnBonusNoEnemiesAheadBonus.size +      // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnBonusNoEnemiesAheadEnemyBonus.size + // PSQTBucketCount * 6, removing 1 rank values
+                                    OpenFileKingPenalty.size +
+                                    SemiOpenFileKingPenalty.size;
 
 class Lynx
 {
@@ -121,8 +121,6 @@ public:
         add_piece_values(5, 0, 64, 0); // Kings
 
         // DoubledPawnPenalty.add(result);
-        SemiOpenFileKingPenalty.add(result);
-        OpenFileKingPenalty.add(result);
         KingShieldBonus.add(result);
         BishopPairBonus.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
@@ -133,6 +131,8 @@ public:
         CentralPawnControlBonus.add(result);
         IsolatedPawnPenalty.add(result);
         PawnPhalanxBonus.add(result);
+        OpenFileKingPenalty.add(result);
+        SemiOpenFileKingPenalty.add(result);
         ConnectedRooksBonus.add(result);
         PawnIslandsBonus.add(result);
         BadBishop_SameColorPawnsPenalty.add(result);
@@ -171,6 +171,8 @@ public:
         assert(PassedPawnEnemyBonus.bucketTunableSize == 6);
         assert(PassedPawnBonusNoEnemiesAheadBonus.bucketTunableSize == 6);
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
+        assert(OpenFileKingPenalty.bucketTunableSize == 8);
+        assert(SemiOpenFileKingPenalty.bucketTunableSize == 8);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(IsolatedPawnPenalty.tunableSize == 8);
@@ -293,12 +295,6 @@ public:
         ss << "public static class EvaluationParams" << std::endl
            << "{" << std::endl;
 
-        name = NAME(SemiOpenFileKingPenalty);
-        SemiOpenFileKingPenalty.to_csharp(parameters, ss, name);
-
-        name = NAME(OpenFileKingPenalty);
-        OpenFileKingPenalty.to_csharp(parameters, ss, name);
-
         name = NAME(KingShieldBonus);
         KingShieldBonus.to_csharp(parameters, ss, name);
 
@@ -415,6 +411,12 @@ public:
         name = NAME(PassedPawnBonusNoEnemiesAheadEnemyBonus);
         PassedPawnBonusNoEnemiesAheadEnemyBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(OpenFileKingPenalty);
+        OpenFileKingPenalty.to_csharp(parameters, ss, name);
+
+        name = NAME(SemiOpenFileKingPenalty);
+        SemiOpenFileKingPenalty.to_csharp(parameters, ss, name);
+
         if (isFinal)
         {
             std::cout << ss.str() << std::endl;
@@ -441,12 +443,6 @@ public:
 
         // name = NAME(DoubledPawnPenalty);
         // DoubledPawnPenalty.to_json(parameters, ss, name);
-
-        name = NAME(SemiOpenFileKingPenalty);
-        SemiOpenFileKingPenalty.to_cpp(parameters, ss, name);
-
-        name = NAME(OpenFileKingPenalty);
-        OpenFileKingPenalty.to_cpp(parameters, ss, name);
 
         name = NAME(KingShieldBonus);
         KingShieldBonus.to_cpp(parameters, ss, name);
@@ -573,6 +569,12 @@ public:
 
         name = NAME(PassedPawnBonusNoEnemiesAheadEnemyBonus);
         PassedPawnBonusNoEnemiesAheadEnemyBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(OpenFileKingPenalty);
+        OpenFileKingPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(SemiOpenFileKingPenalty);
+        SemiOpenFileKingPenalty.to_cpp(parameters, ss, name);
 
         if (isFinal)
         {
@@ -828,7 +830,7 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, co
     return packedBonus;
 }
 
-int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, const chess::Color kingSide, const chess::Board &board, const int pieceCount[], coefficients_t &coefficients)
+int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const int pieceCount[], coefficients_t &coefficients)
 {
     // Virtual mobility (as if Queen)
     const auto mobilityCount = chess::builtin::popcount(
@@ -848,16 +850,18 @@ int KingAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, con
         // King on open file
         if (((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) & FileMasks[squareIndex]) == 0) // isOpenFile
         {
-            // std::cout << "Open: " << (kingSide == chess::Color::WHITE ? "White" : "Black") << std::endl;
-            packedBonus += OpenFileKingPenalty.packed;
-            IncrementCoefficients(coefficients, OpenFileKingPenalty.index, kingSide);
+            const auto file = File[squareIndex];
+
+            packedBonus += OpenFileKingPenalty.packed(bucket, file);
+            IncrementCoefficients(coefficients, OpenFileKingPenalty.index(bucket, file), kingSide);
         }
         // King on semi-open file
         else if ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide) & FileMasks[squareIndex]) == 0) // isSemiOpenFile
         {
-            // std::cout << "Semiopen: " << (kingSide == chess::Color::WHITE ? "White" : "Black") << std::endl;
-            packedBonus += SemiOpenFileKingPenalty.packed;
-            IncrementCoefficients(coefficients, SemiOpenFileKingPenalty.index, kingSide);
+            const auto file = File[squareIndex];
+
+            packedBonus += SemiOpenFileKingPenalty.packed(bucket, file);
+            IncrementCoefficients(coefficients, SemiOpenFileKingPenalty.index(bucket, file), kingSide);
         }
     }
 
@@ -1366,8 +1370,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                    PackedPositionalTables(0, blackBucket, 11, blackKing) +
                    PackedPositionalTables(1, blackBucket, 5, whiteKing) +
                    PackedPositionalTables(1, whiteBucket, 11, blackKing) +
-                   KingAdditionalEvaluation(whiteKing, blackPawnAttacks, chess::Color::WHITE, board, pieceCount, coefficients) -
-                   KingAdditionalEvaluation(blackKing, whitePawnAttacks, chess::Color::BLACK, board, pieceCount, coefficients);
+                   KingAdditionalEvaluation(whiteKing, whiteBucket, blackPawnAttacks, chess::Color::WHITE, board, pieceCount, coefficients) -
+                   KingAdditionalEvaluation(blackKing, blackBucket, whitePawnAttacks, chess::Color::BLACK, board, pieceCount, coefficients);
 
     IncrementCoefficients(
         coefficients,
