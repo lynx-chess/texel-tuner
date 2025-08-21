@@ -5904,8 +5904,6 @@ constexpr static std::array<std::array<int, 64>, PSQTBucketCount> EndGameEnemyKi
 		},
 	}};
 
-TunableSingle SemiOpenFileKingPenalty(-21, 4);
-TunableSingle OpenFileKingPenalty(-58, 1);
 TunableSingle KingShieldBonus(23, 0);
 TunableSingle BishopPairBonus(28, 68);
 TunableSingle BishopInUnblockedLongDiagonalBonus(19, 13);
@@ -6337,117 +6335,6 @@ TunableArrayBucketed PassedPawnBonusNoEnemiesAheadEnemyBonus(
 	}},
 	1);
 
-TunableArrayBucketed OpenFileKingPenalty(
-	chess::PieceType::PAWN,
-	std::array<std::vector<int>, PSQTBucketCount>{{
-		std::vector<int>{-113, 0, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, -65, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, -33, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, -41, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, -42, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, -34, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, -67, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, 0, -73},
-		std::vector<int>{0, -85, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, -39, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, -67, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, -70, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, -88, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, -65, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, 0, -68},
-		std::vector<int>{-94, 0, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, -52, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, -54, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, -37, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, -6, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, -108, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, -40, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, 0, -4},
-
-	}},
-	std::array<std::vector<int>, PSQTBucketCount>{{
-		std::vector<int>{8, 0, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, -14, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, -15, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 2, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, -0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, -5, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, -18, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, 0, 7},
-		std::vector<int>{0, 8, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, -10, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, -4, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 1, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 10, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, 0, 15},
-		std::vector<int>{22, 0, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, -10, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, -4, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 13, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 10, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 18, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, -7, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, 0, 38},
-
-	}},
-	0);
-
-TunableArrayBucketed SemiOpenFileKingPenalty(
-	chess::PieceType::PAWN,
-	std::array<std::vector<int>, PSQTBucketCount>{{
-		std::vector<int>{-45, 0, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, -25, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, -1, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 6, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, -11, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 9, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, -28, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, 0, -33},
-		std::vector<int>{0, -28, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, -3, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, -8, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, -18, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, -37, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, -28, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, 0, -40},
-		std::vector<int>{-40, 0, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, -64, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, -48, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, -35, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, -55, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, -104, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, -49, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, 0, -89},
-
-	}},
-	std::array<std::vector<int>, PSQTBucketCount>{{
-		std::vector<int>{4, 0, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 4, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, -6, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, -14, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, -5, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, -11, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, -4, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, 0, 10},
-		std::vector<int>{0, 11, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, -3, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, -3, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 1, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 7, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, 18, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, 0, 15},
-		std::vector<int>{-10, 0, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, -19, 0, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, -14, 0, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 4, 0, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 14, 0, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 13, 0, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, -9, 0},
-		std::vector<int>{0, 0, 0, 0, 0, 0, 0, 13},
-
-	}},
-	0);
 TunableArrayBucketed OpenFileKingPenalty(
 	chess::PieceType::PAWN,
 	std::array<std::vector<int>, PSQTBucketCount>{{
