@@ -26,7 +26,7 @@ const static size_t numParameters = psqtIndexCount +
 
                                     // Arrays
                                     PieceProtectedByPawnBonus.tunableSize + // 5, removing king
-                                    CentralPawnControlBonus.tunableSize +        // 8, files
+                                    CentralPawnControlBonus.size +          // 8, files
                                     IsolatedPawnPenalty.tunableSize +       // 8, files
                                     PawnPhalanxBonus.tunableSize +          // 6
                                     ConnectedRooksBonus.tunableSize +
@@ -173,7 +173,6 @@ public:
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
-        assert(CentralPawnControlBonus.tunableSize == 9);
         assert(IsolatedPawnPenalty.tunableSize == 8);
         assert(PawnPhalanxBonus.tunableSize == 6);
         assert(OpenFileRookBonus.tunableSize == 8);
@@ -910,13 +909,17 @@ int PawnIslands(const u64 bitboard)
 
 int CentralPawnControl(const chess::Board &board, const std::array<u64, 12> &attacks, coefficients_t &coefficients)
 {
-    const auto whiteCentralPawnCount = ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | attacks[static_cast<int>(chess::PieceType::PAWN) + 0]) & CentralSquaresControl_WhitePawns) % 9;
-    const auto blackCentralPawnCount = ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK) | attacks[static_cast<int>(chess::PieceType::PAWN) + 6]) & CentralSquaresControl_BlackPawns) % 9;
+    const auto whiteCentralPawnCount = ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | attacks[static_cast<int>(chess::PieceType::PAWN) + 0]) &
+                                        (CentralSquaresControl_WhitePawns)) %
+                                       9;
+    const auto blackCentralPawnCount = ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK) | attacks[static_cast<int>(chess::PieceType::PAWN) + 6]) &
+                                        (CentralSquaresControl_BlackPawns)) %
+                                       9;
 
-    IncrementCoefficients(coefficients, CentralPawnControlBonus.index - CentralPawnControlBonus.start + whiteCentralPawnCount, chess::Color::WHITE);
-    IncrementCoefficients(coefficients, CentralPawnControlBonus.index - CentralPawnControlBonus.start + blackCentralPawnCount, chess::Color::BLACK);
+    IncrementCoefficients(coefficients, CentralPawnControlBonus.index, chess::Color::WHITE, whiteCentralPawnCount);
+    IncrementCoefficients(coefficients, CentralPawnControlBonus.index, chess::Color::BLACK, blackCentralPawnCount);
 
-    return CentralPawnControlBonus.packed[whiteCentralPawnCount] - CentralPawnControlBonus.packed[blackCentralPawnCount];
+    return CentralPawnControlBonus.packed * whiteCentralPawnCount - CentralPawnControlBonus.packed * blackCentralPawnCount;
 }
 
 std::array<u64, 12> CalculateAttacks(const chess::Board &board)

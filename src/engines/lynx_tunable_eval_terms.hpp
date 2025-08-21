@@ -5910,17 +5910,11 @@ TunableSingle KingShieldBonus(23, 0);
 TunableSingle BishopPairBonus(28, 68);
 TunableSingle BishopInUnblockedLongDiagonalBonus(19, 13);
 TunableSingle PieceAttackedByPawnPenalty(-50, -31);
+TunableSingle CentralPawnControlBonus(-50, -31);
 TunableArray PieceProtectedByPawnBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{17, -1, 6, 8, -9},
 	std::vector<int>{9, 13, 19, 12, 23},
-	0,
-	0);
-
-TunableArray CentralPawnControlBonus(
-	chess::PieceType::PAWN,
-	std::vector<int>{-2, 1, 0, -1, 3, 0, -0, 1, 4},
-	std::vector<int>{0, 1, -0, -0, -1, -1, -1, 0, -3},
 	0,
 	0);
 
