@@ -913,14 +913,12 @@ int PawnIslands(const u64 bitboard)
 
 int CentralPawnControl(const chess::Board &board, const std::array<u64, 12> &attacks, coefficients_t &coefficients)
 {
-    const auto whiteCentralPawnCount = ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE)) &
-                                        (CentralSquaresControl_WhitePawns)) %
-                                       9;
-    const auto blackCentralPawnCount = ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) &
-                                        (CentralSquaresControl_BlackPawns)) %
-                                       9;
-
-                                    //    std::cout<< whiteCentralPawnCount << " vs " << blackCentralPawnCount << std::endl;
+    const auto whiteCentralPawnCount = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) &
+                                    CentralSquaresControl_WhitePawns &
+                                    ~attacks[static_cast<int>(chess::PieceType::PAWN) + 6];
+    const auto blackCentralPawnCount = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK) &
+                                    CentralSquaresControl_BlackPawns &
+                                    ~attacks[static_cast<int>(chess::PieceType::PAWN)];
 
     IncrementCoefficients(coefficients, CentralPawnControlBonus.index, chess::Color::WHITE, whiteCentralPawnCount);
     IncrementCoefficients(coefficients, CentralPawnControlBonus.index, chess::Color::BLACK, blackCentralPawnCount);
