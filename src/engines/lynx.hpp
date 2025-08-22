@@ -911,14 +911,16 @@ int PawnIslands(const u64 bitboard)
     return islandCount;
 }
 
-int CentralPawnControl(const chess::Board &board, const std::array<u64, 12> &attacks, coefficients_t &coefficients)
+int CentralPawnControl(const chess::Board &board, const std::array<u64, 12> &attacks, const std::array<u64, 2> &attacksBySide, coefficients_t &coefficients)
 {
     const auto whiteCentralPawnCount = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) &
-                                    CentralSquaresControl_WhitePawns &
-                                    attacks[static_cast<int>(chess::PieceType::PAWN)];
+                                       CentralSquaresControl_WhitePawns &
+                                       attacksBySide[static_cast<int>(chess::Color::WHITE)] &
+                                       ~attacks[static_cast<int>(chess::PieceType::PAWN) + 6];
     const auto blackCentralPawnCount = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK) &
-                                    CentralSquaresControl_BlackPawns &
-                                    attacks[static_cast<int>(chess::PieceType::PAWN) + 6];
+                                       CentralSquaresControl_BlackPawns &
+                                       attacksBySide[static_cast<int>(chess::Color::BLACK) + 6] &
+                                       ~attacks[static_cast<int>(chess::PieceType::PAWN)];
 
     IncrementCoefficients(coefficients, CentralPawnControlBonus.index, chess::Color::WHITE, whiteCentralPawnCount);
     IncrementCoefficients(coefficients, CentralPawnControlBonus.index, chess::Color::BLACK, blackCentralPawnCount);
@@ -1428,7 +1430,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
 
     // Central pawn control
-    packedScore += CentralPawnControl(board, attacks, coefficients);
+    packedScore += CentralPawnControl(board, attacks, attacksBySide, coefficients);
 
     // Threats
     packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks);
