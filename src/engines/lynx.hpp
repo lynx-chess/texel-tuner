@@ -59,7 +59,9 @@ const static size_t numParameters = psqtIndexCount +
                                     PassedPawnBonusNoEnemiesAheadBonus.size +      // PSQTBucketCount * 6, removing 1 rank values
                                     PassedPawnBonusNoEnemiesAheadEnemyBonus.size + // PSQTBucketCount * 6, removing 1 rank values
                                     OpenFileKingPenalty.size +
-                                    SemiOpenFileKingPenalty.size;
+                                    SemiOpenFileKingPenalty.size +
+                                    OpenFileEnemyKingPenalty.size +
+                                    SemiOpenFileEnemyKingPenalty.size;
 
 class Lynx
 {
@@ -129,16 +131,12 @@ public:
         PieceProtectedByPawnBonus.add(result);
         IsolatedPawnPenalty.add(result);
         PawnPhalanxBonus.add(result);
-        OpenFileKingPenalty.add(result);
-        SemiOpenFileKingPenalty.add(result);
         ConnectedRooksBonus.add(result);
         PawnIslandsBonus.add(result);
         BadBishop_SameColorPawnsPenalty.add(result);
         BadBishop_BlockedCentralPawnsPenalty.add(result);
         SafeCheckBonus.add(result);
         UnsafeCheckBonus.add(result);
-        OpenFileRookBonus.add(result);
-        SemiOpenFileRookBonus.add(result);
 
         FriendlyKingDistanceToPassedPawnBonus.add(result);
         EnemyKingDistanceToPassedPawnPenalty.add(result);
@@ -164,6 +162,12 @@ public:
         PassedPawnEnemyBonus.add(result);
         PassedPawnBonusNoEnemiesAheadBonus.add(result);
         PassedPawnBonusNoEnemiesAheadEnemyBonus.add(result);
+        OpenFileRookBonus.add(result);
+        SemiOpenFileRookBonus.add(result);
+        OpenFileKingPenalty.add(result);
+        SemiOpenFileKingPenalty.add(result);
+        OpenFileEnemyKingPenalty.add(result);
+        SemiOpenFileEnemyKingPenalty.add(result);
 
         assert(PassedPawnBonus.bucketTunableSize == 6);
         assert(PassedPawnEnemyBonus.bucketTunableSize == 6);
@@ -171,6 +175,8 @@ public:
         assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
         assert(OpenFileKingPenalty.bucketTunableSize == 8);
         assert(SemiOpenFileKingPenalty.bucketTunableSize == 8);
+        assert(OpenFileEnemyKingPenalty.bucketTunableSize == 8);
+        assert(SemiOpenFileEnemyKingPenalty.bucketTunableSize == 8);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(IsolatedPawnPenalty.tunableSize == 8);
@@ -412,6 +418,12 @@ public:
         name = NAME(SemiOpenFileKingPenalty);
         SemiOpenFileKingPenalty.to_csharp(parameters, ss, name);
 
+        name = NAME(OpenFileEnemyKingPenalty);
+        OpenFileEnemyKingPenalty.to_csharp(parameters, ss, name);
+
+        name = NAME(SemiOpenFileEnemyKingPenalty);
+        SemiOpenFileEnemyKingPenalty.to_csharp(parameters, ss, name);
+
         if (isFinal)
         {
             std::cout << ss.str() << std::endl;
@@ -566,6 +578,12 @@ public:
 
         name = NAME(SemiOpenFileKingPenalty);
         SemiOpenFileKingPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(OpenFileEnemyKingPenalty);
+        OpenFileEnemyKingPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(SemiOpenFileEnemyKingPenalty);
+        SemiOpenFileEnemyKingPenalty.to_cpp(parameters, ss, name);
 
         if (isFinal)
         {
@@ -821,7 +839,7 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, co
     return packedBonus;
 }
 
-int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const int pieceCount[], coefficients_t &coefficients)
+int KingAdditionalEvaluation(int squareIndex, int bucket, int opponentBucket, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const int pieceCount[], coefficients_t &coefficients)
 {
     // Virtual mobility (as if Queen)
     const auto mobilityCount = chess::builtin::popcount(
@@ -845,6 +863,9 @@ int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawn
 
             packedBonus += OpenFileKingPenalty.packed(bucket, file);
             IncrementCoefficients(coefficients, OpenFileKingPenalty.index(bucket, file), kingSide);
+
+            packedBonus += OpenFileEnemyKingPenalty.packed(opponentBucket, file);
+            IncrementCoefficients(coefficients, OpenFileEnemyKingPenalty.index(opponentBucket, file), kingSide);
         }
         // King on semi-open file
         else if ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide) & FileMasks[squareIndex]) == 0) // isSemiOpenFile
@@ -853,6 +874,9 @@ int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawn
 
             packedBonus += SemiOpenFileKingPenalty.packed(bucket, file);
             IncrementCoefficients(coefficients, SemiOpenFileKingPenalty.index(bucket, file), kingSide);
+
+            packedBonus += SemiOpenFileEnemyKingPenalty.packed(opponentBucket, file);
+            IncrementCoefficients(coefficients, SemiOpenFileEnemyKingPenalty.index(opponentBucket, file), kingSide);
         }
     }
 
@@ -1346,8 +1370,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                    PackedPositionalTables(0, blackBucket, 11, blackKing) +
                    PackedPositionalTables(1, blackBucket, 5, whiteKing) +
                    PackedPositionalTables(1, whiteBucket, 11, blackKing) +
-                   KingAdditionalEvaluation(whiteKing, whiteBucket, blackPawnAttacks, chess::Color::WHITE, board, pieceCount, coefficients) -
-                   KingAdditionalEvaluation(blackKing, blackBucket, whitePawnAttacks, chess::Color::BLACK, board, pieceCount, coefficients);
+                   KingAdditionalEvaluation(whiteKing, whiteBucket, blackBucket, blackPawnAttacks, chess::Color::WHITE, board, pieceCount, coefficients) -
+                   KingAdditionalEvaluation(blackKing, blackBucket, whiteBucket, whitePawnAttacks, chess::Color::BLACK, board, pieceCount, coefficients);
 
     IncrementCoefficients(
         coefficients,
