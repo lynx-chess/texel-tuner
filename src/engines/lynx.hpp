@@ -177,6 +177,7 @@ public:
         assert(SemiOpenFileKingPenalty.bucketTunableSize == 8);
         assert(OpenFileEnemyKingPenalty.bucketTunableSize == 8);
         assert(SemiOpenFileEnemyKingPenalty.bucketTunableSize == 8);
+
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(IsolatedPawnPenalty.tunableSize == 8);
