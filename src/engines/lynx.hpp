@@ -844,8 +844,8 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
     {
         const int a1 = 56, h1 = 63, b2 = 49, g2 = 54;
 
-        if ((squareIndex == a1 && board.at(b2) == chess::Piece::WHITEPAWN) ||
-            (squareIndex == h1 && board.at(g2) == chess::Piece::WHITEPAWN))
+        if ((squareIndex == a1 && board.at(b2 ^ 56) == chess::Piece::WHITEPAWN) ||
+            (squareIndex == h1 && board.at(g2 ^ 56) == chess::Piece::WHITEPAWN))
         {
             packedBonus += BishopCorneredPenalty.packed;
             IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
@@ -855,8 +855,8 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
     {
         const int a8 = 0, h8 = 7, b7 = 9, g7 = 14;
 
-        if ((squareIndex == a8 && board.at(b7) == chess::Piece::BLACKPAWN) ||
-            (squareIndex == h8 && board.at(g7) == chess::Piece::BLACKPAWN))
+        if ((squareIndex == a8 && board.at(b7 ^ 56) == chess::Piece::BLACKPAWN) ||
+            (squareIndex == h8 && board.at(g7 ^ 56) == chess::Piece::BLACKPAWN))
         {
             packedBonus += BishopCorneredPenalty.packed;
             IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
