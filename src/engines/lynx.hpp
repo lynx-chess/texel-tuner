@@ -826,11 +826,18 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
         IncrementCoefficients(coefficients, BishopInUnblockedLongDiagonalBonus.index, color);
     }
 
+    if (!GetBit(Corners, squareIndex))
+    {
+        return packedBonus;
+    }
+
     // Cornered/trapped bishop
     if (color == chess::Color::WHITE)
     {
-        if ((squareIndex == 56 && board.at(49) == chess::Piece::WHITEPAWN) ||
-            (squareIndex == 63 && board.at(54) == chess::Piece::WHITEPAWN))
+        const int a1 = 56, h1 = 63, b2 = 49, g2 = 54;
+
+        if ((squareIndex == a1 && board.at(b2) == chess::Piece::WHITEPAWN) ||
+            (squareIndex == h1 && board.at(g2) == chess::Piece::WHITEPAWN))
         {
             packedBonus += BishopCorneredPenalty.packed;
             IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
@@ -838,8 +845,10 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
     }
     else
     {
-        if ((squareIndex == 0 && board.at(9) == chess::Piece::BLACKPAWN) ||
-            (squareIndex == 7 && board.at(14) == chess::Piece::BLACKPAWN))
+        const int a8 = 0, h8 = 7, b7 = 9, g7 = 14;
+
+        if ((squareIndex == a8 && board.at(b7) == chess::Piece::BLACKPAWN) ||
+            (squareIndex == h8 && board.at(g7) == chess::Piece::BLACKPAWN))
         {
             packedBonus += BishopCorneredPenalty.packed;
             IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
