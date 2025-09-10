@@ -826,6 +826,26 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
         IncrementCoefficients(coefficients, BishopInUnblockedLongDiagonalBonus.index, color);
     }
 
+    // Cornered/trapped bishop
+    if (color == chess::Color::WHITE)
+    {
+        if ((squareIndex == 56 && board.at(49) == chess::Piece::WHITEPAWN) ||
+            (squareIndex == 63 && board.at(54) == chess::Piece::WHITEPAWN))
+        {
+            packedBonus += BishopCorneredPenalty.packed;
+            IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
+        }
+    }
+    else
+    {
+        if ((squareIndex == 0 && board.at(9) == chess::Piece::BLACKPAWN) ||
+            (squareIndex == 7 && board.at(14) == chess::Piece::BLACKPAWN))
+        {
+            packedBonus += BishopCorneredPenalty.packed;
+            IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
+        }
+    }
+
     return packedBonus;
 }
 
