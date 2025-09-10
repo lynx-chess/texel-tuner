@@ -19,6 +19,7 @@ const static size_t numParameters = psqtIndexCount +
                                     // DoubledPawnPenalty.size
                                     KingShieldBonus.size +
                                     BishopPairBonus.size +
+                                    BishopCorneredPenalty.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
                                     PieceAttackedByPawnPenalty.size +
 
@@ -124,6 +125,7 @@ public:
         // DoubledPawnPenalty.add(result);
         KingShieldBonus.add(result);
         BishopPairBonus.add(result);
+        BishopCorneredPenalty.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
 
@@ -306,6 +308,9 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(BishopCorneredPenalty);
+        BishopCorneredPenalty.to_csharp(parameters, ss, name);
+
         name = NAME(BishopInUnblockedLongDiagonalBonus);
         BishopInUnblockedLongDiagonalBonus.to_csharp(parameters, ss, name);
 
@@ -457,6 +462,9 @@ public:
 
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(BishopCorneredPenalty);
+        BishopCorneredPenalty.to_cpp(parameters, ss, name);
 
         name = NAME(BishopInUnblockedLongDiagonalBonus);
         BishopInUnblockedLongDiagonalBonus.to_cpp(parameters, ss, name);
