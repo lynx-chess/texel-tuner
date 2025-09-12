@@ -1461,7 +1461,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     const int totalPawnsCount = board.pieces(chess::PieceType::PAWN, chess::Color::WHITE).count() +
                                 board.pieces(chess::PieceType::PAWN, chess::Color::BLACK).count();
 
-    if (gamePhase <= 5)
+    // Few pieces endgames
+    if (gamePhase <= 6)
     {
         // Pawnless endgames with few pieces
         if (totalPawnsCount == 0)
