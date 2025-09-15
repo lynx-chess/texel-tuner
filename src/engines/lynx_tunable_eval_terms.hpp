@@ -6027,6 +6027,34 @@ TunableArray QueenMobilityBonus(
 	0,
 	0);
 
+TunableArray KnightKingRingAttacksBonus(
+	chess::PieceType::KNIGHT,
+	std::vector<int>{0, 15, 26},
+	std::vector<int>{0, 44, 62},
+	0,
+	0);
+
+TunableArray BishopKingRingAttacksBonus(
+	chess::PieceType::BISHOP,
+	std::vector<int>{0, 16, 23},
+	std::vector<int>{0, 31, 51},
+	0,
+	0);
+
+TunableArray RookKingRingAttacksBonus(
+	chess::PieceType::ROOK,
+	std::vector<int>{0, 15, 19, 27, 32},
+	std::vector<int>{0, 26, 43, 48, 55},
+	0,
+	0);
+
+TunableArray QueenKingRingAttacksBonus(
+	chess::PieceType::QUEEN,
+	std::vector<int>{0, 13, 25, 24, 27, 31},
+	std::vector<int>{0, 191, 323, 411, 451, 481},
+	0,
+	0);
+
 TunableArray KnightThreatsBonus(
 	chess::PieceType::KNIGHT,
 	std::vector<int>{-13, -2, 27, 60, 25, 52},
