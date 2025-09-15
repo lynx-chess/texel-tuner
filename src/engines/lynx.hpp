@@ -194,7 +194,7 @@ public:
         assert(BishopMobilityBonus.tunableSize == 14);
         assert(RookMobilityBonus.tunableSize == 15);
         assert(QueenMobilityBonus.tunableSize == 28);
-        assert(KingMobilityBonus.tunableSize == 10);
+        assert(KingMobilityBonus.tunableSize == 9);
         assert(KnightThreatsBonus.tunableSize == 6);
         assert(KnightThreatsBonus_Defended.tunableSize == 6);
         assert(BishopThreatsBonus.tunableSize == 6);
@@ -1407,14 +1407,13 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
         chess::Color::BLACK);
 
     // Kings mobility
-    // Mobility
     const auto whiteKingAttacks = chess::attacks::king(static_cast<chess::Square>(whiteKing)).getBits();
     const auto whiteMobilityCount = chess::builtin::popcount(
         whiteKingAttacks &
         (~whitePawns) &
         (~attacksBySide[static_cast<int>(chess::Color::BLACK)]));
 
-    auto packedBonus = KingMobilityBonus.packed[whiteMobilityCount];
+    // packedScore += whiteMobilityCount;
     IncrementCoefficients(coefficients, KingMobilityBonus.index + whiteMobilityCount - KingMobilityBonus.start, chess::Color::WHITE);
 
     const auto blackKingAttacks = chess::attacks::king(static_cast<chess::Square>(blackKing)).getBits();
@@ -1423,7 +1422,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
         (~blackPawns) &
         (~attacksBySide[static_cast<int>(chess::Color::WHITE)]));
 
-    packedBonus -= KingMobilityBonus.packed[blackMobilityCount];
+    // packedScore -= KingMobilityBonus.packed[blackMobilityCount];
     IncrementCoefficients(coefficients, KingMobilityBonus.index + blackMobilityCount - KingMobilityBonus.start, chess::Color::BLACK);
 
     // Bishop pair bonus
