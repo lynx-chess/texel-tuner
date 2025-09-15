@@ -6027,6 +6027,13 @@ TunableArray QueenMobilityBonus(
 	0,
 	0);
 
+TunableArray KingMobilityBonus(
+	chess::PieceType::KING,
+	std::vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	std::vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	0,
+	0);
+
 TunableArray KnightThreatsBonus(
 	chess::PieceType::KNIGHT,
 	std::vector<int>{-13, -2, 27, 60, 25, 52},
