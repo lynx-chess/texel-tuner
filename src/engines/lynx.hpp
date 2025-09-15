@@ -200,10 +200,10 @@ public:
         assert(BishopMobilityBonus.tunableSize == 14);
         assert(RookMobilityBonus.tunableSize == 15);
         assert(QueenMobilityBonus.tunableSize == 28);
-        assert(KnightKingRingAttacksBonus.tunableSize == 3);
-        assert(BishopKingRingAttacksBonus.tunableSize == 3);
-        assert(RookKingRingAttacksBonus.tunableSize == 5);
-        assert(QueenKingRingAttacksBonus.tunableSize == 6);
+        assert(KnightKingRingAttacksBonus.tunableSize == 2);
+        assert(BishopKingRingAttacksBonus.tunableSize == 2);
+        assert(RookKingRingAttacksBonus.tunableSize == 4);
+        assert(QueenKingRingAttacksBonus.tunableSize == 5);
         assert(KnightThreatsBonus.tunableSize == 6);
         assert(KnightThreatsBonus_Defended.tunableSize == 6);
         assert(BishopThreatsBonus.tunableSize == 6);
