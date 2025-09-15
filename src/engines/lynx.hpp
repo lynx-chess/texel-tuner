@@ -723,11 +723,12 @@ int RookAdditonalEvaluation(int squareIndex, int bucket, int oppositeSideBucket,
 {
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
     const auto attacks = chess::attacks::rook(static_cast<chess::Square>(squareIndex), occupancy).getBits();
+    const auto sameSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
 
     // Mobility
     const auto mobilityCount = chess::builtin::popcount(
         attacks &
-        (~__builtin_bswap64(board.us(color).getBits())) &
+        (~sameSidePawns) &
         (~opponentPawnAttacks));
 
     int packedBonus = RookMobilityBonus.packed[mobilityCount];
@@ -778,11 +779,12 @@ int RookAdditonalEvaluation(int squareIndex, int bucket, int oppositeSideBucket,
 int KnightAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     const auto attacks = chess::attacks::knight(static_cast<chess::Square>(squareIndex)).getBits();
+    const auto sameSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
 
     // Mobility
     const auto mobilityCount = chess::builtin::popcount(
         attacks &
-        (~__builtin_bswap64(board.us(color).getBits())) &
+        (~sameSidePawns) &
         (~opponentPawnAttacks));
 
     auto packedBonus = KnightMobilityBonus.packed[mobilityCount];
@@ -795,18 +797,18 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
 {
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
     const auto attacks = chess::attacks::bishop(static_cast<chess::Square>(squareIndex), occupancy).getBits();
+    const auto sameSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
 
     // Mobility
     const auto mobilityCount = chess::builtin::popcount(
         attacks &
-        (~__builtin_bswap64(board.us(color).getBits())) &
+        (~sameSidePawns) &
         (~opponentPawnAttacks));
 
     auto packedBonus = BishopMobilityBonus.packed[mobilityCount];
     IncrementCoefficients(coefficients, BishopMobilityBonus.index + mobilityCount, color);
 
     // Bad bishop - same color pawns
-    const auto sameSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
     const auto sameColorPawnsCount = chess::builtin::popcount(sameSidePawns &
                                                               (DarkSquares[squareIndex] == 1
                                                                    ? DarkSquaresBitBoard
@@ -870,11 +872,12 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, co
 {
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
     const auto attacks = chess::attacks::queen(static_cast<chess::Square>(squareIndex), occupancy).getBits();
+    const auto sameSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
 
     // Mobility
     const auto mobilityCount = chess::builtin::popcount(
         attacks &
-        (~__builtin_bswap64(board.us(color).getBits())) &
+        (~sameSidePawns) &
         (~opponentPawnAttacks));
 
     auto packedBonus = QueenMobilityBonus.packed[mobilityCount];
