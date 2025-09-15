@@ -851,10 +851,12 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, co
 
 int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const int pieceCount[], coefficients_t &coefficients)
 {
+    const auto sameSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide);
+
     // Virtual mobility (as if Queen)
     const auto mobilityCount = chess::builtin::popcount(
         chess::attacks::queen(static_cast<chess::Square>(squareIndex), __builtin_bswap64(board.occ().getBits())).getBits() &
-        (~__builtin_bswap64(board.us(kingSide).getBits())) &
+        (~sameSidePawns) &
         (~opponentPawnAttacks));
 
     IncrementCoefficients(coefficients, VirtualKingMobilityBonus.index + mobilityCount, kingSide);
