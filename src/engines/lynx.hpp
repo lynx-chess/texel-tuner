@@ -377,16 +377,16 @@ public:
         QueenMobilityBonus.to_csharp(parameters, ss, name, mobilityPieceValues);
 
         name = NAME(KnightKingRingAttacksBonus);
-        KnightKingRingAttacksBonus.to_csharp(parameters, ss, name, mobilityPieceValues);
+        KnightKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
         name = NAME(BishopKingRingAttacksBonus);
-        BishopKingRingAttacksBonus.to_csharp(parameters, ss, name, mobilityPieceValues);
+        BishopKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
         name = NAME(RookKingRingAttacksBonus);
-        RookKingRingAttacksBonus.to_csharp(parameters, ss, name, mobilityPieceValues);
+        RookKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
         name = NAME(QueenKingRingAttacksBonus);
-        QueenKingRingAttacksBonus.to_csharp(parameters, ss, name, mobilityPieceValues);
+        QueenKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
         name = NAME(KnightThreatsBonus);
         KnightThreatsBonus.to_csharp(parameters, ss, name);
@@ -550,16 +550,16 @@ public:
         QueenMobilityBonus.to_cpp(parameters, ss, name, mobilityPieceValues);
 
         name = NAME(KnightKingRingAttacksBonus);
-        KnightKingRingAttacksBonus.to_cpp(parameters, ss, name, mobilityPieceValues);
+        KnightKingRingAttacksBonus.to_cpp(parameters, ss, name);
 
         name = NAME(BishopKingRingAttacksBonus);
-        BishopKingRingAttacksBonus.to_cpp(parameters, ss, name, mobilityPieceValues);
+        BishopKingRingAttacksBonus.to_cpp(parameters, ss, name);
 
         name = NAME(RookKingRingAttacksBonus);
-        RookKingRingAttacksBonus.to_cpp(parameters, ss, name, mobilityPieceValues);
+        RookKingRingAttacksBonus.to_cpp(parameters, ss, name);
 
         name = NAME(QueenKingRingAttacksBonus);
-        QueenKingRingAttacksBonus.to_cpp(parameters, ss, name, mobilityPieceValues);
+        QueenKingRingAttacksBonus.to_cpp(parameters, ss, name);
 
         name = NAME(KnightThreatsBonus);
         KnightThreatsBonus.to_cpp(parameters, ss, name);
