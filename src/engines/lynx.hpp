@@ -1413,7 +1413,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
         (~whitePawns) &
         (~attacksBySide[static_cast<int>(chess::Color::BLACK)]));
 
-    // packedScore += whiteMobilityCount;
+    packedScore += KingMobilityBonus.packed[whiteMobilityCount];
     IncrementCoefficients(coefficients, KingMobilityBonus.index + whiteMobilityCount - KingMobilityBonus.start, chess::Color::WHITE);
 
     const auto blackKingAttacks = chess::attacks::king(static_cast<chess::Square>(blackKing)).getBits();
@@ -1422,7 +1422,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
         (~blackPawns) &
         (~attacksBySide[static_cast<int>(chess::Color::WHITE)]));
 
-    // packedScore -= KingMobilityBonus.packed[blackMobilityCount];
+    packedScore -= KingMobilityBonus.packed[blackMobilityCount];
     IncrementCoefficients(coefficients, KingMobilityBonus.index + blackMobilityCount - KingMobilityBonus.start, chess::Color::BLACK);
 
     // Bishop pair bonus
