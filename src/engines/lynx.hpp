@@ -21,6 +21,10 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopPairBonus.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
                                     PieceAttackedByPawnPenalty.size +
+                                    KnightKingRingAttacksBonus.size + // 3
+                                    BishopKingRingAttacksBonus.size + // 3
+                                    RookKingRingAttacksBonus.size +   // 5
+                                    QueenKingRingAttacksBonus.size +  // 6
 
                                     // Arrays
                                     PieceProtectedByPawnBonus.tunableSize + // 5, removing king
@@ -40,10 +44,6 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopMobilityBonus.tunableSize +                   // 14, removing end
                                     RookMobilityBonus.tunableSize +                     // 15
                                     QueenMobilityBonus.tunableSize +
-                                    KnightKingRingAttacksBonus.tunableSize + // 3
-                                    BishopKingRingAttacksBonus.tunableSize + // 3
-                                    RookKingRingAttacksBonus.tunableSize +   // 5
-                                    QueenKingRingAttacksBonus.tunableSize +  // 6
                                     KnightThreatsBonus.tunableSize +
                                     KnightThreatsBonus_Defended.tunableSize +
                                     BishopThreatsBonus.tunableSize +
@@ -130,6 +130,10 @@ public:
         BishopPairBonus.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
+        KnightKingRingAttacksBonus.add(result);
+        BishopKingRingAttacksBonus.add(result);
+        RookKingRingAttacksBonus.add(result);
+        QueenKingRingAttacksBonus.add(result);
 
         // Arrays
         PieceProtectedByPawnBonus.add(result);
@@ -152,10 +156,6 @@ public:
         BishopMobilityBonus.add(result);
         RookMobilityBonus.add(result);
         QueenMobilityBonus.add(result);
-        KnightKingRingAttacksBonus.add(result);
-        BishopKingRingAttacksBonus.add(result);
-        RookKingRingAttacksBonus.add(result);
-        QueenKingRingAttacksBonus.add(result);
         KnightThreatsBonus.add(result);
         KnightThreatsBonus_Defended.add(result);
         BishopThreatsBonus.add(result);
@@ -200,10 +200,10 @@ public:
         assert(BishopMobilityBonus.tunableSize == 14);
         assert(RookMobilityBonus.tunableSize == 15);
         assert(QueenMobilityBonus.tunableSize == 28);
-        assert(KnightKingRingAttacksBonus.tunableSize == 2);
-        assert(BishopKingRingAttacksBonus.tunableSize == 2);
-        assert(RookKingRingAttacksBonus.tunableSize == 4);
-        assert(QueenKingRingAttacksBonus.tunableSize == 5);
+        // assert(KnightKingRingAttacksBonus.tunableSize == 2);
+        // assert(BishopKingRingAttacksBonus.tunableSize == 2);
+        // assert(RookKingRingAttacksBonus.tunableSize == 4);
+        // assert(QueenKingRingAttacksBonus.tunableSize == 5);
         assert(KnightThreatsBonus.tunableSize == 6);
         assert(KnightThreatsBonus_Defended.tunableSize == 6);
         assert(BishopThreatsBonus.tunableSize == 6);
@@ -324,6 +324,18 @@ public:
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
+        name = NAME(KnightKingRingAttacksBonus);
+        KnightKingRingAttacksBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(BishopKingRingAttacksBonus);
+        BishopKingRingAttacksBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(RookKingRingAttacksBonus);
+        RookKingRingAttacksBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(QueenKingRingAttacksBonus);
+        QueenKingRingAttacksBonus.to_csharp(parameters, ss, name);
+
         // Arrays
         name = NAME(PieceProtectedByPawnBonus);
         PieceProtectedByPawnBonus.to_csharp(parameters, ss, name);
@@ -375,18 +387,6 @@ public:
 
         name = NAME(QueenMobilityBonus);
         QueenMobilityBonus.to_csharp(parameters, ss, name, mobilityPieceValues);
-
-        name = NAME(KnightKingRingAttacksBonus);
-        KnightKingRingAttacksBonus.to_csharp(parameters, ss, name);
-
-        name = NAME(BishopKingRingAttacksBonus);
-        BishopKingRingAttacksBonus.to_csharp(parameters, ss, name);
-
-        name = NAME(RookKingRingAttacksBonus);
-        RookKingRingAttacksBonus.to_csharp(parameters, ss, name);
-
-        name = NAME(QueenKingRingAttacksBonus);
-        QueenKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
         name = NAME(KnightThreatsBonus);
         KnightThreatsBonus.to_csharp(parameters, ss, name);
@@ -488,6 +488,18 @@ public:
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
 
+        name = NAME(KnightKingRingAttacksBonus);
+        KnightKingRingAttacksBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(BishopKingRingAttacksBonus);
+        BishopKingRingAttacksBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(RookKingRingAttacksBonus);
+        RookKingRingAttacksBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(QueenKingRingAttacksBonus);
+        QueenKingRingAttacksBonus.to_cpp(parameters, ss, name);
+
         // Arrays
         name = NAME(PieceProtectedByPawnBonus);
         PieceProtectedByPawnBonus.to_cpp(parameters, ss, name);
@@ -548,18 +560,6 @@ public:
 
         name = NAME(QueenMobilityBonus);
         QueenMobilityBonus.to_cpp(parameters, ss, name, mobilityPieceValues);
-
-        name = NAME(KnightKingRingAttacksBonus);
-        KnightKingRingAttacksBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(BishopKingRingAttacksBonus);
-        BishopKingRingAttacksBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(RookKingRingAttacksBonus);
-        RookKingRingAttacksBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(QueenKingRingAttacksBonus);
-        QueenKingRingAttacksBonus.to_cpp(parameters, ss, name);
 
         name = NAME(KnightThreatsBonus);
         KnightThreatsBonus.to_cpp(parameters, ss, name);
@@ -762,12 +762,8 @@ int RookAdditonalEvaluation(int squareIndex, int bucket, int oppositeSideBucket,
     // King ring attacks
     const auto kingRing = KingRing[oppositeSideKingSquare];
     const auto kingRingAttacksCount = chess::builtin::popcount(attacks & kingRing);
-
-    if (kingRingAttacksCount > 0)
-    {
-        packedBonus += RookKingRingAttacksBonus.packed[kingRingAttacksCount];
-        IncrementCoefficients(coefficients, RookKingRingAttacksBonus.index + kingRingAttacksCount - RookKingRingAttacksBonus.start, color);
-    }
+    packedBonus += RookKingRingAttacksBonus.packed * kingRingAttacksCount;
+    IncrementCoefficients(coefficients, RookKingRingAttacksBonus.index, color, kingRingAttacksCount);
 
     // Open file
     if (((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) & FileMasks[squareIndex]) == 0)
@@ -825,12 +821,8 @@ int KnightAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, i
     // King ring attacks
     const auto kingRing = KingRing[oppositeSideKingSquare];
     const auto kingRingAttacksCount = chess::builtin::popcount(attacks & kingRing);
-
-    if (kingRingAttacksCount > 0)
-    {
-        packedBonus += KnightKingRingAttacksBonus.packed[kingRingAttacksCount];
-        IncrementCoefficients(coefficients, KnightKingRingAttacksBonus.index + kingRingAttacksCount - KnightKingRingAttacksBonus.start, color);
-    }
+    packedBonus += KnightKingRingAttacksBonus.packed * kingRingAttacksCount;
+    IncrementCoefficients(coefficients, KnightKingRingAttacksBonus.index, color, kingRingAttacksCount);
 
     return packedBonus;
 }
@@ -850,12 +842,8 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
     // King ring attacks
     const auto kingRing = KingRing[oppositeSideKingSquare];
     const auto kingRingAttacksCount = chess::builtin::popcount(attacks & kingRing);
-
-    if (kingRingAttacksCount > 0)
-    {
-        packedBonus += BishopKingRingAttacksBonus.packed[kingRingAttacksCount];
-        IncrementCoefficients(coefficients, BishopKingRingAttacksBonus.index + kingRingAttacksCount - BishopKingRingAttacksBonus.start, color);
-    }
+    packedBonus += BishopKingRingAttacksBonus.packed * kingRingAttacksCount;
+    IncrementCoefficients(coefficients, BishopKingRingAttacksBonus.index, color, kingRingAttacksCount);
 
     // Bad bishop - same color pawns
     const auto sameColorPawnsCount = chess::builtin::popcount(sameSidePawns &
@@ -903,12 +891,8 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, in
     // King ring attacks
     const auto kingRing = KingRing[oppositeSideKingSquare];
     const auto kingRingAttacksCount = chess::builtin::popcount(attacks & kingRing);
-
-    if (kingRingAttacksCount > 0)
-    {
-        packedBonus += QueenKingRingAttacksBonus.packed[kingRingAttacksCount];
-        IncrementCoefficients(coefficients, QueenKingRingAttacksBonus.index + kingRingAttacksCount - QueenKingRingAttacksBonus.start, color);
-    }
+    packedBonus += QueenKingRingAttacksBonus.packed * kingRingAttacksCount;
+    IncrementCoefficients(coefficients, QueenKingRingAttacksBonus.index, color, kingRingAttacksCount);
 
     return packedBonus;
 }

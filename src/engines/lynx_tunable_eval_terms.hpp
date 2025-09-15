@@ -5908,6 +5908,15 @@ TunableSingle KingShieldBonus(20, 0);
 TunableSingle BishopPairBonus(29, 71);
 TunableSingle BishopInUnblockedLongDiagonalBonus(17, 12);
 TunableSingle PieceAttackedByPawnPenalty(-47, -31);
+
+TunableSingle KnightKingRingAttacksBonus(1, 2);
+
+TunableSingle BishopKingRingAttacksBonus(3, 4);
+
+TunableSingle RookKingRingAttacksBonus(4, 6);
+
+TunableSingle QueenKingRingAttacksBonus(7, 8);
+
 TunableArray PieceProtectedByPawnBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{17, 1, 11, 9, -6},
@@ -6025,34 +6034,6 @@ TunableArray QueenMobilityBonus(
 	std::vector<int>{-744, 0, 12, 24, 24, 27, 31, 36, 41, 46, 50, 53, 56, 60, 61, 66, 63, 64, 72, 86, 97, 111, 134, 155, 157, 278, 130, -14},
 	std::vector<int>{-561, 0, 193, 326, 413, 453, 482, 498, 510, 517, 523, 528, 531, 534, 538, 538, 547, 547, 539, 528, 518, 501, 491, 462, 459, 378, 460, 497},
 	0,
-	0);
-
-TunableArray KnightKingRingAttacksBonus(
-	chess::PieceType::KNIGHT,
-	std::vector<int>{0, 34, 50},
-	std::vector<int>{0, -3, -17},
-	1,
-	0);
-
-TunableArray BishopKingRingAttacksBonus(
-	chess::PieceType::BISHOP,
-	std::vector<int>{0, 11, 38},
-	std::vector<int>{0, -3, -5},
-	1,
-	0);
-
-TunableArray RookKingRingAttacksBonus(
-	chess::PieceType::ROOK,
-	std::vector<int>{0, 6, 12, 53, 70},
-	std::vector<int>{0, -8, -9, -11, 7},
-	1,
-	0);
-
-TunableArray QueenKingRingAttacksBonus(
-	chess::PieceType::QUEEN,
-	std::vector<int>{0, -4, 4, 28, 107, 185},
-	std::vector<int>{0, 7, 3, -12, -60, -95},
-	1,
 	0);
 
 TunableArray KnightThreatsBonus(
