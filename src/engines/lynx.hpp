@@ -367,6 +367,9 @@ public:
         name = NAME(QueenMobilityBonus);
         QueenMobilityBonus.to_csharp(parameters, ss, name, mobilityPieceValues);
 
+        name = NAME(KingMobilityBonus);
+        KingMobilityBonus.to_csharp(parameters, ss, name, mobilityPieceValues);
+
         name = NAME(KnightThreatsBonus);
         KnightThreatsBonus.to_csharp(parameters, ss, name);
 
@@ -527,6 +530,9 @@ public:
 
         name = NAME(QueenMobilityBonus);
         QueenMobilityBonus.to_cpp(parameters, ss, name, mobilityPieceValues);
+
+        name = NAME(KingMobilityBonus);
+        KingMobilityBonus.to_cpp(parameters, ss, name, mobilityPieceValues);
 
         name = NAME(KnightThreatsBonus);
         KnightThreatsBonus.to_cpp(parameters, ss, name);
