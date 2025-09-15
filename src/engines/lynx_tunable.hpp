@@ -189,7 +189,8 @@ public:
 
             for (int i = 0; i < size; ++i)
             {
-                if (parameters[index + i][phase] != 0.0)
+                if (i != 0 &&
+                    parameters[index + i][phase] != 0.0)
                 {
                     min = parameters[index + i][phase];
                     packed[phase] = min;
