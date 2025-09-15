@@ -40,10 +40,10 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopMobilityBonus.tunableSize +                   // 14, removing end
                                     RookMobilityBonus.tunableSize +                     // 15
                                     QueenMobilityBonus.tunableSize +
-                                    KnightKingRingAttacksBonus.tunableSize + // 3
-                                    BishopKingRingAttacksBonus.tunableSize + // 3
-                                    RookKingRingAttacksBonus.tunableSize +   // 5
-                                    QueenKingRingAttacksBonus.tunableSize +  // 6
+                                    KnightKingRingAttacksBonus.tunableSize + // 2
+                                    BishopKingRingAttacksBonus.tunableSize + // 2
+                                    RookKingRingAttacksBonus.tunableSize +   // 4
+                                    QueenKingRingAttacksBonus.tunableSize +  // 5
                                     KnightThreatsBonus.tunableSize +
                                     KnightThreatsBonus_Defended.tunableSize +
                                     BishopThreatsBonus.tunableSize +
