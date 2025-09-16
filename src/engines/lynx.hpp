@@ -858,31 +858,30 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
         {
             const auto squareInFrontOfPawn = b2 - 8;
 
-            if (board.at(squareInFrontOfPawn ^ 56) != chess::Piece::NONE)
-            {
-                packedBonus += BishopCorneredAndBlockedPenalty.packed;
-                IncrementCoefficients(coefficients, BishopCorneredAndBlockedPenalty.index, color);
-            }
-            else
+            if (board.at(squareInFrontOfPawn ^ 56) == chess::Piece::NONE)
             {
                 packedBonus += BishopCorneredPenalty.packed;
                 IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
+            }
+            else
+            {
+                packedBonus += BishopCorneredAndBlockedPenalty.packed;
+                IncrementCoefficients(coefficients, BishopCorneredAndBlockedPenalty.index, color);
             }
         }
         else if (squareIndex == h1 && board.at(g2 ^ 56) == chess::Piece::WHITEPAWN)
         {
             const auto squareInFrontOfPawn = g2 - 8;
 
-            if (board.at(squareInFrontOfPawn ^ 56) != chess::Piece::NONE)
-            {
-
-                packedBonus += BishopCorneredAndBlockedPenalty.packed;
-                IncrementCoefficients(coefficients, BishopCorneredAndBlockedPenalty.index, color);
-            }
-            else
+            if (board.at(squareInFrontOfPawn ^ 56) == chess::Piece::NONE)
             {
                 packedBonus += BishopCorneredPenalty.packed;
                 IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
+            }
+            else
+            {
+                packedBonus += BishopCorneredAndBlockedPenalty.packed;
+                IncrementCoefficients(coefficients, BishopCorneredAndBlockedPenalty.index, color);
             }
         }
     }
@@ -894,29 +893,29 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
         {
             const auto squareInFrontOfPawn = b7 + 8;
 
-            if (board.at(squareInFrontOfPawn ^ 56) != chess::Piece::NONE)
-            {
-                packedBonus += BishopCorneredAndBlockedPenalty.packed;
-                IncrementCoefficients(coefficients, BishopCorneredAndBlockedPenalty.index, color);
-            }
-            else
+            if (board.at(squareInFrontOfPawn ^ 56) == chess::Piece::NONE)
             {
                 packedBonus += BishopCorneredPenalty.packed;
                 IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
+            }
+            else
+            {
+                packedBonus += BishopCorneredAndBlockedPenalty.packed;
+                IncrementCoefficients(coefficients, BishopCorneredAndBlockedPenalty.index, color);
             }
         }
         else if (squareIndex == h8 && board.at(g7 ^ 56) == chess::Piece::BLACKPAWN)
         {
             const auto squareInFrontOfPawn = g7 + 8;
-            if (board.at(squareInFrontOfPawn ^ 56) != chess::Piece::NONE)
-            {
-                packedBonus += BishopCorneredAndBlockedPenalty.packed;
-                IncrementCoefficients(coefficients, BishopCorneredAndBlockedPenalty.index, color);
-            }
-            else
+            if (board.at(squareInFrontOfPawn ^ 56) == chess::Piece::NONE)
             {
                 packedBonus += BishopCorneredPenalty.packed;
                 IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
+            }
+            else
+            {
+                packedBonus += BishopCorneredAndBlockedPenalty.packed;
+                IncrementCoefficients(coefficients, BishopCorneredAndBlockedPenalty.index, color);
             }
         }
     }
