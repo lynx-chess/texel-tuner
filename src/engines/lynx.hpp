@@ -19,6 +19,7 @@ const static size_t numParameters = psqtIndexCount +
                                     // DoubledPawnPenalty.size
                                     KingShieldBonus.size +
                                     BishopPairBonus.size +
+                                    BishopCorneredPenalty.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
                                     PieceAttackedByPawnPenalty.size +
 
@@ -124,6 +125,7 @@ public:
         // DoubledPawnPenalty.add(result);
         KingShieldBonus.add(result);
         BishopPairBonus.add(result);
+        BishopCorneredPenalty.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
 
@@ -306,6 +308,9 @@ public:
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(BishopCorneredPenalty);
+        BishopCorneredPenalty.to_csharp(parameters, ss, name);
+
         name = NAME(BishopInUnblockedLongDiagonalBonus);
         BishopInUnblockedLongDiagonalBonus.to_csharp(parameters, ss, name);
 
@@ -457,6 +462,9 @@ public:
 
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(BishopCorneredPenalty);
+        BishopCorneredPenalty.to_cpp(parameters, ss, name);
 
         name = NAME(BishopInUnblockedLongDiagonalBonus);
         BishopInUnblockedLongDiagonalBonus.to_cpp(parameters, ss, name);
@@ -826,6 +834,35 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
     {
         packedBonus += BishopInUnblockedLongDiagonalBonus.packed;
         IncrementCoefficients(coefficients, BishopInUnblockedLongDiagonalBonus.index, color);
+    }
+
+    if (!GetBit(Corners, squareIndex))
+    {
+        return packedBonus;
+    }
+
+    // Cornered/trapped bishop
+    if (color == chess::Color::WHITE)
+    {
+        const int a1 = 56, h1 = 63, b2 = 49, g2 = 54;
+
+        if ((squareIndex == a1 && board.at(b2 ^ 56) == chess::Piece::WHITEPAWN) ||
+            (squareIndex == h1 && board.at(g2 ^ 56) == chess::Piece::WHITEPAWN))
+        {
+            packedBonus += BishopCorneredPenalty.packed;
+            IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
+        }
+    }
+    else
+    {
+        const int a8 = 0, h8 = 7, b7 = 9, g7 = 14;
+
+        if ((squareIndex == a8 && board.at(b7 ^ 56) == chess::Piece::BLACKPAWN) ||
+            (squareIndex == h8 && board.at(g7 ^ 56) == chess::Piece::BLACKPAWN))
+        {
+            packedBonus += BishopCorneredPenalty.packed;
+            IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
+        }
     }
 
     return packedBonus;
