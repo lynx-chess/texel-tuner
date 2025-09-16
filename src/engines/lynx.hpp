@@ -1443,7 +1443,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
         enemyKingBaseIndex + (48 * PSQTBucketCount) + (64 * PSQTBucketCount * 4) + (64 * whiteBucket) + (blackKing ^ 56),
         chess::Color::BLACK);
 
-    // Kings mobility
+    // King mobility
     const auto whiteKingAttacks = chess::attacks::king(static_cast<chess::Square>(whiteKing)).getBits();
     const auto whiteMobilityCount = chess::builtin::popcount(
         whiteKingAttacks &
