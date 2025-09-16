@@ -1448,7 +1448,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     const auto whiteMobilityCount = chess::builtin::popcount(
         whiteKingAttacks &
         (~whitePawns) &
-        (~attacksBySide[static_cast<int>(chess::Color::BLACK)]));
+        (~blackPawnAttacks));
 
     packedScore += KingMobilityBonus.packed[whiteMobilityCount];
     IncrementCoefficients(coefficients, KingMobilityBonus.index + whiteMobilityCount - KingMobilityBonus.start, chess::Color::WHITE);
@@ -1457,7 +1457,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     const auto blackMobilityCount = chess::builtin::popcount(
         blackKingAttacks &
         (~blackPawns) &
-        (~attacksBySide[static_cast<int>(chess::Color::WHITE)]));
+        (~whitePawnAttacks));
 
     packedScore -= KingMobilityBonus.packed[blackMobilityCount];
     IncrementCoefficients(coefficients, KingMobilityBonus.index + blackMobilityCount - KingMobilityBonus.start, chess::Color::BLACK);
