@@ -5913,6 +5913,12 @@ TunableSingle KnightKingRingAttacksBonus(27, -9);
 TunableSingle BishopKingRingAttacksBonus(14, -1);
 TunableSingle RookKingRingAttacksBonus(9, -1);
 TunableSingle QueenKingRingAttacksBonus(3, 2);
+TunableArray TotalKingRingAttacksBonus(
+	chess::PieceType::PAWN,
+	std::vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	std::vector<int>{10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	1,
+	0);
 TunableArray PieceProtectedByPawnBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{17, 1, 11, 9, -6},
