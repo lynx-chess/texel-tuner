@@ -26,9 +26,9 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopKingRingAttacksBonus.size + // 3
                                     RookKingRingAttacksBonus.size +   // 5
                                     QueenKingRingAttacksBonus.size +  // 6
+                                    TotalKingRingAttacksBonus.size +
 
                                     // Arrays
-                                    TotalKingRingAttacksBonus.tunableSize + // 5, removing king
                                     PieceProtectedByPawnBonus.tunableSize + // 5, removing king
                                     IsolatedPawnPenalty.tunableSize +       // 8, files
                                     PawnPhalanxBonus.tunableSize +          // 6
@@ -137,9 +137,9 @@ public:
         BishopKingRingAttacksBonus.add(result);
         RookKingRingAttacksBonus.add(result);
         QueenKingRingAttacksBonus.add(result);
+        TotalKingRingAttacksBonus.add(result);
 
         // Arrays
-        TotalKingRingAttacksBonus.add(result);
         PieceProtectedByPawnBonus.add(result);
         IsolatedPawnPenalty.add(result);
         PawnPhalanxBonus.add(result);
@@ -192,7 +192,6 @@ public:
         assert(OpenFileRookEnemyBonus.bucketTunableSize == 8);
         assert(SemiOpenFileRookEnemyBonus.bucketTunableSize == 8);
 
-        assert(TotalKingRingAttacksBonus.tunableSize == 14);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(IsolatedPawnPenalty.tunableSize == 8);
@@ -344,10 +343,10 @@ public:
         name = NAME(QueenKingRingAttacksBonus);
         QueenKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
-        // Arrays
         name = NAME(TotalKingRingAttacksBonus);
         TotalKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
+        // Arrays
         name = NAME(PieceProtectedByPawnBonus);
         PieceProtectedByPawnBonus.to_csharp(parameters, ss, name);
 
@@ -514,11 +513,11 @@ public:
         name = NAME(QueenKingRingAttacksBonus);
         QueenKingRingAttacksBonus.to_cpp(parameters, ss, name);
 
-        // Arrays
         name = NAME(TotalKingRingAttacksBonus);
         TotalKingRingAttacksBonus.to_cpp(parameters, ss, name);
-        ss << "\n";
 
+        ss << "\n";
+        // Arrays
         name = NAME(PieceProtectedByPawnBonus);
         PieceProtectedByPawnBonus.to_cpp(parameters, ss, name);
         ss << "\n";
@@ -1507,12 +1506,12 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
 
     // Total king ring attacks
     const auto totalKingRingWhiteAttacks = std::min(13, totalKingRingAttacks[static_cast<int>(chess::Color::WHITE)]);
-    packedScore += TotalKingRingAttacksBonus.packed[totalKingRingWhiteAttacks];
-    IncrementCoefficients(coefficients, TotalKingRingAttacksBonus.index + totalKingRingWhiteAttacks - TotalKingRingAttacksBonus.start, chess::Color::WHITE);
+    IncrementCoefficients(coefficients, TotalKingRingAttacksBonus.index, chess::Color::WHITE, totalKingRingWhiteAttacks);
 
     const auto totalKingRingBlackAttacks = std::min(13, totalKingRingAttacks[static_cast<int>(chess::Color::BLACK)]);
-    packedScore -= TotalKingRingAttacksBonus.packed[totalKingRingBlackAttacks];
-    IncrementCoefficients(coefficients, TotalKingRingAttacksBonus.index + totalKingRingBlackAttacks - TotalKingRingAttacksBonus.start, chess::Color::BLACK);
+    IncrementCoefficients(coefficients, TotalKingRingAttacksBonus.index, chess::Color::BLACK, totalKingRingBlackAttacks);
+
+    packedScore += (totalKingRingWhiteAttacks - totalKingRingBlackAttacks) * TotalKingRingAttacksBonus.packed;
 
     // Bishop pair bonus
     if (chess::builtin::popcount(whiteBishops) >= 2)
