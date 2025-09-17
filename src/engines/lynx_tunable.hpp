@@ -446,7 +446,9 @@ public:
         bucketSize = mg[0].size();
         bucketTunableSize = bucketSize - start;
         size = PSQTBucketCount * bucketTunableSize;
-        std::cout << bucketSize << "-" << start << "=" << bucketTunableSize << std::endl;
+        
+        // std::cout << bucketSize << "-" << start << " == " << bucketTunableSize << std::endl;
+        assert(bucketSize - start == bucketTunableSize);
 
         _packed = std::array<std::vector<i32>, PSQTBucketCount>();
         for (int bucket = 0; bucket < PSQTBucketCount; ++bucket)
