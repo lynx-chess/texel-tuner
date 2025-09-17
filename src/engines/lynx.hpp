@@ -220,7 +220,6 @@ public:
         assert(KingThreatsBonus.tunableSize == 6);
         assert(KingThreatsBonus_Defended.tunableSize == 6);
 
-        std::cout << result.size() << " == " << numParameters << std::endl;
         assert(result.size() == numParameters);
 
         return result;
