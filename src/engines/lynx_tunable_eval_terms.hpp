@@ -5917,7 +5917,7 @@ TunableArray TotalKingRingAttacksBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{0, -10, -33, -39, -20, 11, 62, 108, 176, 207, 158, 8, 32, 33},
 	std::vector<int>{0, -6, 5, 12, 4, -3, -25, -48, -45, -60, -33, -8, 13, 9},
-	1,
+	0,
 	0);
 
 TunableArray PieceProtectedByPawnBonus(
