@@ -755,7 +755,7 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     return packedBonus;
 }
 
-int RookAdditonalEvaluation(int squareIndex, int bucket, int oppositeSideBucket, const u64 opponentPawnAttacks, int oppositeSideKingSquare, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket, const u64 opponentPawnAttacks, int oppositeSideKingSquare, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
     const auto attacks = chess::attacks::rook(static_cast<chess::Square>(squareIndex), occupancy).getBits();
@@ -1302,7 +1302,7 @@ int AdditionalPieceEvaluation(int pieceSquareIndex, int pieceIndex, int bucket, 
 
     case 3:
     case 9:
-        return RookAdditonalEvaluation(pieceSquareIndex, bucket, oppositeSideBucket, opponentPawnAttacks, oppositeSideKingSquare, board, color, coefficients);
+        return RookAdditionalEvaluation(pieceSquareIndex, bucket, oppositeSideBucket, opponentPawnAttacks, oppositeSideKingSquare, board, color, coefficients);
 
     case 2:
     case 8:
