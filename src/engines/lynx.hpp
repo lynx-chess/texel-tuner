@@ -192,7 +192,7 @@ public:
         assert(OpenFileRookEnemyBonus.bucketTunableSize == 8);
         assert(SemiOpenFileRookEnemyBonus.bucketTunableSize == 8);
 
-        assert(TotalKingRingAttacksBonus.tunableSize == 14);
+        assert(TotalKingRingAttacksBonus.tunableSize == 10);    // [4..13]
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(IsolatedPawnPenalty.tunableSize == 8);
@@ -1506,11 +1506,11 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     const auto blackBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::BLACK);
 
     // Total king ring attacks
-    const auto totalKingRingWhiteAttacks = std::min(13, totalKingRingAttacks[static_cast<int>(chess::Color::WHITE)]);
+    const auto totalKingRingWhiteAttacks = std::clamp(totalKingRingAttacks[static_cast<int>(chess::Color::WHITE)], 4, 13);
     packedScore += TotalKingRingAttacksBonus.packed[totalKingRingWhiteAttacks];
     IncrementCoefficients(coefficients, TotalKingRingAttacksBonus.index + totalKingRingWhiteAttacks - TotalKingRingAttacksBonus.start, chess::Color::WHITE);
 
-    const auto totalKingRingBlackAttacks = std::min(13, totalKingRingAttacks[static_cast<int>(chess::Color::BLACK)]);
+    const auto totalKingRingBlackAttacks = std::clamp(totalKingRingAttacks[static_cast<int>(chess::Color::BLACK)], 4, 13);
     packedScore -= TotalKingRingAttacksBonus.packed[totalKingRingBlackAttacks];
     IncrementCoefficients(coefficients, TotalKingRingAttacksBonus.index + totalKingRingBlackAttacks - TotalKingRingAttacksBonus.start, chess::Color::BLACK);
 
