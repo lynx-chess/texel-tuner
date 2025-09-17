@@ -22,6 +22,10 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopCorneredPenalty.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
                                     PieceAttackedByPawnPenalty.size +
+                                    KnightKingRingAttacksBonus.size + // 3
+                                    BishopKingRingAttacksBonus.size + // 3
+                                    RookKingRingAttacksBonus.size +   // 5
+                                    QueenKingRingAttacksBonus.size +  // 6
 
                                     // Arrays
                                     PieceProtectedByPawnBonus.tunableSize + // 5, removing king
@@ -128,6 +132,10 @@ public:
         BishopCorneredPenalty.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
+        KnightKingRingAttacksBonus.add(result);
+        BishopKingRingAttacksBonus.add(result);
+        RookKingRingAttacksBonus.add(result);
+        QueenKingRingAttacksBonus.add(result);
 
         // Arrays
         PieceProtectedByPawnBonus.add(result);
@@ -194,6 +202,10 @@ public:
         assert(BishopMobilityBonus.tunableSize == 14);
         assert(RookMobilityBonus.tunableSize == 15);
         assert(QueenMobilityBonus.tunableSize == 28);
+        // assert(KnightKingRingAttacksBonus.tunableSize == 2);
+        // assert(BishopKingRingAttacksBonus.tunableSize == 2);
+        // assert(RookKingRingAttacksBonus.tunableSize == 4);
+        // assert(QueenKingRingAttacksBonus.tunableSize == 5);
         assert(KnightThreatsBonus.tunableSize == 6);
         assert(KnightThreatsBonus_Defended.tunableSize == 6);
         assert(BishopThreatsBonus.tunableSize == 6);
@@ -316,6 +328,18 @@ public:
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
+
+        name = NAME(KnightKingRingAttacksBonus);
+        KnightKingRingAttacksBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(BishopKingRingAttacksBonus);
+        BishopKingRingAttacksBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(RookKingRingAttacksBonus);
+        RookKingRingAttacksBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(QueenKingRingAttacksBonus);
+        QueenKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
         // Arrays
         name = NAME(PieceProtectedByPawnBonus);
@@ -471,6 +495,18 @@ public:
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(KnightKingRingAttacksBonus);
+        KnightKingRingAttacksBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(BishopKingRingAttacksBonus);
+        BishopKingRingAttacksBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(RookKingRingAttacksBonus);
+        RookKingRingAttacksBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(QueenKingRingAttacksBonus);
+        QueenKingRingAttacksBonus.to_cpp(parameters, ss, name);
 
         // Arrays
         name = NAME(PieceProtectedByPawnBonus);
@@ -719,20 +755,23 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     return packedBonus;
 }
 
-int RookAdditonalEvaluation(int squareIndex, int bucket, int oppositeSideBucket, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+int RookAdditonalEvaluation(int squareIndex, int bucket, int oppositeSideBucket, const u64 opponentPawnAttacks, int oppositeSideKingSquare, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
     const auto attacks = chess::attacks::rook(static_cast<chess::Square>(squareIndex), occupancy).getBits();
     const auto sameSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
 
     // Mobility
-    const auto mobilityCount = chess::builtin::popcount(
-        attacks &
-        (~sameSidePawns) &
-        (~opponentPawnAttacks));
-
+    const auto squaresToExcludeFromMobility = (~sameSidePawns) & (~opponentPawnAttacks);
+    const auto mobilityCount = chess::builtin::popcount(attacks & squaresToExcludeFromMobility);
     int packedBonus = RookMobilityBonus.packed[mobilityCount];
     IncrementCoefficients(coefficients, RookMobilityBonus.index + mobilityCount, color);
+
+    // King ring attacks
+    const auto kingRing = KingRing[oppositeSideKingSquare];
+    const auto kingRingAttacksCount = chess::builtin::popcount(attacks & kingRing);
+    packedBonus += RookKingRingAttacksBonus.packed * kingRingAttacksCount;
+    IncrementCoefficients(coefficients, RookKingRingAttacksBonus.index, color, kingRingAttacksCount);
 
     // Open file
     if (((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) & FileMasks[squareIndex]) == 0)
@@ -776,37 +815,43 @@ int RookAdditonalEvaluation(int squareIndex, int bucket, int oppositeSideBucket,
     return packedBonus;
 }
 
-int KnightAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+int KnightAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, int oppositeSideKingSquare, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     const auto attacks = chess::attacks::knight(static_cast<chess::Square>(squareIndex)).getBits();
     const auto sameSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
 
     // Mobility
-    const auto mobilityCount = chess::builtin::popcount(
-        attacks &
-        (~sameSidePawns) &
-        (~opponentPawnAttacks));
-
+    const auto squaresToExcludeFromMobility = (~sameSidePawns) & (~opponentPawnAttacks);
+    const auto mobilityCount = chess::builtin::popcount(attacks & squaresToExcludeFromMobility);
     auto packedBonus = KnightMobilityBonus.packed[mobilityCount];
     IncrementCoefficients(coefficients, KnightMobilityBonus.index + mobilityCount, color);
+
+    // King ring attacks
+    const auto kingRing = KingRing[oppositeSideKingSquare];
+    const auto kingRingAttacksCount = chess::builtin::popcount(attacks & kingRing);
+    packedBonus += KnightKingRingAttacksBonus.packed * kingRingAttacksCount;
+    IncrementCoefficients(coefficients, KnightKingRingAttacksBonus.index, color, kingRingAttacksCount);
 
     return packedBonus;
 }
 
-int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 opponentPawnAttacks, int oppositeSideKingSquare, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
     const auto attacks = chess::attacks::bishop(static_cast<chess::Square>(squareIndex), occupancy).getBits();
     const auto sameSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
 
     // Mobility
-    const auto mobilityCount = chess::builtin::popcount(
-        attacks &
-        (~sameSidePawns) &
-        (~opponentPawnAttacks));
-
+    const auto squaresToExcludeFromMobility = (~sameSidePawns) & (~opponentPawnAttacks);
+    const auto mobilityCount = chess::builtin::popcount(attacks & squaresToExcludeFromMobility);
     auto packedBonus = BishopMobilityBonus.packed[mobilityCount];
     IncrementCoefficients(coefficients, BishopMobilityBonus.index + mobilityCount, color);
+
+    // King ring attacks
+    const auto kingRing = KingRing[oppositeSideKingSquare];
+    const auto kingRingAttacksCount = chess::builtin::popcount(attacks & kingRing);
+    packedBonus += BishopKingRingAttacksBonus.packed * kingRingAttacksCount;
+    IncrementCoefficients(coefficients, BishopKingRingAttacksBonus.index, color, kingRingAttacksCount);
 
     // Bad bishop - same color pawns
     const auto sameColorPawnsCount = chess::builtin::popcount(sameSidePawns &
@@ -868,20 +913,23 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
     return packedBonus;
 }
 
-int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
+int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, int oppositeSideKingSquare, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients)
 {
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
     const auto attacks = chess::attacks::queen(static_cast<chess::Square>(squareIndex), occupancy).getBits();
     const auto sameSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
 
     // Mobility
-    const auto mobilityCount = chess::builtin::popcount(
-        attacks &
-        (~sameSidePawns) &
-        (~opponentPawnAttacks));
-
+    const auto squaresToExcludeFromMobility = (~sameSidePawns) & (~opponentPawnAttacks);
+    const auto mobilityCount = chess::builtin::popcount(attacks & squaresToExcludeFromMobility);
     auto packedBonus = QueenMobilityBonus.packed[mobilityCount];
     IncrementCoefficients(coefficients, QueenMobilityBonus.index + mobilityCount, color);
+
+    // King ring attacks
+    const auto kingRing = KingRing[oppositeSideKingSquare];
+    const auto kingRingAttacksCount = chess::builtin::popcount(attacks & kingRing);
+    packedBonus += QueenKingRingAttacksBonus.packed * kingRingAttacksCount;
+    IncrementCoefficients(coefficients, QueenKingRingAttacksBonus.index, color, kingRingAttacksCount);
 
     return packedBonus;
 }
@@ -1250,19 +1298,19 @@ int AdditionalPieceEvaluation(int pieceSquareIndex, int pieceIndex, int bucket, 
 
     case 1:
     case 7:
-        return KnightAdditionalEvaluation(pieceSquareIndex, opponentPawnAttacks, board, color, coefficients);
+        return KnightAdditionalEvaluation(pieceSquareIndex, opponentPawnAttacks, oppositeSideKingSquare, board, color, coefficients);
 
     case 3:
     case 9:
-        return RookAdditonalEvaluation(pieceSquareIndex, bucket, oppositeSideBucket, opponentPawnAttacks, board, color, coefficients);
+        return RookAdditonalEvaluation(pieceSquareIndex, bucket, oppositeSideBucket, opponentPawnAttacks, oppositeSideKingSquare, board, color, coefficients);
 
     case 2:
     case 8:
-        return BishopAdditionalEvaluation(pieceSquareIndex, pieceIndex, opponentPawnAttacks, board, color, coefficients);
+        return BishopAdditionalEvaluation(pieceSquareIndex, pieceIndex, opponentPawnAttacks, oppositeSideKingSquare, board, color, coefficients);
 
     case 4:
     case 10:
-        return QueenAdditionalEvaluation(pieceSquareIndex, opponentPawnAttacks, board, color, coefficients);
+        return QueenAdditionalEvaluation(pieceSquareIndex, opponentPawnAttacks, oppositeSideKingSquare, board, color, coefficients);
 
     default:
         return 0;
