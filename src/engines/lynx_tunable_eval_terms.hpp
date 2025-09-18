@@ -6039,28 +6039,28 @@ TunableArray KnightKingRingAttacksBonus(
 	chess::PieceType::KNIGHT,
 	std::vector<int>{0, 34, 50},
 	std::vector<int>{0, -3, -17},
-	1,
+	0,
 	0);
 
 TunableArray BishopKingRingAttacksBonus(
 	chess::PieceType::BISHOP,
 	std::vector<int>{0, 11, 38},
 	std::vector<int>{0, -3, -5},
-	1,
+	0,
 	0);
 
 TunableArray RookKingRingAttacksBonus(
 	chess::PieceType::ROOK,
 	std::vector<int>{0, 6, 12, 53, 69},
 	std::vector<int>{0, -8, -9, -11, 7},
-	1,
+	0,
 	0);
 
 TunableArray QueenKingRingAttacksBonus(
 	chess::PieceType::QUEEN,
 	std::vector<int>{0, -4, 4, 28, 107, 186},
 	std::vector<int>{0, 7, 4, -11, -61, -96},
-	1,
+	0,
 	0);
 
 TunableArray KnightThreatsBonus(
