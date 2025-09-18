@@ -189,7 +189,8 @@ public:
 
             for (int i = 0; i < size; ++i)
             {
-                if (parameters[index + i][phase] != 0.0)
+                if (i != 0 &&
+                    parameters[index + i][phase] != 0.0)
                 {
                     min = parameters[index + i][phase];
                     packed[phase] = min;
@@ -445,7 +446,9 @@ public:
         bucketSize = mg[0].size();
         bucketTunableSize = bucketSize - start;
         size = PSQTBucketCount * bucketTunableSize;
-        std::cout << bucketSize << "-" << start << "=" << bucketTunableSize << std::endl;
+        
+        // std::cout << bucketSize << "-" << start << " == " << bucketTunableSize << std::endl;
+        assert(bucketSize - start == bucketTunableSize);
 
         _packed = std::array<std::vector<i32>, PSQTBucketCount>();
         for (int bucket = 0; bucket < PSQTBucketCount; ++bucket)
