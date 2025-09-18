@@ -20,6 +20,7 @@ const static size_t numParameters = psqtIndexCount +
                                     KingShieldBonus.size +
                                     BishopPairBonus.size +
                                     BishopCorneredPenalty.size +
+                                    BishopCorneredAndBlockedPenalty.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
                                     PieceAttackedByPawnPenalty.size +
                                     KnightKingRingAttacksBonus.size + // 3
@@ -131,6 +132,7 @@ public:
         KingShieldBonus.add(result);
         BishopPairBonus.add(result);
         BishopCorneredPenalty.add(result);
+        BishopCorneredAndBlockedPenalty.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
         KnightKingRingAttacksBonus.add(result);
@@ -220,7 +222,6 @@ public:
         assert(KingThreatsBonus.tunableSize == 6);
         assert(KingThreatsBonus_Defended.tunableSize == 6);
 
-        std::cout << result.size() << " == " << numParameters << std::endl;
         assert(result.size() == numParameters);
 
         return result;
@@ -325,6 +326,9 @@ public:
 
         name = NAME(BishopCorneredPenalty);
         BishopCorneredPenalty.to_csharp(parameters, ss, name);
+
+        name = NAME(BishopCorneredAndBlockedPenalty);
+        BishopCorneredAndBlockedPenalty.to_csharp(parameters, ss, name);
 
         name = NAME(BishopInUnblockedLongDiagonalBonus);
         BishopInUnblockedLongDiagonalBonus.to_csharp(parameters, ss, name);
@@ -495,6 +499,9 @@ public:
 
         name = NAME(BishopCorneredPenalty);
         BishopCorneredPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(BishopCorneredAndBlockedPenalty);
+        BishopCorneredAndBlockedPenalty.to_cpp(parameters, ss, name);
 
         name = NAME(BishopInUnblockedLongDiagonalBonus);
         BishopInUnblockedLongDiagonalBonus.to_cpp(parameters, ss, name);
@@ -907,22 +914,69 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
     {
         const int a1 = 56, h1 = 63, b2 = 49, g2 = 54;
 
-        if ((squareIndex == a1 && board.at(b2 ^ 56) == chess::Piece::WHITEPAWN) ||
-            (squareIndex == h1 && board.at(g2 ^ 56) == chess::Piece::WHITEPAWN))
+        if (squareIndex == a1 && board.at(b2 ^ 56) == chess::Piece::WHITEPAWN)
         {
-            packedBonus += BishopCorneredPenalty.packed;
-            IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
+            const auto squareInFrontOfPawn = b2 - 8;
+
+            if (board.at(squareInFrontOfPawn ^ 56) == chess::Piece::NONE)
+            {
+                packedBonus += BishopCorneredPenalty.packed;
+                IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
+            }
+            else
+            {
+                packedBonus += BishopCorneredAndBlockedPenalty.packed;
+                IncrementCoefficients(coefficients, BishopCorneredAndBlockedPenalty.index, color);
+            }
+        }
+        else if (squareIndex == h1 && board.at(g2 ^ 56) == chess::Piece::WHITEPAWN)
+        {
+            const auto squareInFrontOfPawn = g2 - 8;
+
+            if (board.at(squareInFrontOfPawn ^ 56) == chess::Piece::NONE)
+            {
+                packedBonus += BishopCorneredPenalty.packed;
+                IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
+            }
+            else
+            {
+                packedBonus += BishopCorneredAndBlockedPenalty.packed;
+                IncrementCoefficients(coefficients, BishopCorneredAndBlockedPenalty.index, color);
+            }
         }
     }
     else
     {
         const int a8 = 0, h8 = 7, b7 = 9, g7 = 14;
 
-        if ((squareIndex == a8 && board.at(b7 ^ 56) == chess::Piece::BLACKPAWN) ||
-            (squareIndex == h8 && board.at(g7 ^ 56) == chess::Piece::BLACKPAWN))
+        if (squareIndex == a8 && board.at(b7 ^ 56) == chess::Piece::BLACKPAWN)
         {
-            packedBonus += BishopCorneredPenalty.packed;
-            IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
+            const auto squareInFrontOfPawn = b7 + 8;
+
+            if (board.at(squareInFrontOfPawn ^ 56) == chess::Piece::NONE)
+            {
+                packedBonus += BishopCorneredPenalty.packed;
+                IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
+            }
+            else
+            {
+                packedBonus += BishopCorneredAndBlockedPenalty.packed;
+                IncrementCoefficients(coefficients, BishopCorneredAndBlockedPenalty.index, color);
+            }
+        }
+        else if (squareIndex == h8 && board.at(g7 ^ 56) == chess::Piece::BLACKPAWN)
+        {
+            const auto squareInFrontOfPawn = g7 + 8;
+            if (board.at(squareInFrontOfPawn ^ 56) == chess::Piece::NONE)
+            {
+                packedBonus += BishopCorneredPenalty.packed;
+                IncrementCoefficients(coefficients, BishopCorneredPenalty.index, color);
+            }
+            else
+            {
+                packedBonus += BishopCorneredAndBlockedPenalty.packed;
+                IncrementCoefficients(coefficients, BishopCorneredAndBlockedPenalty.index, color);
+            }
         }
     }
 
