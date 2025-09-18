@@ -780,13 +780,10 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     const auto kingRing = KingRing[oppositeSideKingSquare];
     const auto kingRingAttacksCount = chess::builtin::popcount(attacks & kingRing);
 
-    if (kingRingAttacksCount > 0)
-    {
-        packedBonus += RookKingRingAttacksBonus.packed[kingRingAttacksCount];
-        IncrementCoefficients(coefficients, RookKingRingAttacksBonus.index + kingRingAttacksCount - RookKingRingAttacksBonus.start, color);
+    packedBonus += RookKingRingAttacksBonus.packed[kingRingAttacksCount];
+    IncrementCoefficients(coefficients, RookKingRingAttacksBonus.index + kingRingAttacksCount - RookKingRingAttacksBonus.start, color);
 
-        totalKingRingAttacks[color] += kingRingAttacksCount;
-    }
+    totalKingRingAttacks[color] += kingRingAttacksCount;
 
     // Open file
     if (((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) & FileMasks[squareIndex]) == 0)
@@ -845,13 +842,10 @@ int KnightAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, i
     const auto kingRing = KingRing[oppositeSideKingSquare];
     const auto kingRingAttacksCount = chess::builtin::popcount(attacks & kingRing);
 
-    if (kingRingAttacksCount > 0)
-    {
-        packedBonus += KnightKingRingAttacksBonus.packed[kingRingAttacksCount];
-        IncrementCoefficients(coefficients, KnightKingRingAttacksBonus.index + kingRingAttacksCount - KnightKingRingAttacksBonus.start, color);
+    packedBonus += KnightKingRingAttacksBonus.packed[kingRingAttacksCount];
+    IncrementCoefficients(coefficients, KnightKingRingAttacksBonus.index + kingRingAttacksCount - KnightKingRingAttacksBonus.start, color);
 
-        totalKingRingAttacks[color] += kingRingAttacksCount;
-    }
+    totalKingRingAttacks[color] += kingRingAttacksCount;
 
     return packedBonus;
 }
@@ -872,13 +866,10 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
     const auto kingRing = KingRing[oppositeSideKingSquare];
     const auto kingRingAttacksCount = chess::builtin::popcount(attacks & kingRing);
 
-    if (kingRingAttacksCount > 0)
-    {
-        packedBonus += BishopKingRingAttacksBonus.packed[kingRingAttacksCount];
-        IncrementCoefficients(coefficients, BishopKingRingAttacksBonus.index + kingRingAttacksCount - BishopKingRingAttacksBonus.start, color);
+    packedBonus += BishopKingRingAttacksBonus.packed[kingRingAttacksCount];
+    IncrementCoefficients(coefficients, BishopKingRingAttacksBonus.index + kingRingAttacksCount - BishopKingRingAttacksBonus.start, color);
 
-        totalKingRingAttacks[color] += kingRingAttacksCount;
-    }
+    totalKingRingAttacks[color] += kingRingAttacksCount;
 
     // Bad bishop - same color pawns
     const auto sameColorPawnsCount = chess::builtin::popcount(sameSidePawns &
@@ -956,13 +947,10 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, in
     const auto kingRing = KingRing[oppositeSideKingSquare];
     const auto kingRingAttacksCount = chess::builtin::popcount(attacks & kingRing);
 
-    if (kingRingAttacksCount > 0)
-    {
-        packedBonus += QueenKingRingAttacksBonus.packed[kingRingAttacksCount];
-        IncrementCoefficients(coefficients, QueenKingRingAttacksBonus.index + kingRingAttacksCount - QueenKingRingAttacksBonus.start, color);
+    packedBonus += QueenKingRingAttacksBonus.packed[kingRingAttacksCount];
+    IncrementCoefficients(coefficients, QueenKingRingAttacksBonus.index + kingRingAttacksCount - QueenKingRingAttacksBonus.start, color);
 
-        totalKingRingAttacks[color] += kingRingAttacksCount;
-    }
+    totalKingRingAttacks[color] += kingRingAttacksCount;
 
     return packedBonus;
 }
