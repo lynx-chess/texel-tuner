@@ -194,7 +194,7 @@ public:
         assert(OpenFileRookEnemyBonus.bucketTunableSize == 8);
         assert(SemiOpenFileRookEnemyBonus.bucketTunableSize == 8);
 
-        assert(TotalKingRingAttacksBonus.tunableSize == 14);
+        assert(TotalKingRingAttacksBonus.tunableSize == 12);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(IsolatedPawnPenalty.tunableSize == 8);
