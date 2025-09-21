@@ -1560,11 +1560,11 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     const auto blackBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::BLACK);
 
     // Total king ring attacks
-    const auto totalKingRingWhiteAttacks = std::min(13, totalKingRingAttacks[static_cast<int>(chess::Color::WHITE)]);
+    const auto totalKingRingWhiteAttacks = std::min(11, totalKingRingAttacks[static_cast<int>(chess::Color::WHITE)]);
     packedScore += TotalKingRingAttacksBonus.packed[totalKingRingWhiteAttacks];
     IncrementCoefficients(coefficients, TotalKingRingAttacksBonus.index + totalKingRingWhiteAttacks - TotalKingRingAttacksBonus.start, chess::Color::WHITE);
 
-    const auto totalKingRingBlackAttacks = std::min(13, totalKingRingAttacks[static_cast<int>(chess::Color::BLACK)]);
+    const auto totalKingRingBlackAttacks = std::min(11, totalKingRingAttacks[static_cast<int>(chess::Color::BLACK)]);
     packedScore -= TotalKingRingAttacksBonus.packed[totalKingRingBlackAttacks];
     IncrementCoefficients(coefficients, TotalKingRingAttacksBonus.index + totalKingRingBlackAttacks - TotalKingRingAttacksBonus.start, chess::Color::BLACK);
 
