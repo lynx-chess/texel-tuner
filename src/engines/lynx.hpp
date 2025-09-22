@@ -196,7 +196,7 @@ public:
 
         assert(TotalKingRingAttacksBonus.tunableSize == 14);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
-        assert(PieceAttackedByPawnPenalty.tunableSize == 6);
+        assert(PieceAttackedByPawnPenalty.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(IsolatedPawnPenalty.tunableSize == 8);
         assert(PawnPhalanxBonus.tunableSize == 6);
