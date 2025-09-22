@@ -1095,7 +1095,7 @@ int PawnIslands(const u64 bitboard)
     return islandCount;
 }
 
-int KingPawnShelter(const chess::Board &board, coefficients_t &coefficients)
+int KingPawnShelter(const chess::Board &board, coefficients_t &coefficients, const std::array<u64, 12> &attacks)
 {
     const auto whiteKings = GetPieceSwappingEndianness(board, chess::PieceType::KING, chess::Color::WHITE);
     const auto whitePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE);
@@ -1106,8 +1106,8 @@ int KingPawnShelter(const chess::Board &board, coefficients_t &coefficients)
     const auto whiteShelterPawns = ShiftUpLeft(whiteKings)  | ShiftUp(whiteKings)  | ShiftUpRight(whiteKings);
     const auto blackShelterPawns = ShiftDownLeft(blackKings) | ShiftDown(blackKings) | ShiftDownRight(blackKings);
 
-    const auto whiteShelter = chess::builtin::popcount(whitePawns & whiteShelterPawns);
-    const auto blackShelter = chess::builtin::popcount(blackPawns & blackShelterPawns);
+    const auto whiteShelter = chess::builtin::popcount(whitePawns & whiteShelterPawns & (~attacks[static_cast<int>(chess::PieceType::PAWN) + 6]));
+    const auto blackShelter = chess::builtin::popcount(blackPawns & blackShelterPawns & (~attacks[static_cast<int>(chess::PieceType::PAWN)]));
 
     IncrementCoefficients(coefficients, KingPawnShelterBonus.index, chess::Color::WHITE, whiteShelter);
     IncrementCoefficients(coefficients, KingPawnShelterBonus.index, chess::Color::BLACK, blackShelter);
@@ -1628,7 +1628,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
 
     // King pawn shelter
-    packedScore += KingPawnShelter(board, coefficients);
+    packedScore += KingPawnShelter(board, coefficients, attacks);
 
     // Threats
     packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks);
