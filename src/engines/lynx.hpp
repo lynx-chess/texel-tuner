@@ -22,7 +22,7 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopCorneredPenalty.size +
                                     BishopCorneredAndBlockedPenalty.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
-                                    KingShelterBonus.size +
+                                    KingPawnShelterBonus.size +
                                     PieceAttackedByPawnPenalty.size +
                                     KnightKingRingAttacksBonus.size + // 3
                                     BishopKingRingAttacksBonus.size + // 3
@@ -135,7 +135,7 @@ public:
         BishopCorneredPenalty.add(result);
         BishopCorneredAndBlockedPenalty.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
-        KingShelterBonus.add(result);
+        KingPawnShelterBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
         KnightKingRingAttacksBonus.add(result);
         BishopKingRingAttacksBonus.add(result);
@@ -335,8 +335,8 @@ public:
         name = NAME(BishopInUnblockedLongDiagonalBonus);
         BishopInUnblockedLongDiagonalBonus.to_csharp(parameters, ss, name);
 
-        name = NAME(KingShelterBonus);
-        KingShelterBonus.to_csharp(parameters, ss, name);
+        name = NAME(KingPawnShelterBonus);
+        KingPawnShelterBonus.to_csharp(parameters, ss, name);
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
@@ -511,8 +511,8 @@ public:
         name = NAME(BishopInUnblockedLongDiagonalBonus);
         BishopInUnblockedLongDiagonalBonus.to_cpp(parameters, ss, name);
 
-        name = NAME(KingShelterBonus);
-        KingShelterBonus.to_cpp(parameters, ss, name);
+        name = NAME(KingPawnShelterBonus);
+        KingPawnShelterBonus.to_cpp(parameters, ss, name);
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
@@ -1109,10 +1109,10 @@ int KingPawnShelter(const chess::Board &board, coefficients_t &coefficients)
     const auto whiteShelter = chess::builtin::popcount(whitePawns & whiteShelterPawns);
     const auto blackShelter = chess::builtin::popcount(blackPawns & blackShelterPawns);
 
-    IncrementCoefficients(coefficients, KingShelterBonus.index, chess::Color::WHITE, whiteShelter);
-    IncrementCoefficients(coefficients, KingShelterBonus.index, chess::Color::BLACK, blackShelter);
+    IncrementCoefficients(coefficients, KingPawnShelterBonus.index, chess::Color::WHITE, whiteShelter);
+    IncrementCoefficients(coefficients, KingPawnShelterBonus.index, chess::Color::BLACK, blackShelter);
 
-    return KingShelterBonus.packed * (whiteShelter - blackShelter);
+    return KingPawnShelterBonus.packed * (whiteShelter - blackShelter);
 }
 
 std::array<u64, 12> CalculateAttacks(const chess::Board &board)
