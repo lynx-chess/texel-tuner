@@ -22,6 +22,7 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopCorneredPenalty.size +
                                     BishopCorneredAndBlockedPenalty.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
+                                    TotalPiecesAttackedByPawnPenalty.size +
                                     KnightKingRingAttacksBonus.size + // 3
                                     BishopKingRingAttacksBonus.size + // 3
                                     RookKingRingAttacksBonus.size +   // 5
@@ -134,6 +135,7 @@ public:
         BishopCorneredPenalty.add(result);
         BishopCorneredAndBlockedPenalty.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
+        TotalPiecesAttackedByPawnPenalty.add(result);
         KnightKingRingAttacksBonus.add(result);
         BishopKingRingAttacksBonus.add(result);
         RookKingRingAttacksBonus.add(result);
@@ -334,6 +336,9 @@ public:
         name = NAME(BishopInUnblockedLongDiagonalBonus);
         BishopInUnblockedLongDiagonalBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(TotalPiecesAttackedByPawnPenalty);
+        TotalPiecesAttackedByPawnPenalty.to_csharp(parameters, ss, name);
+
         name = NAME(KnightKingRingAttacksBonus);
         KnightKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
@@ -506,6 +511,9 @@ public:
 
         name = NAME(BishopInUnblockedLongDiagonalBonus);
         BishopInUnblockedLongDiagonalBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(TotalPiecesAttackedByPawnPenalty);
+        TotalPiecesAttackedByPawnPenalty.to_cpp(parameters, ss, name);
 
         name = NAME(KnightKingRingAttacksBonus);
         KnightKingRingAttacksBonus.to_cpp(parameters, ss, name);
@@ -1615,6 +1623,16 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
         packedScore -= BishopPairBonus.packed;
         IncrementCoefficients(coefficients, BishopPairBonus.index, chess::Color::BLACK);
     }
+
+    // Pieces attacked by pawns bonus
+    const auto attackedPiecesByBlackPawns = chess::builtin::popcount(blackPawnAttacks & __builtin_bswap64(board.us(chess::Color::WHITE).getBits()) /*&(~GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE))*/);
+    const auto attackedPiecesByWhitePawns = chess::builtin::popcount(whitePawnAttacks & __builtin_bswap64(board.us(chess::Color::BLACK).getBits()) /*&(~GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK))*/);
+
+    IncrementCoefficients(coefficients, TotalPiecesAttackedByPawnPenalty.index, chess::Color::WHITE, attackedPiecesByBlackPawns);
+    IncrementCoefficients(coefficients, TotalPiecesAttackedByPawnPenalty.index, chess::Color::BLACK, attackedPiecesByWhitePawns);
+
+    packedScore += (TotalPiecesAttackedByPawnPenalty.packed * attackedPiecesByBlackPawns) -
+                   (TotalPiecesAttackedByPawnPenalty.packed * attackedPiecesByWhitePawns);
 
     // Pawn islands
     const auto whitePawnIslands = PawnIslands(whitePawns);
