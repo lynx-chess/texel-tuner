@@ -446,7 +446,7 @@ public:
         bucketSize = mg[0].size();
         bucketTunableSize = bucketSize - start;
         size = PSQTBucketCount * bucketTunableSize;
-        
+
         // std::cout << bucketSize << "-" << start << " == " << bucketTunableSize << std::endl;
         assert(bucketSize - start == bucketTunableSize);
 
