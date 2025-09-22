@@ -22,6 +22,7 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopCorneredPenalty.size +
                                     BishopCorneredAndBlockedPenalty.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
+                                    KingShelterBonus.size +
                                     PieceAttackedByPawnPenalty.size +
                                     KnightKingRingAttacksBonus.size + // 3
                                     BishopKingRingAttacksBonus.size + // 3
@@ -134,6 +135,7 @@ public:
         BishopCorneredPenalty.add(result);
         BishopCorneredAndBlockedPenalty.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
+        KingShelterBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
         KnightKingRingAttacksBonus.add(result);
         BishopKingRingAttacksBonus.add(result);
@@ -333,6 +335,9 @@ public:
         name = NAME(BishopInUnblockedLongDiagonalBonus);
         BishopInUnblockedLongDiagonalBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(KingShelterBonus);
+        KingShelterBonus.to_csharp(parameters, ss, name);
+
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
@@ -505,6 +510,9 @@ public:
 
         name = NAME(BishopInUnblockedLongDiagonalBonus);
         BishopInUnblockedLongDiagonalBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(KingShelterBonus);
+        KingShelterBonus.to_cpp(parameters, ss, name);
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
@@ -1087,6 +1095,26 @@ int PawnIslands(const u64 bitboard)
     return islandCount;
 }
 
+int KingPawnShelter(const chess::Board &board, coefficients_t &coefficients)
+{
+    const auto whiteKings = GetPieceSwappingEndianness(board, chess::PieceType::KING, chess::Color::WHITE);
+    const auto whitePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE);
+
+    const auto blackKings = GetPieceSwappingEndianness(board, chess::PieceType::KING, chess::Color::BLACK);
+    const auto blackPawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK);
+
+    const auto whiteShelterPawns = ShiftUpLeft(whiteKings)  | ShiftUp(whiteKings)  | ShiftUpRight(whiteKings);
+    const auto blackShelterPawns = ShiftDownLeft(blackKings) | ShiftDown(blackKings) | ShiftDownRight(blackKings);
+
+    const auto whiteShelter = chess::builtin::popcount(whitePawns & whiteShelterPawns);
+    const auto blackShelter = chess::builtin::popcount(blackPawns & blackShelterPawns);
+
+    IncrementCoefficients(coefficients, KingShelterBonus.index, chess::Color::WHITE, whiteShelter);
+    IncrementCoefficients(coefficients, KingShelterBonus.index, chess::Color::BLACK, blackShelter);
+
+    return KingShelterBonus.packed * (whiteShelter - blackShelter);
+}
+
 std::array<u64, 12> CalculateAttacks(const chess::Board &board)
 {
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
@@ -1598,6 +1626,9 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     packedScore += PawnIslandsBonus.packed[whitePawnIslands] - PawnIslandsBonus.packed[blackPawnIslands];
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + whitePawnIslands - PawnIslandsBonus.start, chess::Color::WHITE);
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
+
+    // King pawn shelter
+    packedScore += KingPawnShelter(board, coefficients);
 
     // Threats
     packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks);
