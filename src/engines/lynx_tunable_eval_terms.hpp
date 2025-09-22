@@ -5929,9 +5929,9 @@ TunableArray PieceProtectedByPawnBonus(
 
 TunableArray PieceAttackedByPawnPenalty(
 	chess::PieceType::PAWN,
-	std::vector<int>{-24, -51, -47, -73, -45},
-	std::vector<int>{30, -36, -59, -2, 22},
-	0,
+	std::vector<int>{0, -51, -47, -73, -45},
+	std::vector<int>{0, -36, -59, -2, 22},
+	1,
 	0);
 
 TunableArray IsolatedPawnPenalty(
