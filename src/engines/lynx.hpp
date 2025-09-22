@@ -1057,8 +1057,8 @@ int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawn
     const auto nonAttackedKingShield = kingShield & (~opponentPawnAttacks);
     const auto nonAttackedKingShieldCount = chess::builtin::popcount(nonAttackedKingShield);
 
-    packedBonus += KingShieldBonus.packed * (kingShieldCount - nonAttackedKingShieldCount);
-    IncrementCoefficients(coefficients, KingShieldBonus.index, kingSide, (kingShieldCount - nonAttackedKingShieldCount));
+    packedBonus += KingShieldBonus.packed * kingShieldCount;
+    IncrementCoefficients(coefficients, KingShieldBonus.index, kingSide, kingShieldCount);
 
     packedBonus += KingShieldNonAttackedBonus.packed * nonAttackedKingShieldCount;
     IncrementCoefficients(coefficients, KingShieldNonAttackedBonus.index, kingSide, nonAttackedKingShieldCount);
