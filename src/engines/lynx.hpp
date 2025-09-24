@@ -716,17 +716,23 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
         pushSquare = squareIndex + 8;
     }
 
+    // Using oppositeColor here instead of color because of little/big endian
+    const auto thisPawnAttacks = chess::attacks::pawn(~color, static_cast<chess::Square>(squareIndex)).getBits();
+    const auto thisSidePawnAttacks = attacks[pieceIndex];
+    const auto oppositeSidePawnAttacks = attacks[6 - pieceIndex];
+
     // Isolated pawn
-    if ((sameSidePawns & IsolatedPawnMasks[squareIndex]) == 0) // isIsolatedPawn
+    if ((sameSidePawns & IsolatedPawnMasks[squareIndex]) == 0 &&
+        (thisPawnAttacks & oppositeSidePieces) == 0)
     {
         const auto file = File[squareIndex];
         packedBonus += IsolatedPawnPenalty.packed[file];
         IncrementCoefficients(coefficients, IsolatedPawnPenalty.index - IsolatedPawnPenalty.start + file, color);
     }
     // Backwards pawn
-    else if (!GetBit(attacks[pieceIndex], squareIndex) &&
+    else if (!GetBit(thisSidePawnAttacks, squareIndex) &&
              (GetBit(oppositeSidePawns, pushSquare) ||      // Blocked
-              GetBit(attacks[6 - pieceIndex], pushSquare))) // Push square attacked by opponent pawns
+              GetBit(oppositeSidePawnAttacks, pushSquare))) // Push square attacked by opponent pawns
     {
         packedBonus += BackwardsPawnPenalty.packed[rank];
         IncrementCoefficients(coefficients, BackwardsPawnPenalty.index - BackwardsPawnPenalty.start + rank, color);
