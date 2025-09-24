@@ -723,7 +723,7 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
 
     // Isolated pawn
     if ((sameSidePawns & IsolatedPawnMasks[squareIndex]) == 0 &&
-        (thisPawnAttacks & oppositeSidePieces) == 0)
+        (thisPawnAttacks & oppositeSidePawns) == 0)
     {
         const auto file = File[squareIndex];
         packedBonus += IsolatedPawnPenalty.packed[file];
