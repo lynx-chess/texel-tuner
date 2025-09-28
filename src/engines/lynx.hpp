@@ -48,6 +48,7 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopMobilityBonus.tunableSize +                   // 14, removing end
                                     RookMobilityBonus.tunableSize +                     // 15
                                     QueenMobilityBonus.tunableSize +
+                                    KingMobilityBonus.tunableSize +
                                     KnightThreatsBonus.tunableSize +
                                     KnightThreatsBonus_Defended.tunableSize +
                                     BishopThreatsBonus.tunableSize +
@@ -164,6 +165,7 @@ public:
         BishopMobilityBonus.add(result);
         RookMobilityBonus.add(result);
         QueenMobilityBonus.add(result);
+        KingMobilityBonus.add(result);
         KnightThreatsBonus.add(result);
         KnightThreatsBonus_Defended.add(result);
         BishopThreatsBonus.add(result);
@@ -209,10 +211,7 @@ public:
         assert(BishopMobilityBonus.tunableSize == 14);
         assert(RookMobilityBonus.tunableSize == 15);
         assert(QueenMobilityBonus.tunableSize == 28);
-        // assert(KnightKingRingAttacksBonus.tunableSize == 2);
-        // assert(BishopKingRingAttacksBonus.tunableSize == 2);
-        // assert(RookKingRingAttacksBonus.tunableSize == 4);
-        // assert(QueenKingRingAttacksBonus.tunableSize == 5);
+        assert(KingMobilityBonus.tunableSize == 9);
         assert(KnightThreatsBonus.tunableSize == 6);
         assert(KnightThreatsBonus_Defended.tunableSize == 6);
         assert(BishopThreatsBonus.tunableSize == 6);
@@ -408,6 +407,9 @@ public:
         name = NAME(QueenMobilityBonus);
         QueenMobilityBonus.to_csharp(parameters, ss, name, mobilityPieceValues);
 
+        name = NAME(KingMobilityBonus);
+        KingMobilityBonus.to_csharp(parameters, ss, name, mobilityPieceValues);
+
         name = NAME(KnightThreatsBonus);
         KnightThreatsBonus.to_csharp(parameters, ss, name);
 
@@ -593,6 +595,9 @@ public:
 
         name = NAME(QueenMobilityBonus);
         QueenMobilityBonus.to_cpp(parameters, ss, name, mobilityPieceValues);
+
+        name = NAME(KingMobilityBonus);
+        KingMobilityBonus.to_cpp(parameters, ss, name, mobilityPieceValues);
 
         name = NAME(KnightThreatsBonus);
         KnightThreatsBonus.to_cpp(parameters, ss, name);
@@ -1584,6 +1589,26 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
         enemyKingBaseIndex + (48 * PSQTBucketCount) + (64 * PSQTBucketCount * 4) + (64 * whiteBucket) + (blackKing ^ 56),
         chess::Color::BLACK);
 
+    // King mobility
+    const auto whiteKingAttacks = chess::attacks::king(static_cast<chess::Square>(whiteKing)).getBits();
+    const auto whiteMobilityCount = chess::builtin::popcount(
+        whiteKingAttacks &
+        (~whitePawns) &
+        (~blackPawnAttacks));
+
+    packedScore += KingMobilityBonus.packed[whiteMobilityCount];
+    IncrementCoefficients(coefficients, KingMobilityBonus.index + whiteMobilityCount - KingMobilityBonus.start, chess::Color::WHITE);
+
+    const auto blackKingAttacks = chess::attacks::king(static_cast<chess::Square>(blackKing)).getBits();
+    const auto blackMobilityCount = chess::builtin::popcount(
+        blackKingAttacks &
+        (~blackPawns) &
+        (~whitePawnAttacks));
+
+    packedScore -= KingMobilityBonus.packed[blackMobilityCount];
+    IncrementCoefficients(coefficients, KingMobilityBonus.index + blackMobilityCount - KingMobilityBonus.start, chess::Color::BLACK);
+
+    // Bishop pair bonus
     const auto whiteBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::WHITE);
     const auto blackBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::BLACK);
 
