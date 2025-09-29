@@ -1406,6 +1406,53 @@ int AdditionalPieceEvaluation(int pieceSquareIndex, int pieceIndex, int bucket, 
     return eval * (200 - movesWithoutCaptureOrPawnMove) / 200;
 }
 
+bool IsBishopPawnDraw(const chess::Board &board, chess::Color winningSide)
+{
+    const auto pawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide);
+
+    const bool hasAFilePawn = (pawns & AFile) != 0;
+    const bool hasHFilePawn = (pawns & HFile) != 0;
+
+    if (hasAFilePawn && hasHFilePawn)
+    {
+        return false;
+    }
+
+    auto promotionCornerSquare = hasAFilePawn
+                                     ? 0  // a8
+                                     : 7; // h8
+
+    const auto whiteBlackDiff = 56; // a1 - a8
+
+    // 1 is black is winning
+    const auto inverseWinningSide = winningSide == chess::Color::BLACK
+                                        ? 1
+                                        : 0;
+
+    promotionCornerSquare += inverseWinningSide * whiteBlackDiff;
+
+    const auto bishopSquare = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide)).index();
+    if (SameColor(bishopSquare, promotionCornerSquare))
+    {
+        return false;
+    }
+
+    const auto attackingKing = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::KING, winningSide)).index();
+    const auto defendingKing = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::KING, ~winningSide)).index();
+
+    const auto attackingKingCornerDistance = ChebyshevDistance(promotionCornerSquare, attackingKing);
+
+    const auto oneIfDefendingSideTomove = board.sideToMove() ^ inverseWinningSide; // ^ 1 not needed here, since colors here are opposed to the ones in my C# implementation
+
+    const auto defendingKingCornerDistance = ChebyshevDistance(promotionCornerSquare, defendingKing) -
+                                             // The only case when the defending king can't reduce the distance to the corner is if the attacking one is in the middle,
+                                             // and therefore their difference is at least 2 distance squares
+                                             oneIfDefendingSideTomove;
+
+    return defendingKingCornerDistance < attackingKingCornerDistance &&
+           ManhattanDistance(promotionCornerSquare, defendingKing) - (2 * oneIfDefendingSideTomove) < ManhattanDistance(promotionCornerSquare, attackingKing);
+}
+
 EvalResult Lynx::get_external_eval_result(const chess::Board &board)
 {
     std::vector<std::int16_t> coefficients(numParameters, 0);
@@ -1737,8 +1784,16 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                 // Bishop vs A/H pawns: if the defending king reaches the corner, and the corner is the opposite color of the bishop, it's a draw
                 // TODO implement that
                 // For now, we reduce all endgames that only have one bishop and A/H pawns
-                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 && (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
+                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 &&
+                    (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
                 {
+                    if (IsBishopPawnDraw(board, winningSide))
+                    {
+                        return EvalResult{
+                            std::move(coefficients),
+                            (double)0};
+                    }
+
                     eval >>= 1; // /2
                 }
             }
