@@ -1784,12 +1784,12 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                 if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 &&
                     (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
                 {
-                    if (IsBishopPawnDraw(board, winningSide))
-                    {
-                        return EvalResult{
-                            std::move(coefficients),
-                            (double)0};
-                    }
+                    // if (IsBishopPawnDraw(board, winningSide))
+                    // {
+                    //     return EvalResult{
+                    //         std::move(coefficients),
+                    //         (double)0};
+                    // }
 
                     // We can reduce the rest of positions, i.e. if the king hasn't reached the corner
                     // This also reduces won positions, but it shouldn't matter
