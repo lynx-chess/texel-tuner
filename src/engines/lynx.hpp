@@ -1410,7 +1410,8 @@ bool IsBishopPawnDraw(const chess::Board &board, chess::Color winningSide, int &
 {
     auto pawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide);
 
-    if ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) != 0)
+    if ((pawns == 0) // Pawns <-> Bishoop opposite side
+        || (pawns & NotAorH) != 0)
     {
         return false;
     }
