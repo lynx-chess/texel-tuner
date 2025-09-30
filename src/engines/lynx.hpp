@@ -1406,9 +1406,14 @@ int AdditionalPieceEvaluation(int pieceSquareIndex, int pieceIndex, int bucket, 
     return eval * (200 - movesWithoutCaptureOrPawnMove) / 200;
 }
 
-bool IsBishopPawnDraw(const chess::Board &board, chess::Color winningSide)
+bool IsBishopPawnDraw(const chess::Board &board, chess::Color winningSide, int &eval)
 {
-    const auto pawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide);
+    auto pawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide);
+
+    if ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) != 0)
+    {
+        return false;
+    }
 
     const bool hasAFilePawn = (pawns & AFile) != 0;
     const bool hasHFilePawn = (pawns & HFile) != 0;
@@ -1418,9 +1423,8 @@ bool IsBishopPawnDraw(const chess::Board &board, chess::Color winningSide)
         return false;
     }
 
-    auto promotionCornerSquare = hasAFilePawn
-                                     ? 0  // a8
-                                     : 7; // h8
+    // If only A or H pawns, let's halve the score
+    eval >>= 1;
 
     const auto whiteBlackDiff = 56; // a1 - a8
 
@@ -1428,6 +1432,10 @@ bool IsBishopPawnDraw(const chess::Board &board, chess::Color winningSide)
     const auto inverseWinningSide = winningSide == chess::Color::BLACK
                                         ? 1
                                         : 0;
+
+    auto promotionCornerSquare = hasAFilePawn
+                                     ? 0  // a8
+                                     : 7; // h8
 
     promotionCornerSquare += inverseWinningSide * whiteBlackDiff;
 
@@ -1437,20 +1445,52 @@ bool IsBishopPawnDraw(const chess::Board &board, chess::Color winningSide)
         return false;
     }
 
-    const auto attackingKing = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::KING, winningSide)).index();
     const auto defendingKing = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::KING, ~winningSide)).index();
+    const auto defendingKingCornerDistance = ChebyshevDistance(promotionCornerSquare, defendingKing);
 
+    if (defendingKingCornerDistance <= 1)
+    {
+        eval = 0;
+        return true;
+    }
+
+    const auto attackingKing = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::KING, winningSide)).index();
     const auto attackingKingCornerDistance = ChebyshevDistance(promotionCornerSquare, attackingKing);
 
+    const auto pawnSquare = chess::builtin::lsb(pawns).index();
+    ResetLS1B(pawns);
+
+    auto closerPawnCornerDistance = std::abs(promotionCornerSquare - pawnSquare) >> 3; // /8
+
+    // Normally this won't be executed, since only one pawn is the typical case
+    while (pawns != 0)
+    {
+        const auto loopPawnSquare = chess::builtin::lsb(pawns).index();
+        ResetLS1B(pawns);
+
+        auto promotionDistance = std::abs(promotionCornerSquare - loopPawnSquare) >> 3; // /8
+        if (promotionDistance < closerPawnCornerDistance)
+        {
+            closerPawnCornerDistance = promotionDistance;
+        }
+    }
+
+    // The are two cases when the defending king can't reduce the distance to the corner:
+    // - If the attacking one is in the middle, and therefore their difference is at least 2 distance squares - not a concern
+    // - If the pawn is in 7th rank and blocks the defending king from approaching the corner - we don't use this for comparing defending and attacking conditions
     const auto oneIfDefendingSideTomove = board.sideToMove() ^ inverseWinningSide; // ^ 1 not needed here, since colors here are opposed to the ones in my C# implementation
 
-    const auto defendingKingCornerDistance = ChebyshevDistance(promotionCornerSquare, defendingKing) -
-                                             // The only case when the defending king can't reduce the distance to the corner is if the attacking one is in the middle,
-                                             // and therefore their difference is at least 2 distance squares
-                                             oneIfDefendingSideTomove;
+    const auto likelyADraw =
+        closerPawnCornerDistance > defendingKingCornerDistance                                                                                                                                                                                         // Avoids bishop + king blocking, i.e. 2k5/P7/2K5/8/8/8/8/B7 b - - 0 1, 4k3/8/4K3/P7/8/8/8/B7 b - - 0 1
+        && attackingKingCornerDistance > 2                                                                                                                                                                                                             // Avoids bishop blocking, i.e. 2k5/8/2K5/8/5B2/8/P7/8 b - - 0 1
+        && defendingKingCornerDistance - oneIfDefendingSideTomove < attackingKingCornerDistance && ManhattanDistance(promotionCornerSquare, defendingKing) - (2 * oneIfDefendingSideTomove) < ManhattanDistance(promotionCornerSquare, attackingKing); // Avoids king diagonal blocking, i.e. 3K4/8/2k5/8/8/2B5/P7/8 w - - 0 48
 
-    return defendingKingCornerDistance < attackingKingCornerDistance &&
-           ManhattanDistance(promotionCornerSquare, defendingKing) - (2 * oneIfDefendingSideTomove) < ManhattanDistance(promotionCornerSquare, attackingKing);
+    if (likelyADraw)
+    {
+        eval >>= 1; // /4 total
+    }
+
+    return false;
 }
 
 EvalResult Lynx::get_external_eval_result(const chess::Board &board)
@@ -1782,18 +1822,11 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
             if (gamePhase == 1)
             {
                 if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 &&
-                    (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
+                    IsBishopPawnDraw(board, winningSide, eval))
                 {
-                    if (IsBishopPawnDraw(board, winningSide))
-                    {
-                        return EvalResult{
-                            std::move(coefficients),
-                            (double)0};
-                    }
-
-                    // We can reduce the rest of positions, i.e. if the king hasn't reached the corner
-                    // This also reduces won positions, but it shouldn't matter
-                    eval >>= 1; // /2
+                    return EvalResult{
+                        std::move(coefficients),
+                        (double)0};
                 }
             }
             else if (gamePhase == 2)
