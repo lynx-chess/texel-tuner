@@ -5906,6 +5906,7 @@ constexpr static std::array<std::array<int, 64>, PSQTBucketCount> EndGameEnemyKi
 
 TunableSingle KingShieldBonus(-36, 2);
 TunableSingle KingShieldNonAttackedBonus(39, -3);
+TunableSingle KingShieldAttackedPenalty(-35, -46);
 TunableSingle BishopPairBonus(30, 71);
 TunableSingle BishopCorneredPenalty(-35, -46);
 TunableSingle BishopCorneredAndBlockedPenalty(-112, -154);
