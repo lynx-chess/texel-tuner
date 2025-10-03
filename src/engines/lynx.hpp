@@ -1019,7 +1019,7 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, in
     return packedBonus;
 }
 
-int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const int pieceCount[], coefficients_t &coefficients)
+int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawnAttacks, chess::Color kingSide, const chess::Board &board, const std::array<int, 12> &pieceCount, coefficients_t &coefficients)
 {
     // Virtual mobility (as if Queen)
     const auto mobilityCount = chess::builtin::popcount(
@@ -1056,7 +1056,7 @@ int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawn
 
     // King shield
     const auto kingShield = chess::attacks::king(static_cast<chess::Square>(squareIndex)).getBits() &
-        GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide);
+                            GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide);
     const auto kingShieldCount = chess::builtin::popcount(kingShield);
 
     const auto nonAttackedKingShield = kingShield & (~opponentPawnAttacks);
@@ -1468,19 +1468,153 @@ bool IsBishopPawnDraw(const chess::Board &board, chess::Color winningSide)
            ManhattanDistance(promotionCornerSquare, defendingKing) - (2 * oneIfDefendingSideTomove) < ManhattanDistance(promotionCornerSquare, attackingKing);
 }
 
+int phase(const chess::Board &board, std::array<int, 12> &pieceCount)
+{
+    auto phase = 0;
+
+    for (int pieceIndex = 0; pieceIndex < 6; ++pieceIndex)
+    {
+        const auto whitePieces = board.pieces(static_cast<chess::PieceType::underlying>(pieceIndex), chess::Color::WHITE);
+        phase += whitePieces.count() * phaseValues[pieceIndex];
+        const auto blackPieces = board.pieces(static_cast<chess::PieceType::underlying>(pieceIndex), chess::Color::BLACK);
+        phase += blackPieces.count() * phaseValues[pieceIndex];
+
+        pieceCount[pieceIndex] = whitePieces.count();
+        pieceCount[pieceIndex + 6] = blackPieces.count();
+    }
+
+    return phase;
+}
+
 EvalResult Lynx::get_external_eval_result(const chess::Board &board)
 {
     std::vector<std::int16_t> coefficients(numParameters, 0);
 
-    int pieceCount[12] = {}; // Init to zeros
+    std::array<int, 12> pieceCount = {}; // Init to zeros
 
     int packedScore = 0;
-    int gamePhase = 0;
+    int gamePhase = phase(board, pieceCount);
+
+    const int initialEndgameScaling = 128;
+    int endgameScaling = initialEndgameScaling;
 
     const auto whitePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE);
-    const auto whitePawnAttacks = ShiftUpLeft(whitePawns) | ShiftUpRight(whitePawns);
-
     const auto blackPawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK);
+
+    const int totalPawnsCount = board.pieces(chess::PieceType::PAWN, chess::Color::WHITE).count() +
+                                board.pieces(chess::PieceType::PAWN, chess::Color::BLACK).count();
+    if (gamePhase <= 5)
+    {
+        // Pawnless endgames with few pieces
+        if (totalPawnsCount == 0)
+        {
+            switch (gamePhase)
+            {
+            case 5:
+            {
+                // RB vs R, RN vs R - scale it down due to the chances of it being a draw
+                if (pieceCount[static_cast<int>(chess::PieceType::ROOK)] == 1 &&
+                    pieceCount[static_cast<int>(chess::PieceType::ROOK) + 6] == 1)
+                {
+                    endgameScaling >>= 1; // /2
+                }
+
+                break;
+            }
+            case 4:
+            {
+                // Rook vs 2 minors and R vs r should be a draw
+                if (
+                    (pieceCount[static_cast<int>(chess::PieceType::ROOK)] != 0 &&
+                     (pieceCount[static_cast<int>(chess::PieceType::BISHOP)] + pieceCount[static_cast<int>(chess::PieceType::KNIGHT)] == 0)) ||
+                    ((pieceCount[static_cast<int>(chess::PieceType::ROOK) + 6] != 0 &&
+                      (pieceCount[static_cast<int>(chess::PieceType::BISHOP) + 6] + pieceCount[static_cast<int>(chess::PieceType::KNIGHT) + 6] == 0))))
+                {
+                    endgameScaling >>= 1; // /2
+                }
+
+                break;
+            }
+            case 3:
+            {
+                const auto sideWithMorePieces = PieceOffset(board.us(chess::Color::WHITE).count() >= board.them(chess::Color::WHITE).count());
+
+                if (pieceCount[1 + sideWithMorePieces] == 2) // NN vs N, NN vs B
+                {
+                    return EvalResult{
+                        std::move(coefficients),
+                        (double)0};
+                }
+
+                // Rook vs a minor is a draw
+                // Without rooks, only BB vs N is a win and BN vs N can have some chances
+
+                endgameScaling >>= 1; // /2
+
+                break;
+            }
+            case 2:
+            {
+                if (pieceCount[1] + pieceCount[7] == 2     // NN vs -, N vs N
+                    || pieceCount[1] + pieceCount[2] == 1) // B vs N, B vs B
+                {
+                    return EvalResult{
+                        std::move(coefficients),
+                        (double)0};
+                }
+
+                break;
+            }
+            case 1:
+            case 0:
+            {
+                return EvalResult{
+                    std::move(coefficients),
+                    (double)0};
+            }
+            }
+        }
+        else
+        {
+            const auto sideWithMorePieces = board.us(chess::Color::WHITE).count() >= board.them(chess::Color::WHITE).count()
+                                                ? chess::Color::WHITE
+                                                : chess::Color::BLACK;
+
+            if (gamePhase == 1)
+            {
+                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, sideWithMorePieces) != 0 &&
+                    (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, sideWithMorePieces) & NotAorH) == 0)
+                {
+                    // if (IsBishopPawnDraw(board, winningSide))
+                    // {
+                    //     return EvalResult{
+                    //         std::move(coefficients),
+                    //         (double)0};
+                    // }
+
+                    // We can reduce the rest of positions, i.e. if the king hasn't reached the corner
+                    // This also reduces won positions, but it shouldn't matter
+                    endgameScaling >>= 1; // /2
+                }
+            }
+            else if (gamePhase == 2)
+            {
+                const auto whiteBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::WHITE);
+                const auto blackBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::BLACK);
+
+                // Opposite color bishop endgame with pawns
+                if (whiteBishops > 0 && blackBishops > 0 &&
+                    DarkSquares[chess::builtin::lsb(whiteBishops).index()] != DarkSquares[chess::builtin::lsb(blackBishops).index()])
+                {
+                    endgameScaling >>= 1; // /2
+                }
+            }
+        }
+    }
+
+    gamePhase = 0;
+
+    const auto whitePawnAttacks = ShiftUpLeft(whitePawns) | ShiftUpRight(whitePawns);
     const auto blackPawnAttacks = ShiftDownLeft(blackPawns) | ShiftDownRight(blackPawns);
 
     const auto whiteKing = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::KING, chess::Color::WHITE)).index();
@@ -1514,8 +1648,6 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
             packedScore += PackedPositionalTables(0, whiteBucket, pieceIndex, pieceSquareIndex) + PackedPieceValue(0, whiteBucket, pieceIndex) +
                            PackedPositionalTables(1, blackBucket, pieceIndex, pieceSquareIndex) + PackedPieceValue(1, blackBucket, pieceIndex);
             gamePhase += phaseValues[pieceIndex];
-
-            ++pieceCount[pieceIndex];
 
             packedScore += AdditionalPieceEvaluation(pieceSquareIndex, pieceIndex, whiteBucket, blackBucket, whiteKing, blackKing, blackPawnAttacks, attacks, board, chess::Color::WHITE, coefficients, totalKingRingAttacks);
 
@@ -1565,8 +1697,6 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
             packedScore += PackedPositionalTables(0, blackBucket, pieceIndex, pieceSquareIndex) - PackedPieceValue(0, blackBucket, tunerPieceIndex) +
                            PackedPositionalTables(1, whiteBucket, pieceIndex, pieceSquareIndex) - PackedPieceValue(1, whiteBucket, tunerPieceIndex);
             gamePhase += phaseValues[tunerPieceIndex];
-
-            ++pieceCount[pieceIndex];
 
             packedScore -= AdditionalPieceEvaluation(pieceSquareIndex, pieceIndex, blackBucket, whiteBucket, blackKing, whiteKing, whitePawnAttacks, attacks, board, chess::Color::BLACK, coefficients, totalKingRingAttacks);
 
@@ -1716,115 +1846,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     const auto endGameScore = UnpackEG(packedScore);
     int eval = ((middleGameScore * gamePhase) + (endGameScore * endGamePhase)) / maxPhase;
 
-    const int totalPawnsCount = board.pieces(chess::PieceType::PAWN, chess::Color::WHITE).count() +
-                                board.pieces(chess::PieceType::PAWN, chess::Color::BLACK).count();
-
-    if (gamePhase <= 5)
-    {
-        // Pawnless endgames with few pieces
-        if (totalPawnsCount == 0)
-        {
-            switch (gamePhase)
-            {
-            case 5:
-            {
-                // RB vs R, RN vs R - scale it down due to the chances of it being a draw
-                if (pieceCount[static_cast<int>(chess::PieceType::ROOK)] == 1 &&
-                    pieceCount[static_cast<int>(chess::PieceType::ROOK) + 6] == 1)
-                {
-                    eval >>= 1; // /2
-                }
-
-                break;
-            }
-            case 4:
-            {
-                // Rook vs 2 minors and R vs r should be a draw
-                if (
-                    (pieceCount[static_cast<int>(chess::PieceType::ROOK)] != 0 &&
-                     (pieceCount[static_cast<int>(chess::PieceType::BISHOP)] + pieceCount[static_cast<int>(chess::PieceType::KNIGHT)] == 0)) ||
-                    ((pieceCount[static_cast<int>(chess::PieceType::ROOK) + 6] != 0 &&
-                      (pieceCount[static_cast<int>(chess::PieceType::BISHOP) + 6] + pieceCount[static_cast<int>(chess::PieceType::KNIGHT) + 6] == 0))))
-                {
-                    eval >>= 1; // /2
-                }
-
-                break;
-            }
-            case 3:
-            {
-                const auto winningSideOffset = PieceOffset(eval >= 0);
-
-                if (pieceCount[1 + winningSideOffset] == 2) // NN vs N, NN vs B
-                {
-                    return EvalResult{
-                        std::move(coefficients),
-                        (double)0};
-                }
-
-                // Rook vs a minor is a draw
-                // Without rooks, only BB vs N is a win and BN vs N can have some chances
-
-                eval >>= 1; // /2
-
-                break;
-            }
-            case 2:
-            {
-                if (pieceCount[1] + pieceCount[7] == 2     // NN vs -, N vs N
-                    || pieceCount[1] + pieceCount[2] == 1) // B vs N, B vs B
-                {
-                    return EvalResult{
-                        std::move(coefficients),
-                        (double)0};
-                }
-
-                break;
-            }
-            case 1:
-            case 0:
-            {
-                return EvalResult{
-                    std::move(coefficients),
-                    (double)0};
-            }
-            }
-        }
-        else
-        {
-            const auto winningSide = eval >= 0 ? chess::Color::WHITE : chess::Color::BLACK;
-
-            if (gamePhase == 1)
-            {
-                if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 &&
-                    (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
-                {
-                    // if (IsBishopPawnDraw(board, winningSide))
-                    // {
-                    //     return EvalResult{
-                    //         std::move(coefficients),
-                    //         (double)0};
-                    // }
-
-                    // We can reduce the rest of positions, i.e. if the king hasn't reached the corner
-                    // This also reduces won positions, but it shouldn't matter
-                    eval >>= 1; // /2
-                }
-            }
-            else if (gamePhase == 2)
-            {
-                const auto whiteBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::WHITE);
-                const auto blackBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::BLACK);
-
-                // Opposite color bishop endgame with pawns
-                if (whiteBishops > 0 && blackBishops > 0 &&
-                    DarkSquares[chess::builtin::lsb(whiteBishops).index()] != DarkSquares[chess::builtin::lsb(blackBishops).index()])
-                {
-                    eval >>= 1; // /2
-                }
-            }
-        }
-    }
+    eval *= endgameScaling;
+    eval /= initialEndgameScaling;
 
     // Endgame scaling with pawn count
     eval = (int)(eval * ((80 + (totalPawnsCount * 7)) / 128.0));
