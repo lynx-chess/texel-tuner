@@ -32,7 +32,7 @@ constexpr int PieceOffset(bool isWhite)
 
 std::array<int, 6> phaseValues = {0, 1, 1, 2, 4, 0};
 
-constexpr static int EvalNormalizationCoefficient = 106;
+constexpr static int EvalNormalizationCoefficient = 119;
 
 constexpr static std::array<std::array<std::array<std::array<int, 64>, PSQTBucketCount>, 6>, 2> MiddleGamePositionalWhiteTables = {{
 
@@ -227,6 +227,9 @@ constexpr static std::array<int, 64> Rank = {
     1UL, 1UL, 1UL, 1UL, 1UL, 1UL, 1UL, 1UL,
     0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL};
 
+constexpr u64 AFile = 0x101010101010101;
+constexpr u64 HFile = 0x8080808080808080;
+
 constexpr u64 NotAFile = 0xFEFEFEFEFEFEFEFE;
 
 constexpr u64 NotHFile = 0x7F7F7F7F7F7F7F7F;
@@ -381,7 +384,7 @@ constexpr static std::array<u64, 64> KingRing =
     return ShiftLeft(ShiftDown(board));
 }
 
-[[nodiscard]] static u64 ChebyshevDistance(const u64 square1, const u64 square2)
+[[nodiscard]] static u64 ChebyshevDistance(const int square1, const int square2)
 {
     auto xDelta = std::abs(File[square1] - File[square2]);
     auto yDelta = std::abs(Rank[square1] - Rank[square2]);
@@ -389,6 +392,19 @@ constexpr static std::array<u64, 64> KingRing =
     return xDelta >= yDelta
                ? xDelta
                : yDelta;
+}
+
+[[nodiscard]] static u64 ManhattanDistance(const int square1, const int square2)
+{
+    auto xDelta = std::abs(File[square1] - File[square2]);
+    auto yDelta = std::abs(Rank[square1] - Rank[square2]);
+
+    return xDelta + yDelta;
+}
+
+[[nodiscard]] static bool SameColor(int square1, int square2)
+{
+    return ((9 * (square1 ^ square2)) & 8) == 0;
 }
 
 [[nodiscard]] static bool GetBit(const u64 board, const int squareIndex)
