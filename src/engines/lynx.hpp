@@ -18,6 +18,7 @@ constexpr int enemyKingBaseIndex = psqtIndexCount / 2;
 const static size_t numParameters = psqtIndexCount +
                                     // DoubledPawnPenalty.size
                                     KingShieldBonus.size +
+                                    KingShieldNonAttackedBonus.size +
                                     BishopPairBonus.size +
                                     BishopCorneredPenalty.size +
                                     BishopCorneredAndBlockedPenalty.size +
@@ -131,6 +132,7 @@ public:
 
         // DoubledPawnPenalty.add(result);
         KingShieldBonus.add(result);
+        KingShieldNonAttackedBonus.add(result);
         BishopPairBonus.add(result);
         BishopCorneredPenalty.add(result);
         BishopCorneredAndBlockedPenalty.add(result);
@@ -320,6 +322,9 @@ public:
         name = NAME(KingShieldBonus);
         KingShieldBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(KingShieldNonAttackedBonus);
+        KingShieldNonAttackedBonus.to_csharp(parameters, ss, name);
+
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
@@ -495,6 +500,9 @@ public:
 
         name = NAME(KingShieldBonus);
         KingShieldBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(KingShieldNonAttackedBonus);
+        KingShieldNonAttackedBonus.to_cpp(parameters, ss, name);
 
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
@@ -1047,13 +1055,20 @@ int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawn
     }
 
     // King shield
-    const auto ownPawnsAroundCount = chess::builtin::popcount(
-        chess::attacks::king(static_cast<chess::Square>(squareIndex)).getBits() &
-        GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide));
+    const auto kingShield = chess::attacks::king(static_cast<chess::Square>(squareIndex)).getBits() &
+        GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide);
+    const auto kingShieldCount = chess::builtin::popcount(kingShield);
 
-    IncrementCoefficients(coefficients, KingShieldBonus.index, kingSide, ownPawnsAroundCount);
+    const auto nonAttackedKingShield = kingShield & (~opponentPawnAttacks);
+    const auto nonAttackedKingShieldCount = chess::builtin::popcount(nonAttackedKingShield);
 
-    return packedBonus + KingShieldBonus.packed * ownPawnsAroundCount;
+    packedBonus += KingShieldBonus.packed * (kingShieldCount - nonAttackedKingShieldCount);
+    IncrementCoefficients(coefficients, KingShieldBonus.index, kingSide, (kingShieldCount - nonAttackedKingShieldCount));
+
+    packedBonus += KingShieldNonAttackedBonus.packed * nonAttackedKingShieldCount;
+    IncrementCoefficients(coefficients, KingShieldNonAttackedBonus.index, kingSide, nonAttackedKingShieldCount);
+
+    return packedBonus;
 }
 
 int PawnIslands(const u64 bitboard)
