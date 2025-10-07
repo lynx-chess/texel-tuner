@@ -24,6 +24,7 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopCorneredAndBlockedPenalty.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
                                     PieceAttackedByPawnPenalty.size +
+                                    PawnKingRingAttacksBonus.size +   // 3
                                     KnightKingRingAttacksBonus.size + // 3
                                     BishopKingRingAttacksBonus.size + // 3
                                     RookKingRingAttacksBonus.size +   // 5
@@ -138,6 +139,7 @@ public:
         BishopCorneredAndBlockedPenalty.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
+        PawnKingRingAttacksBonus.add(result);
         KnightKingRingAttacksBonus.add(result);
         BishopKingRingAttacksBonus.add(result);
         RookKingRingAttacksBonus.add(result);
@@ -340,6 +342,9 @@ public:
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
+        name = NAME(PawnKingRingAttacksBonus);
+        PawnKingRingAttacksBonus.to_csharp(parameters, ss, name);
+
         name = NAME(KnightKingRingAttacksBonus);
         KnightKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
@@ -518,6 +523,9 @@ public:
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(PawnKingRingAttacksBonus);
+        PawnKingRingAttacksBonus.to_cpp(parameters, ss, name);
 
         name = NAME(KnightKingRingAttacksBonus);
         KnightKingRingAttacksBonus.to_cpp(parameters, ss, name);
@@ -1056,7 +1064,7 @@ int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawn
 
     // King shield
     const auto kingShield = chess::attacks::king(static_cast<chess::Square>(squareIndex)).getBits() &
-        GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide);
+                            GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide);
     const auto kingShieldCount = chess::builtin::popcount(kingShield);
 
     const auto nonAttackedKingShield = kingShield & (~opponentPawnAttacks);
@@ -1645,6 +1653,22 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     // Bishop pair bonus
     const auto whiteBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::WHITE);
     const auto blackBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::BLACK);
+
+    // Pawn king ring attacks
+    const auto whiteKingRing = KingRing[whiteKing];
+    const auto blackKingRing = KingRing[blackKing];
+
+    const auto whitePawnKingRingAttacks = chess::builtin::popcount(whitePawnAttacks & blackKingRing);
+    const auto blackPawnKingRingAttacks = chess::builtin::popcount(blackPawnAttacks & whiteKingRing);
+
+    totalKingRingAttacks[static_cast<int>(chess::Color::WHITE)] += whitePawnKingRingAttacks;
+    totalKingRingAttacks[static_cast<int>(chess::Color::BLACK)] += blackPawnKingRingAttacks;
+
+    packedScore += PawnKingRingAttacksBonus.packed;
+    IncrementCoefficients(coefficients, PawnKingRingAttacksBonus.index, chess::Color::WHITE, whitePawnKingRingAttacks);
+
+    packedScore -= PawnKingRingAttacksBonus.packed;
+    IncrementCoefficients(coefficients, PawnKingRingAttacksBonus.index, chess::Color::BLACK, blackPawnKingRingAttacks);
 
     // Total king ring attacks
     const auto totalKingRingWhiteAttacks = std::min(13, totalKingRingAttacks[static_cast<int>(chess::Color::WHITE)]);
