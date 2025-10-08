@@ -1454,26 +1454,16 @@ bool IsBishopPawnDraw(const chess::Board &board, chess::Color winningSide)
 
     promotionCornerSquare += inverseWinningSide * whiteBlackDiff;
 
-    const auto bishopSquare = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide)).index();
-    if (SameColor(bishopSquare, promotionCornerSquare))
+    const auto defendingKing = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::KING, ~winningSide)).index();
+
+    // Not in the corner or adjacent squares
+    if (ChebyshevDistance(promotionCornerSquare, defendingKing) >= 1)
     {
         return false;
     }
 
-    const auto attackingKing = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::KING, winningSide)).index();
-    const auto defendingKing = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::KING, ~winningSide)).index();
-
-    const auto attackingKingCornerDistance = ChebyshevDistance(promotionCornerSquare, attackingKing);
-
-    const auto oneIfDefendingSideTomove = board.sideToMove() ^ inverseWinningSide; // ^ 1 not needed here, since colors here are opposed to the ones in my C# implementation
-
-    const auto defendingKingCornerDistance = ChebyshevDistance(promotionCornerSquare, defendingKing) -
-                                             // The only case when the defending king can't reduce the distance to the corner is if the attacking one is in the middle,
-                                             // and therefore their difference is at least 2 distance squares
-                                             oneIfDefendingSideTomove;
-
-    return defendingKingCornerDistance < attackingKingCornerDistance &&
-           ManhattanDistance(promotionCornerSquare, defendingKing) - (2 * oneIfDefendingSideTomove) < ManhattanDistance(promotionCornerSquare, attackingKing);
+    const auto bishopSquare = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide)).index();
+    return DifferentColor(bishopSquare, promotionCornerSquare);
 }
 
 EvalResult Lynx::get_external_eval_result(const chess::Board &board)
@@ -1823,12 +1813,12 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                 if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 &&
                     (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
                 {
-                    // if (IsBishopPawnDraw(board, winningSide))
-                    // {
-                    //     return EvalResult{
-                    //         std::move(coefficients),
-                    //         (double)0};
-                    // }
+                    if (IsBishopPawnDraw(board, winningSide))
+                    {
+                        return EvalResult{
+                            std::move(coefficients),
+                            (double)0};
+                    }
 
                     // We can reduce the rest of positions, i.e. if the king hasn't reached the corner
                     // This also reduces won positions, but it shouldn't matter
