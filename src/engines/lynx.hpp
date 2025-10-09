@@ -1466,6 +1466,37 @@ bool IsBishopPawnDraw(const chess::Board &board, chess::Color winningSide)
     return DifferentColor(bishopSquare, promotionCornerSquare);
 }
 
+bool IsRookPawnDraw(const chess::Board &board, chess::Color winningSide)
+{
+    const auto pawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide);
+
+    const bool onlyAFilePawn = (pawns & AFile) == pawns;
+    const bool onlyHFilePawn = (pawns & HFile) == pawns;
+
+    if (!(onlyAFilePawn || onlyHFilePawn))
+    {
+        return false;
+    }
+
+    auto promotionCornerSquare = onlyAFilePawn
+                                     ? 0  // a8
+                                     : 7; // h8
+
+    const auto whiteBlackDiff = 56; // a1 - a8
+
+    // 1 is black is winning
+    const auto inverseWinningSide = winningSide == chess::Color::BLACK
+                                        ? 1
+                                        : 0;
+
+    promotionCornerSquare += inverseWinningSide * whiteBlackDiff;
+
+    const auto defendingKing = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::KING, ~winningSide)).index();
+
+    // Not in the corner or adjacent squares
+    return ChebyshevDistance(promotionCornerSquare, defendingKing) <= 1;
+}
+
 EvalResult Lynx::get_external_eval_result(const chess::Board &board)
 {
     std::vector<std::int16_t> coefficients(numParameters, 0);
@@ -1808,7 +1839,16 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
         {
             const auto winningSide = eval >= 0 ? chess::Color::WHITE : chess::Color::BLACK;
 
-            if (gamePhase == 1)
+            if (gamePhase == 0)
+            {
+                if (IsRookPawnDraw(board, winningSide))
+                {
+                    return EvalResult{
+                        std::move(coefficients),
+                        (double)0};
+                }
+            }
+            else if (gamePhase == 1)
             {
                 if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 &&
                     (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
