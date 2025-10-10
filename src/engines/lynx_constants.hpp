@@ -402,9 +402,14 @@ constexpr static std::array<u64, 64> KingRing =
     return xDelta + yDelta;
 }
 
-[[nodiscard]] static bool SameColor(int square1, int square2)
+[[nodiscard]] static bool SameColor(int squareIndex1, int squareIndex2)
 {
-    return ((9 * (square1 ^ square2)) & 8) == 0;
+    return ((9 * (squareIndex1 ^ squareIndex2)) & 8) == 0;
+}
+
+[[nodiscard]] static bool DifferentColor(int squareIndex1, int squareIndex2)
+{
+    return ((9 * (squareIndex1 ^ squareIndex2)) & 8) != 0;
 }
 
 [[nodiscard]] static bool GetBit(const u64 board, const int squareIndex)

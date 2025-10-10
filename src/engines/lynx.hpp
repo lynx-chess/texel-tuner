@@ -24,6 +24,7 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopCorneredAndBlockedPenalty.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
                                     PieceAttackedByPawnPenalty.size +
+                                    PawnKingRingAttacksBonus.size +   // 3
                                     KnightKingRingAttacksBonus.size + // 3
                                     BishopKingRingAttacksBonus.size + // 3
                                     RookKingRingAttacksBonus.size +   // 5
@@ -138,6 +139,7 @@ public:
         BishopCorneredAndBlockedPenalty.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
         PieceAttackedByPawnPenalty.add(result);
+        PawnKingRingAttacksBonus.add(result);
         KnightKingRingAttacksBonus.add(result);
         BishopKingRingAttacksBonus.add(result);
         RookKingRingAttacksBonus.add(result);
@@ -340,6 +342,9 @@ public:
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
+        name = NAME(PawnKingRingAttacksBonus);
+        PawnKingRingAttacksBonus.to_csharp(parameters, ss, name);
+
         name = NAME(KnightKingRingAttacksBonus);
         KnightKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
@@ -518,6 +523,9 @@ public:
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(PawnKingRingAttacksBonus);
+        PawnKingRingAttacksBonus.to_cpp(parameters, ss, name);
 
         name = NAME(KnightKingRingAttacksBonus);
         KnightKingRingAttacksBonus.to_cpp(parameters, ss, name);
@@ -1056,7 +1064,7 @@ int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawn
 
     // King shield
     const auto kingShield = chess::attacks::king(static_cast<chess::Square>(squareIndex)).getBits() &
-        GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide);
+                            GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide);
     const auto kingShieldCount = chess::builtin::popcount(kingShield);
 
     const auto nonAttackedKingShield = kingShield & (~opponentPawnAttacks);
@@ -1446,26 +1454,16 @@ bool IsBishopPawnDraw(const chess::Board &board, chess::Color winningSide)
 
     promotionCornerSquare += inverseWinningSide * whiteBlackDiff;
 
-    const auto bishopSquare = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide)).index();
-    if (SameColor(bishopSquare, promotionCornerSquare))
+    const auto defendingKing = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::KING, ~winningSide)).index();
+
+    // Not in the corner or adjacent squares
+    if (ChebyshevDistance(promotionCornerSquare, defendingKing) >= 1)
     {
         return false;
     }
 
-    const auto attackingKing = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::KING, winningSide)).index();
-    const auto defendingKing = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::KING, ~winningSide)).index();
-
-    const auto attackingKingCornerDistance = ChebyshevDistance(promotionCornerSquare, attackingKing);
-
-    const auto oneIfDefendingSideTomove = board.sideToMove() ^ inverseWinningSide; // ^ 1 not needed here, since colors here are opposed to the ones in my C# implementation
-
-    const auto defendingKingCornerDistance = ChebyshevDistance(promotionCornerSquare, defendingKing) -
-                                             // The only case when the defending king can't reduce the distance to the corner is if the attacking one is in the middle,
-                                             // and therefore their difference is at least 2 distance squares
-                                             oneIfDefendingSideTomove;
-
-    return defendingKingCornerDistance < attackingKingCornerDistance &&
-           ManhattanDistance(promotionCornerSquare, defendingKing) - (2 * oneIfDefendingSideTomove) < ManhattanDistance(promotionCornerSquare, attackingKing);
+    const auto bishopSquare = chess::builtin::lsb(GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide)).index();
+    return DifferentColor(bishopSquare, promotionCornerSquare);
 }
 
 EvalResult Lynx::get_external_eval_result(const chess::Board &board)
@@ -1646,6 +1644,22 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     const auto whiteBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::WHITE);
     const auto blackBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::BLACK);
 
+    // Pawn king ring attacks
+    const auto whiteKingRing = KingRing[whiteKing];
+    const auto blackKingRing = KingRing[blackKing];
+
+    const auto whitePawnKingRingAttacks = chess::builtin::popcount(whitePawnAttacks & blackKingRing);
+    const auto blackPawnKingRingAttacks = chess::builtin::popcount(blackPawnAttacks & whiteKingRing);
+
+    totalKingRingAttacks[static_cast<int>(chess::Color::WHITE)] += whitePawnKingRingAttacks;
+    totalKingRingAttacks[static_cast<int>(chess::Color::BLACK)] += blackPawnKingRingAttacks;
+
+    packedScore += PawnKingRingAttacksBonus.packed;
+    IncrementCoefficients(coefficients, PawnKingRingAttacksBonus.index, chess::Color::WHITE, whitePawnKingRingAttacks);
+
+    packedScore -= PawnKingRingAttacksBonus.packed;
+    IncrementCoefficients(coefficients, PawnKingRingAttacksBonus.index, chess::Color::BLACK, blackPawnKingRingAttacks);
+
     // Total king ring attacks
     const auto totalKingRingWhiteAttacks = std::min(13, totalKingRingAttacks[static_cast<int>(chess::Color::WHITE)]);
     packedScore += TotalKingRingAttacksBonus.packed[totalKingRingWhiteAttacks];
@@ -1799,12 +1813,12 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                 if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 &&
                     (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
                 {
-                    // if (IsBishopPawnDraw(board, winningSide))
-                    // {
-                    //     return EvalResult{
-                    //         std::move(coefficients),
-                    //         (double)0};
-                    // }
+                    if (IsBishopPawnDraw(board, winningSide))
+                    {
+                        return EvalResult{
+                            std::move(coefficients),
+                            (double)0};
+                    }
 
                     // We can reduce the rest of positions, i.e. if the king hasn't reached the corner
                     // This also reduces won positions, but it shouldn't matter
