@@ -19,6 +19,7 @@ const static size_t numParameters = psqtIndexCount +
                                     // DoubledPawnPenalty.size
                                     KingShieldBonus.size +
                                     KingShieldNonAttackedBonus.size +
+                                    PassedPawnPushProtectedByPawnsBonus.size +
                                     BishopPairBonus.size +
                                     BishopCorneredPenalty.size +
                                     BishopCorneredAndBlockedPenalty.size +
@@ -62,8 +63,8 @@ const static size_t numParameters = psqtIndexCount +
                                     KingThreatsBonus_Defended.tunableSize +
 
                                     // Bucketed arrays
-                                    PassedPawnBonus.size +                         // PSQTBucketCount * 6, removing 1 rank values
-                                    PassedPawnEnemyBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnEnemyBonus.size +               // PSQTBucketCount * 6, removing 1 rank values
                                     PassedPawnNoEnemiesAheadBonus.size +      // PSQTBucketCount * 6, removing 1 rank values
                                     PassedPawnNoEnemiesAheadEnemyBonus.size + // PSQTBucketCount * 6, removing 1 rank values
                                     OpenFileKingPenalty.size +
@@ -134,6 +135,7 @@ public:
         // DoubledPawnPenalty.add(result);
         KingShieldBonus.add(result);
         KingShieldNonAttackedBonus.add(result);
+        PassedPawnPushProtectedByPawnsBonus.add(result);
         BishopPairBonus.add(result);
         BishopCorneredPenalty.add(result);
         BishopCorneredAndBlockedPenalty.add(result);
@@ -327,6 +329,9 @@ public:
         name = NAME(KingShieldNonAttackedBonus);
         KingShieldNonAttackedBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(PassedPawnPushProtectedByPawnsBonus);
+        PassedPawnPushProtectedByPawnsBonus.to_csharp(parameters, ss, name);
+
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
@@ -508,6 +513,9 @@ public:
 
         name = NAME(KingShieldNonAttackedBonus);
         KingShieldNonAttackedBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(PassedPawnPushProtectedByPawnsBonus);
+        PassedPawnPushProtectedByPawnsBonus.to_cpp(parameters, ss, name);
 
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
@@ -737,6 +745,9 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
         pushSquare = squareIndex + 8;
     }
 
+    const auto sameSidePawnAttacks = attacks[pieceIndex];
+    const auto oppositeSidePawnAttacks = attacks[6 - pieceIndex];
+
     // Isolated pawn
     if ((sameSidePawns & IsolatedPawnMasks[squareIndex]) == 0) // isIsolatedPawn
     {
@@ -745,9 +756,9 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
         IncrementCoefficients(coefficients, IsolatedPawnPenalty.index - IsolatedPawnPenalty.start + file, color);
     }
     // Backwards pawn
-    else if (!GetBit(attacks[pieceIndex], squareIndex) &&
+    else if (!GetBit(sameSidePawnAttacks, squareIndex) &&
              (GetBit(oppositeSidePawns, pushSquare) ||      // Blocked
-              GetBit(attacks[6 - pieceIndex], pushSquare))) // Push square attacked by opponent pawns
+              GetBit(oppositeSidePawnAttacks, pushSquare))) // Push square attacked by opponent pawns
     {
         packedBonus += BackwardsPawnPenalty.packed[rank];
         IncrementCoefficients(coefficients, BackwardsPawnPenalty.index - BackwardsPawnPenalty.start + rank, color);
@@ -761,6 +772,12 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
 
         packedBonus += PassedPawnEnemyBonus.packed(oppositeSideBucket, rank);
         IncrementCoefficients(coefficients, PassedPawnEnemyBonus.index(oppositeSideBucket, rank - PassedPawnEnemyBonus.start), color); // There's no coefficient for rank 0
+
+        // Passed pawn push square defended by pawns
+        if (chess::builtin::popcount(sameSidePawnAttacks) > chess::builtin::popcount(oppositeSidePawnAttacks))
+        {
+            packedBonus += PassedPawnPushProtectedByPawnsBonus.packed;
+        }
 
         // Passed pawn without opponent pieces ahead (in its passed pawn mask)
         if ((oppositeSidePieces & passedPawnMask) == 0)
