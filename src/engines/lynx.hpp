@@ -64,8 +64,8 @@ const static size_t numParameters = psqtIndexCount +
                                     // Bucketed arrays
                                     PassedPawnBonus.size +                         // PSQTBucketCount * 6, removing 1 rank values
                                     PassedPawnEnemyBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
-                                    PassedPawnBonusNoEnemiesAheadBonus.size +      // PSQTBucketCount * 6, removing 1 rank values
-                                    PassedPawnBonusNoEnemiesAheadEnemyBonus.size + // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnNoEnemiesAheadBonus.size +      // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnNoEnemiesAheadEnemyBonus.size + // PSQTBucketCount * 6, removing 1 rank values
                                     OpenFileKingPenalty.size +
                                     SemiOpenFileKingPenalty.size +
                                     OpenFileRookBonus.size +
@@ -182,8 +182,8 @@ public:
         // Bucketed arrays
         PassedPawnBonus.add(result);
         PassedPawnEnemyBonus.add(result);
-        PassedPawnBonusNoEnemiesAheadBonus.add(result);
-        PassedPawnBonusNoEnemiesAheadEnemyBonus.add(result);
+        PassedPawnNoEnemiesAheadBonus.add(result);
+        PassedPawnNoEnemiesAheadEnemyBonus.add(result);
         OpenFileRookBonus.add(result);
         SemiOpenFileRookBonus.add(result);
         OpenFileRookEnemyBonus.add(result);
@@ -191,8 +191,8 @@ public:
 
         assert(PassedPawnBonus.bucketTunableSize == 6);
         assert(PassedPawnEnemyBonus.bucketTunableSize == 6);
-        assert(PassedPawnBonusNoEnemiesAheadBonus.bucketTunableSize == 6);
-        assert(PassedPawnBonusNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
+        assert(PassedPawnNoEnemiesAheadBonus.bucketTunableSize == 6);
+        assert(PassedPawnNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
         assert(OpenFileKingPenalty.bucketTunableSize == 8);
         assert(SemiOpenFileKingPenalty.bucketTunableSize == 8);
         assert(OpenFileRookBonus.bucketTunableSize == 8);
@@ -452,11 +452,11 @@ public:
         name = NAME(PassedPawnEnemyBonus);
         PassedPawnEnemyBonus.to_csharp(parameters, ss, name);
 
-        name = NAME(PassedPawnBonusNoEnemiesAheadBonus);
-        PassedPawnBonusNoEnemiesAheadBonus.to_csharp(parameters, ss, name);
+        name = NAME(PassedPawnNoEnemiesAheadBonus);
+        PassedPawnNoEnemiesAheadBonus.to_csharp(parameters, ss, name);
 
-        name = NAME(PassedPawnBonusNoEnemiesAheadEnemyBonus);
-        PassedPawnBonusNoEnemiesAheadEnemyBonus.to_csharp(parameters, ss, name);
+        name = NAME(PassedPawnNoEnemiesAheadEnemyBonus);
+        PassedPawnNoEnemiesAheadEnemyBonus.to_csharp(parameters, ss, name);
 
         name = NAME(OpenFileKingPenalty);
         OpenFileKingPenalty.to_csharp(parameters, ss, name);
@@ -644,11 +644,11 @@ public:
         name = NAME(PassedPawnEnemyBonus);
         PassedPawnEnemyBonus.to_cpp(parameters, ss, name);
 
-        name = NAME(PassedPawnBonusNoEnemiesAheadBonus);
-        PassedPawnBonusNoEnemiesAheadBonus.to_cpp(parameters, ss, name);
+        name = NAME(PassedPawnNoEnemiesAheadBonus);
+        PassedPawnNoEnemiesAheadBonus.to_cpp(parameters, ss, name);
 
-        name = NAME(PassedPawnBonusNoEnemiesAheadEnemyBonus);
-        PassedPawnBonusNoEnemiesAheadEnemyBonus.to_cpp(parameters, ss, name);
+        name = NAME(PassedPawnNoEnemiesAheadEnemyBonus);
+        PassedPawnNoEnemiesAheadEnemyBonus.to_cpp(parameters, ss, name);
 
         name = NAME(OpenFileKingPenalty);
         OpenFileKingPenalty.to_cpp(parameters, ss, name);
@@ -765,11 +765,11 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
         // Passed pawn without opponent pieces ahead (in its passed pawn mask)
         if ((oppositeSidePieces & passedPawnMask) == 0)
         {
-            packedBonus += PassedPawnBonusNoEnemiesAheadBonus.packed(bucket, rank);
-            IncrementCoefficients(coefficients, PassedPawnBonusNoEnemiesAheadBonus.index(bucket, rank - PassedPawnBonusNoEnemiesAheadBonus.start), color); // There's no coefficient for rank 0
+            packedBonus += PassedPawnNoEnemiesAheadBonus.packed(bucket, rank);
+            IncrementCoefficients(coefficients, PassedPawnNoEnemiesAheadBonus.index(bucket, rank - PassedPawnNoEnemiesAheadBonus.start), color); // There's no coefficient for rank 0
 
-            packedBonus += PassedPawnBonusNoEnemiesAheadEnemyBonus.packed(oppositeSideBucket, rank);
-            IncrementCoefficients(coefficients, PassedPawnBonusNoEnemiesAheadEnemyBonus.index(oppositeSideBucket, rank - PassedPawnBonusNoEnemiesAheadEnemyBonus.start), color); // There's no coefficient for rank 0
+            packedBonus += PassedPawnNoEnemiesAheadEnemyBonus.packed(oppositeSideBucket, rank);
+            IncrementCoefficients(coefficients, PassedPawnNoEnemiesAheadEnemyBonus.index(oppositeSideBucket, rank - PassedPawnNoEnemiesAheadEnemyBonus.start), color); // There's no coefficient for rank 0
         }
 
         // King distance to passed pawn
