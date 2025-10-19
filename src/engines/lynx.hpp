@@ -774,7 +774,7 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
         IncrementCoefficients(coefficients, PassedPawnEnemyBonus.index(oppositeSideBucket, rank - PassedPawnEnemyBonus.start), color); // There's no coefficient for rank 0
 
         // Passed pawn push square defended by pawns
-        if (GetBit(sameSidePawnAttacks, pushSquare))
+        if (GetBit(sameSidePawnAttacks, pushSquare) && !GetBit(oppositeSidePawnAttacks, pushSquare))
         {
             packedBonus += PassedPawnPushProtectedByPawnBonus.packed;
             IncrementCoefficients(coefficients, PassedPawnPushProtectedByPawnBonus.index, color);
