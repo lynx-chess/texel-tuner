@@ -19,7 +19,6 @@ const static size_t numParameters = psqtIndexCount +
                                     // DoubledPawnPenalty.size
                                     KingShieldBonus.size +
                                     KingShieldNonAttackedBonus.size +
-                                    PassedPawnPushProtectedByPawnBonus.size +
                                     BishopPairBonus.size +
                                     BishopCorneredPenalty.size +
                                     BishopCorneredAndBlockedPenalty.size +
@@ -32,6 +31,7 @@ const static size_t numParameters = psqtIndexCount +
                                     QueenKingRingAttacksBonus.size +  // 6
 
                                     // Arrays
+                                    PassedPawnPushProtectedByPawnBonus.tunableSize +
                                     TotalKingRingAttacksBonus.tunableSize + // 5, removing king
                                     PieceProtectedByPawnBonus.tunableSize + // 5, removing king
                                     IsolatedPawnPenalty.tunableSize +       // 8, files
@@ -135,7 +135,6 @@ public:
         // DoubledPawnPenalty.add(result);
         KingShieldBonus.add(result);
         KingShieldNonAttackedBonus.add(result);
-        PassedPawnPushProtectedByPawnBonus.add(result);
         BishopPairBonus.add(result);
         BishopCorneredPenalty.add(result);
         BishopCorneredAndBlockedPenalty.add(result);
@@ -148,6 +147,7 @@ public:
         QueenKingRingAttacksBonus.add(result);
 
         // Arrays
+        PassedPawnPushProtectedByPawnBonus.add(result);
         TotalKingRingAttacksBonus.add(result);
         PieceProtectedByPawnBonus.add(result);
         IsolatedPawnPenalty.add(result);
@@ -202,6 +202,7 @@ public:
         assert(OpenFileRookEnemyBonus.bucketTunableSize == 8);
         assert(SemiOpenFileRookEnemyBonus.bucketTunableSize == 8);
 
+        assert(PassedPawnPushProtectedByPawnBonus.tunableSize == 6);
         assert(TotalKingRingAttacksBonus.tunableSize == 14);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
@@ -329,9 +330,6 @@ public:
         name = NAME(KingShieldNonAttackedBonus);
         KingShieldNonAttackedBonus.to_csharp(parameters, ss, name);
 
-        name = NAME(PassedPawnPushProtectedByPawnBonus);
-        PassedPawnPushProtectedByPawnBonus.to_csharp(parameters, ss, name);
-
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_csharp(parameters, ss, name);
 
@@ -363,6 +361,9 @@ public:
         QueenKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
         // Arrays
+        name = NAME(PassedPawnPushProtectedByPawnBonus);
+        PassedPawnPushProtectedByPawnBonus.to_csharp(parameters, ss, name);
+
         name = NAME(TotalKingRingAttacksBonus);
         TotalKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
@@ -514,9 +515,6 @@ public:
         name = NAME(KingShieldNonAttackedBonus);
         KingShieldNonAttackedBonus.to_cpp(parameters, ss, name);
 
-        name = NAME(PassedPawnPushProtectedByPawnBonus);
-        PassedPawnPushProtectedByPawnBonus.to_cpp(parameters, ss, name);
-
         name = NAME(BishopPairBonus);
         BishopPairBonus.to_cpp(parameters, ss, name);
 
@@ -548,6 +546,10 @@ public:
         QueenKingRingAttacksBonus.to_cpp(parameters, ss, name);
 
         // Arrays
+        name = NAME(PassedPawnPushProtectedByPawnBonus);
+        PassedPawnPushProtectedByPawnBonus.to_cpp(parameters, ss, name);
+        ss << "\n";
+
         name = NAME(TotalKingRingAttacksBonus);
         TotalKingRingAttacksBonus.to_cpp(parameters, ss, name);
         ss << "\n";
@@ -776,8 +778,8 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
         // Passed pawn push square defended by pawns
         if (GetBit(sameSidePawnAttacks, pushSquare))
         {
-            packedBonus += PassedPawnPushProtectedByPawnBonus.packed;
-            IncrementCoefficients(coefficients, PassedPawnPushProtectedByPawnBonus.index, color);
+            packedBonus += PassedPawnPushProtectedByPawnBonus.packed[rank];
+            IncrementCoefficients(coefficients, PassedPawnPushProtectedByPawnBonus.index + rank - PassedPawnPushProtectedByPawnBonus.start, color);
         }
 
         // Passed pawn without opponent pieces ahead (in its passed pawn mask)
