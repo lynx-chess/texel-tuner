@@ -490,7 +490,7 @@ public:
 
             file << "}\n"
                  << std::endl
-                 << "#pragma warning restore IDE0055, IDE1006 // Discard formatting and naming styles\n";
+                 << "#pragma warning restore IDE0055, IDE1006, RCS1036 // Discard formatting and naming styles\n";
         }
         file.close();
     }
