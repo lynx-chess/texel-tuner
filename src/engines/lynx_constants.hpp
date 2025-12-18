@@ -384,6 +384,30 @@ constexpr static std::array<u64, 64> KingRing =
     return ShiftLeft(ShiftDown(board));
 }
 
+[[nodiscard]] static u64 ShiftUpRightAndLeft(const u64 board)
+{
+    return ShiftUpRight(board) | ShiftUpLeft(board);
+}
+
+[[nodiscard]] static u64 ShiftDownRightAndLeft(const u64 board)
+{
+    return ShiftDownRight(board) | ShiftDownLeft(board);
+}
+
+[[nodiscard]] static u64 PawnPush(const u64 board, chess::Color side)
+{
+    return side == chess::Color::WHITE
+        ? ShiftUp(board) 
+        : ShiftDown(board);
+}
+
+[[nodiscard]] static u64 PawnAttacks(const u64 board, chess::Color side)
+{
+    return side == chess::Color::WHITE
+        ? ShiftUpRightAndLeft(board) 
+        : ShiftDownRightAndLeft(board);
+}
+
 [[nodiscard]] static u64 ChebyshevDistance(const int square1, const int square2)
 {
     auto xDelta = std::abs(File[square1] - File[square2]);
