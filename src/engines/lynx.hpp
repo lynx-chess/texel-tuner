@@ -1357,12 +1357,12 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     }
 
     // Pawn push threats
-    auto ourPawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
-    auto theirPawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, ~color);
+    const auto ourPawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
+    const auto theirPawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, ~color);
 
-    auto nonPawnEnemies = __builtin_bswap64(board.them(color).getBits()) & ~theirPawns;
+    const auto nonPawnEnemies = __builtin_bswap64(board.them(color).getBits()) & ~theirPawns;
 
-    auto safe = ~defendedSquares;
+    const auto safe = ~defendedSquares;
     // TODO: if we take into account all the piece attacks for defendedSquares
     //| (evaluationContext.AttacksBySide[(int)Side] & ~evaluationContext.Attacks[oppositeSidePawnIndex]);
 
@@ -1370,11 +1370,11 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
     // Double pushes
     u64 thirdRank = color == chess::Color::WHITE ? 280375465082880 : 16711680;
-    auto doublePushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(pushes & thirdRank, color);
+    const auto doublePushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(pushes & thirdRank, color);
     pushes |= doublePushes;
 
-    auto pushThreats = PawnAttacks(pushes & safe, color) & nonPawnEnemies;
-    auto pushThreatsCount = chess::builtin::popcount(pushThreats);
+    const auto pushThreats = PawnAttacks(pushes & safe, color) & nonPawnEnemies;
+    const auto pushThreatsCount = chess::builtin::popcount(pushThreats);
 
     packedBonus += PawnPushThreatBonus.packed * pushThreatsCount;
     IncrementCoefficients(coefficients, PawnPushThreatBonus.index, color, pushThreatsCount);
