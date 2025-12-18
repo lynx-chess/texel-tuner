@@ -6489,8 +6489,8 @@ TunableArray KingThreatsBonus_Defended(
 
 TunableArray PawnPushThreatBonus(
 	chess::PieceType::KING,
-	std::vector<int>{0, 20, 24, 18, 21, 34},
-	std::vector<int>{0, 29, 5, 21, -1, -4},
+	std::vector<int>{0, 20, 24, 18},
+	std::vector<int>{0, 29, 5, 21},
 	1,
 	0);
 

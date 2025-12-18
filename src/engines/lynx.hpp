@@ -226,7 +226,7 @@ public:
         assert(QueenThreatsBonus_Defended.tunableSize == 6);
         assert(KingThreatsBonus.tunableSize == 6);
         assert(KingThreatsBonus_Defended.tunableSize == 6);
-        assert(PawnPushThreatBonus.tunableSize == 5);
+        assert(PawnPushThreatBonus.tunableSize == 3);
 
         assert(result.size() == numParameters);
 
@@ -1374,17 +1374,11 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     auto doublePushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(pushes & thirdRank, color);
     pushes |= doublePushes;
 
-    auto pushThreats = PawnAttacks(pushes & safe, color) & nonPawnEnemies;
-    while (pushThreats != 0)
-    {
-        const auto pushThreat = chess::builtin::lsb(pushThreats).index();
-        ResetLS1B(pushThreats);
-
-        const auto piece = static_cast<int>(board.at(pushThreat ^ 56).type());
-
-        packedBonus += PawnPushThreatBonus.packed[piece];
-        IncrementCoefficients(coefficients, PawnPushThreatBonus.index - PawnPhalanxBonus.start + piece, color);
-    }
+    const auto pushThreats = PawnAttacks(pushes & safe, color) & nonPawnEnemies;
+    const auto pushThreatsCount = std::min(3, chess::builtin::popcount(pushThreats));
+    
+    packedBonus += PawnPushThreatBonus.packed[pushThreatsCount];
+    IncrementCoefficients(coefficients, PawnPushThreatBonus.index - PawnPushThreatBonus.start + pushThreatsCount, color);
 
     return packedBonus;
 }
