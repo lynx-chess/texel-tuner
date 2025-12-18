@@ -29,7 +29,6 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopKingRingAttacksBonus.size + // 3
                                     RookKingRingAttacksBonus.size +   // 5
                                     QueenKingRingAttacksBonus.size +  // 6
-                                    PawnPushThreatBonus.size +        // 6
 
                                     // Arrays
                                     TotalKingRingAttacksBonus.tunableSize + // 5, removing king
@@ -61,6 +60,7 @@ const static size_t numParameters = psqtIndexCount +
                                     QueenThreatsBonus_Defended.tunableSize +
                                     KingThreatsBonus.tunableSize +
                                     KingThreatsBonus_Defended.tunableSize +
+                                    PawnPushThreatBonus.tunableSize +
 
                                     // Bucketed arrays
                                     PassedPawnBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
@@ -145,7 +145,6 @@ public:
         BishopKingRingAttacksBonus.add(result);
         RookKingRingAttacksBonus.add(result);
         QueenKingRingAttacksBonus.add(result);
-        PawnPushThreatBonus.add(result);
 
         // Arrays
         TotalKingRingAttacksBonus.add(result);
@@ -180,6 +179,7 @@ public:
         QueenThreatsBonus_Defended.add(result);
         KingThreatsBonus.add(result);
         KingThreatsBonus_Defended.add(result);
+        PawnPushThreatBonus.add(result);
 
         // Bucketed arrays
         PassedPawnBonus.add(result);
@@ -359,9 +359,6 @@ public:
         name = NAME(QueenKingRingAttacksBonus);
         QueenKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
-        name = NAME(PawnPushThreatBonus);
-        PawnPushThreatBonus.to_csharp(parameters, ss, name);
-
         // Arrays
         name = NAME(TotalKingRingAttacksBonus);
         TotalKingRingAttacksBonus.to_csharp(parameters, ss, name);
@@ -449,6 +446,9 @@ public:
 
         name = NAME(KingThreatsBonus_Defended);
         KingThreatsBonus_Defended.to_csharp(parameters, ss, name);
+
+        name = NAME(PawnPushThreatBonus);
+        PawnPushThreatBonus.to_csharp(parameters, ss, name);
 
         // Bucketed arrays
         name = NAME(PassedPawnBonus);
@@ -543,9 +543,6 @@ public:
 
         name = NAME(QueenKingRingAttacksBonus);
         QueenKingRingAttacksBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(PawnPushThreatBonus);
-        PawnPushThreatBonus.to_cpp(parameters, ss, name);
 
         // Arrays
         name = NAME(TotalKingRingAttacksBonus);
@@ -644,6 +641,9 @@ public:
 
         name = NAME(KingThreatsBonus_Defended);
         KingThreatsBonus_Defended.to_cpp(parameters, ss, name);
+
+        name = NAME(PawnPushThreatBonus);
+        PawnPushThreatBonus.to_cpp(parameters, ss, name);
 
         // Bucketed arrays
         name = NAME(PassedPawnBonus);
@@ -1374,10 +1374,16 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     pushes |= doublePushes;
 
     auto pushThreats = PawnAttacks(pushes & safe, color) & nonPawnEnemies;
-    auto pushThreatsCount = chess::builtin::popcount(pushThreats);
+    while (pushThreats != 0)
+    {
+        const auto pushThreat = chess::builtin::lsb(pushThreats).index();
+        ResetLS1B(pushThreats);
 
-    packedBonus += PawnPushThreatBonus.packed * pushThreatsCount;
-    IncrementCoefficients(coefficients, PawnPushThreatBonus.index, color, pushThreatsCount);
+        const auto piece = static_cast<int>(board.at(pushThreat ^ 56).type());
+
+        packedBonus += PawnPushThreatBonus.packed[piece];
+        IncrementCoefficients(coefficients, PawnPushThreatBonus.index - PawnPhalanxBonus.start + piece, color);
+    }
 
     return packedBonus;
 }
