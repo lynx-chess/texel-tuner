@@ -29,6 +29,7 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopKingRingAttacksBonus.size + // 3
                                     RookKingRingAttacksBonus.size +   // 5
                                     QueenKingRingAttacksBonus.size +  // 6
+                                    PawnPushThreatBonus.size +        // 6
 
                                     // Arrays
                                     TotalKingRingAttacksBonus.tunableSize + // 5, removing king
@@ -62,8 +63,8 @@ const static size_t numParameters = psqtIndexCount +
                                     KingThreatsBonus_Defended.tunableSize +
 
                                     // Bucketed arrays
-                                    PassedPawnBonus.size +                         // PSQTBucketCount * 6, removing 1 rank values
-                                    PassedPawnEnemyBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnEnemyBonus.size +               // PSQTBucketCount * 6, removing 1 rank values
                                     PassedPawnNoEnemiesAheadBonus.size +      // PSQTBucketCount * 6, removing 1 rank values
                                     PassedPawnNoEnemiesAheadEnemyBonus.size + // PSQTBucketCount * 6, removing 1 rank values
                                     OpenFileKingPenalty.size +
@@ -144,6 +145,7 @@ public:
         BishopKingRingAttacksBonus.add(result);
         RookKingRingAttacksBonus.add(result);
         QueenKingRingAttacksBonus.add(result);
+        PawnPushThreatBonus.add(result);
 
         // Arrays
         TotalKingRingAttacksBonus.add(result);
@@ -357,6 +359,9 @@ public:
         name = NAME(QueenKingRingAttacksBonus);
         QueenKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(PawnPushThreatBonus);
+        PawnPushThreatBonus.to_csharp(parameters, ss, name);
+
         // Arrays
         name = NAME(TotalKingRingAttacksBonus);
         TotalKingRingAttacksBonus.to_csharp(parameters, ss, name);
@@ -538,6 +543,9 @@ public:
 
         name = NAME(QueenKingRingAttacksBonus);
         QueenKingRingAttacksBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(PawnPushThreatBonus);
+        PawnPushThreatBonus.to_cpp(parameters, ss, name);
 
         // Arrays
         name = NAME(TotalKingRingAttacksBonus);
@@ -1347,6 +1355,29 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         packedBonus += KingThreatsBonus.packed[attackedPiece];
         IncrementCoefficients(coefficients, KingThreatsBonus.index - KingThreatsBonus.start + attackedPiece, color);
     }
+
+    // Pawn push threats
+    const auto ourPawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
+    const auto theirPawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, ~color);
+
+    const auto nonPawnEnemies = __builtin_bswap64(board.them(color).getBits()) & ~theirPawns;
+
+    const auto safe = ~defendedSquares;
+    // TODO: if we take into account all the piece attacks for defendedSquares
+    //| (evaluationContext.AttacksBySide[(int)Side] & ~evaluationContext.Attacks[oppositeSidePawnIndex]);
+
+    auto pushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(ourPawns, color);
+
+    // Double pushes
+    u64 thirdRank = color == chess::Color::WHITE ? 280375465082880 : 16711680;
+    const auto doublePushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(pushes & thirdRank, color);
+    pushes |= doublePushes;
+
+    const auto pushThreats = PawnAttacks(pushes & safe, color) & nonPawnEnemies;
+    const auto pushThreatsCount = chess::builtin::popcount(pushThreats);
+
+    packedBonus += PawnPushThreatBonus.packed * pushThreatsCount;
+    IncrementCoefficients(coefficients, PawnPushThreatBonus.index, color, pushThreatsCount);
 
     return packedBonus;
 }
