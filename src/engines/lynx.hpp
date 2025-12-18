@@ -226,6 +226,7 @@ public:
         assert(QueenThreatsBonus_Defended.tunableSize == 6);
         assert(KingThreatsBonus.tunableSize == 6);
         assert(KingThreatsBonus_Defended.tunableSize == 6);
+        assert(PawnPushThreatBonus.tunableSize == 5);
 
         assert(result.size() == numParameters);
 
