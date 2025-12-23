@@ -29,6 +29,7 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopKingRingAttacksBonus.size + // 3
                                     RookKingRingAttacksBonus.size +   // 5
                                     QueenKingRingAttacksBonus.size +  // 6
+                                    PawnPushThreatBonus.size +        // 6
 
                                     // Arrays
                                     TotalKingRingAttacksBonus.tunableSize + // 5, removing king
@@ -60,7 +61,7 @@ const static size_t numParameters = psqtIndexCount +
                                     QueenThreatsBonus_Defended.tunableSize +
                                     KingThreatsBonus.tunableSize +
                                     KingThreatsBonus_Defended.tunableSize +
-                                    PawnPushThreatBonus.tunableSize +
+                                    PawnPushThreatByCountBonus.tunableSize +
 
                                     // Bucketed arrays
                                     PassedPawnBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
@@ -145,6 +146,7 @@ public:
         BishopKingRingAttacksBonus.add(result);
         RookKingRingAttacksBonus.add(result);
         QueenKingRingAttacksBonus.add(result);
+        PawnPushThreatBonus.add(result);
 
         // Arrays
         TotalKingRingAttacksBonus.add(result);
@@ -179,7 +181,7 @@ public:
         QueenThreatsBonus_Defended.add(result);
         KingThreatsBonus.add(result);
         KingThreatsBonus_Defended.add(result);
-        PawnPushThreatBonus.add(result);
+        PawnPushThreatByCountBonus.add(result);
 
         // Bucketed arrays
         PassedPawnBonus.add(result);
@@ -226,7 +228,7 @@ public:
         assert(QueenThreatsBonus_Defended.tunableSize == 6);
         assert(KingThreatsBonus.tunableSize == 6);
         assert(KingThreatsBonus_Defended.tunableSize == 6);
-        assert(PawnPushThreatBonus.tunableSize == 3);
+        assert(PawnPushThreatByCountBonus.tunableSize == 3);
 
         assert(result.size() == numParameters);
 
@@ -360,6 +362,9 @@ public:
         name = NAME(QueenKingRingAttacksBonus);
         QueenKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(PawnPushThreatBonus);
+        PawnPushThreatBonus.to_csharp(parameters, ss, name);
+
         // Arrays
         name = NAME(TotalKingRingAttacksBonus);
         TotalKingRingAttacksBonus.to_csharp(parameters, ss, name);
@@ -448,8 +453,8 @@ public:
         name = NAME(KingThreatsBonus_Defended);
         KingThreatsBonus_Defended.to_csharp(parameters, ss, name);
 
-        name = NAME(PawnPushThreatBonus);
-        PawnPushThreatBonus.to_csharp(parameters, ss, name);
+        name = NAME(PawnPushThreatByCountBonus);
+        PawnPushThreatByCountBonus.to_csharp(parameters, ss, name);
 
         // Bucketed arrays
         name = NAME(PassedPawnBonus);
@@ -544,6 +549,9 @@ public:
 
         name = NAME(QueenKingRingAttacksBonus);
         QueenKingRingAttacksBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(PawnPushThreatBonus);
+        PawnPushThreatBonus.to_cpp(parameters, ss, name);
 
         // Arrays
         name = NAME(TotalKingRingAttacksBonus);
@@ -643,8 +651,8 @@ public:
         name = NAME(KingThreatsBonus_Defended);
         KingThreatsBonus_Defended.to_cpp(parameters, ss, name);
 
-        name = NAME(PawnPushThreatBonus);
-        PawnPushThreatBonus.to_cpp(parameters, ss, name);
+        name = NAME(PawnPushThreatByCountBonus);
+        PawnPushThreatByCountBonus.to_cpp(parameters, ss, name);
 
         // Bucketed arrays
         name = NAME(PassedPawnBonus);
@@ -1376,9 +1384,12 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
     const auto pushThreats = PawnAttacks(pushes & safe, color) & nonPawnEnemies;
     const auto pushThreatsCount = std::min(3, chess::builtin::popcount(pushThreats));
-    
-    packedBonus += PawnPushThreatBonus.packed[pushThreatsCount];
-    IncrementCoefficients(coefficients, PawnPushThreatBonus.index - PawnPushThreatBonus.start + pushThreatsCount, color);
+
+    packedBonus += PawnPushThreatBonus.packed * pushThreatsCount;
+    IncrementCoefficients(coefficients, PawnPushThreatBonus.index, color, pushThreatsCount);
+
+    packedBonus += PawnPushThreatByCountBonus.packed[pushThreatsCount];
+    IncrementCoefficients(coefficients, PawnPushThreatByCountBonus.index - PawnPushThreatByCountBonus.start + pushThreatsCount, color);
 
     return packedBonus;
 }
