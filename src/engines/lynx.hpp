@@ -1870,10 +1870,15 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
             }
             else if (gamePhase == 2)
             {
+                if (totalPawnsCount == 1)
+                {
+                    eval >>= 1; // /2
+                }
+
                 const auto whiteBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::WHITE);
                 const auto blackBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::BLACK);
 
-                // Opposite color bishop endgame with pawns
+                // Opposite color bishop endgame with pawns are even more drawish
                 if (whiteBishops > 0 && blackBishops > 0 &&
                     DarkSquares[chess::builtin::lsb(whiteBishops).index()] != DarkSquares[chess::builtin::lsb(blackBishops).index()])
                 {
