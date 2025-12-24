@@ -253,28 +253,7 @@ public:
 
     void to_csharp(const parameters_t &parameters, std::stringstream &ss, const std::string &name, const std::array<std::array<tune_t, 12>, PSQTBucketCount> &mobilityPieceValues)
     {
-        std::string variable_name;
-
-        if (size == 8 || size == 7)
-        {
-            variable_name = "TaperedEvaluationTermByRank";
-        }
-        else if (size == 9)
-        {
-            variable_name = "TaperedEvaluationTermByCount8";
-        }
-        else if (size == 15)
-        {
-            variable_name = "TaperedEvaluationTermByCount14";
-        }
-        else if (size == 28)
-        {
-            variable_name = "TaperedEvaluationTermByCount27";
-        }
-        else
-        {
-            variable_name = "int[]";
-        }
+        const std::string variable_name = "int[]";
 
         ss << "\tpublic static readonly " << variable_name << " " << name << " =\n\t[\n";
         for (int rank = 0; rank < start; ++rank)
@@ -446,7 +425,7 @@ public:
         bucketSize = mg[0].size();
         bucketTunableSize = bucketSize - start;
         size = PSQTBucketCount * bucketTunableSize;
-        
+
         // std::cout << bucketSize << "-" << start << " == " << bucketTunableSize << std::endl;
         assert(bucketSize - start == bucketTunableSize);
 
@@ -534,29 +513,8 @@ public:
 
     void to_csharp(const parameters_t &parameters, std::stringstream &ss, const std::string &name, const std::array<std::array<tune_t, 12>, PSQTBucketCount> &mobilityPieceValues)
     {
-        std::string variable_name;
-
-        if (bucketSize == 7)
-        {
-            variable_name = "TaperedEvaluationTermByRank";
-        }
-        else if (bucketSize == 9)
-        {
-            variable_name = "TaperedEvaluationTermByCount8";
-        }
-        else if (bucketSize == 14 || bucketSize == 15)
-        {
-            variable_name = "TaperedEvaluationTermByCount14";
-        }
-        else if (bucketSize == 28)
-        {
-            variable_name = "TaperedEvaluationTermByCount27";
-        }
-        else
-        {
-            variable_name = "int[]";
-        }
-
+        const std::string variable_name = "int[]";
+        
         ss << "\tpublic static readonly " << variable_name << "[] " << name << " =\n\t[\n";
 
         for (int bucket = 0; bucket < PSQTBucketCount; ++bucket)
