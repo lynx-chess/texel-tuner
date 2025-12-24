@@ -32,7 +32,6 @@ const static size_t numParameters = psqtIndexCount +
                                     PawnPushThreatBonus.size +        // 6
 
                                     // Arrays
-                                    PassedPawnPushBonus.tunableSize +       // 6
                                     TotalKingRingAttacksBonus.tunableSize + // 5, removing king
                                     PieceProtectedByPawnBonus.tunableSize + // 5, removing king
                                     IsolatedPawnPenalty.tunableSize +       // 8, files
@@ -62,12 +61,13 @@ const static size_t numParameters = psqtIndexCount +
                                     QueenThreatsBonus_Defended.tunableSize +
                                     KingThreatsBonus.tunableSize +
                                     KingThreatsBonus_Defended.tunableSize +
-
+                                    
                                     // Bucketed arrays
                                     PassedPawnBonus.size +                    // PSQTBucketCount * 6, removing 1 rank values
                                     PassedPawnEnemyBonus.size +               // PSQTBucketCount * 6, removing 1 rank values
                                     PassedPawnNoEnemiesAheadBonus.size +      // PSQTBucketCount * 6, removing 1 rank values
                                     PassedPawnNoEnemiesAheadEnemyBonus.size + // PSQTBucketCount * 6, removing 1 rank values
+                                    PassedPawnPushBonus.size +                // PSQTBucketCount * 6, removing 1 and 2 rank values, but including 8
                                     OpenFileKingPenalty.size +
                                     SemiOpenFileKingPenalty.size +
                                     OpenFileRookBonus.size +
@@ -149,7 +149,6 @@ public:
         PawnPushThreatBonus.add(result);
 
         // Arrays
-        PassedPawnPushBonus.add(result);
         TotalKingRingAttacksBonus.add(result);
         PieceProtectedByPawnBonus.add(result);
         IsolatedPawnPenalty.add(result);
@@ -162,7 +161,7 @@ public:
         BadBishop_BlockedCentralPawnsPenalty.add(result);
         SafeCheckBonus.add(result);
         UnsafeCheckBonus.add(result);
-
+        
         FriendlyKingDistanceToPassedPawnBonus.add(result);
         EnemyKingDistanceToPassedPawnPenalty.add(result);
         BackwardsPawnPenalty.add(result);
@@ -182,12 +181,13 @@ public:
         QueenThreatsBonus_Defended.add(result);
         KingThreatsBonus.add(result);
         KingThreatsBonus_Defended.add(result);
-
+        
         // Bucketed arrays
         PassedPawnBonus.add(result);
         PassedPawnEnemyBonus.add(result);
         PassedPawnNoEnemiesAheadBonus.add(result);
         PassedPawnNoEnemiesAheadEnemyBonus.add(result);
+        PassedPawnPushBonus.add(result);
         OpenFileRookBonus.add(result);
         SemiOpenFileRookBonus.add(result);
         OpenFileRookEnemyBonus.add(result);
@@ -203,8 +203,8 @@ public:
         assert(SemiOpenFileRookBonus.bucketTunableSize == 8);
         assert(OpenFileRookEnemyBonus.bucketTunableSize == 8);
         assert(SemiOpenFileRookEnemyBonus.bucketTunableSize == 8);
+        assert(PassedPawnPushBonus.bucketTunableSize == 6);
 
-        assert(PassedPawnPushBonus.tunableSize == 6);
         assert(TotalKingRingAttacksBonus.tunableSize == 14);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
@@ -366,9 +366,6 @@ public:
         PawnPushThreatBonus.to_csharp(parameters, ss, name);
 
         // Arrays
-        name = NAME(PassedPawnPushBonus);
-        PassedPawnPushBonus.to_csharp(parameters, ss, name);
-
         name = NAME(TotalKingRingAttacksBonus);
         TotalKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
@@ -469,6 +466,9 @@ public:
         name = NAME(PassedPawnNoEnemiesAheadEnemyBonus);
         PassedPawnNoEnemiesAheadEnemyBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(PassedPawnPushBonus);
+        PassedPawnPushBonus.to_csharp(parameters, ss, name);
+
         name = NAME(OpenFileKingPenalty);
         OpenFileKingPenalty.to_csharp(parameters, ss, name);
 
@@ -554,9 +554,6 @@ public:
         PawnPushThreatBonus.to_cpp(parameters, ss, name);
 
         // Arrays
-        name = NAME(PassedPawnPushBonus);
-        PassedPawnPushBonus.to_cpp(parameters, ss, name);
-
         name = NAME(TotalKingRingAttacksBonus);
         TotalKingRingAttacksBonus.to_cpp(parameters, ss, name);
         ss << "\n";
@@ -666,6 +663,9 @@ public:
 
         name = NAME(PassedPawnNoEnemiesAheadEnemyBonus);
         PassedPawnNoEnemiesAheadEnemyBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(PassedPawnPushBonus);
+        PassedPawnPushBonus.to_cpp(parameters, ss, name);
 
         name = NAME(OpenFileKingPenalty);
         OpenFileKingPenalty.to_cpp(parameters, ss, name);
@@ -1226,7 +1226,7 @@ std::array<u64, 2> CalculateSideAttacks(const std::array<u64, 12> &attacks)
     return sideAttacks;
 }
 
-int Threats(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients, const std::array<u64, 12> &attacks)
+int Threats(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients, const std::array<u64, 12> &attacks, int bucket)
 {
     int packedBonus = 0;
 
@@ -1401,8 +1401,8 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         {
             const auto rank = isWhite ? Rank[safePush] : 7 - Rank[safePush];
 
-            packedBonus += PassedPawnPushBonus.packed[rank];
-            IncrementCoefficients(coefficients, PassedPawnPushBonus.index - PassedPawnPushBonus.start + rank, color);
+            packedBonus += PassedPawnPushBonus.packed(bucket, rank);
+            IncrementCoefficients(coefficients, PassedPawnPushBonus.index(bucket, rank), color);
         }
     }
 
@@ -1759,8 +1759,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
 
     // Threats
-    packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks);
-    packedScore -= Threats(board, chess::Color::BLACK, coefficients, attacks);
+    packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks, whiteBucket);
+    packedScore -= Threats(board, chess::Color::BLACK, coefficients, attacks, blackBucket);
 
     // Checks
     packedScore += Checks(board, chess::Color::WHITE, coefficients, attacks, attacksBySide);

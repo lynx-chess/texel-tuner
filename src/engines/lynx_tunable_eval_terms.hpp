@@ -6285,12 +6285,6 @@ TunableSingle BishopKingRingAttacksBonus(23, -5);
 TunableSingle RookKingRingAttacksBonus(11, -2);
 TunableSingle QueenKingRingAttacksBonus(14, 1);
 TunableSingle PawnPushThreatBonus(22, 9);
-TunableArray PassedPawnPushBonus(
-	chess::PieceType::PAWN,
-	std::vector<int>{0, 0, 6, -7, 4, 11, -3, 1},
-	std::vector<int>{0, 0, 13, 1, 17, 26, 45, 55},
-	2,
-	0);
 
 TunableArray TotalKingRingAttacksBonus(
 	chess::PieceType::PAWN,
@@ -6718,6 +6712,62 @@ TunableArrayBucketed PassedPawnNoEnemiesAheadEnemyBonus(
 
 	}},
 	1);
+
+TunableArrayBucketed PassedPawnPushBonus(
+	chess::PieceType::PAWN,
+	std::array<std::vector<int>, PSQTBucketCount>{{
+		std::vector<int>{0, 0, -1, 1, -7, 9, 10, 86},
+		std::vector<int>{0, 0, -1, -9, -2, 7, -1, 97},
+		std::vector<int>{0, 0, -1, -13, 2, -2, -3, 64},
+		std::vector<int>{0, 0, -1, -11, -8, -16, -7, 76},
+		std::vector<int>{0, 0, -1, -11, 0, -7, -18, 23},
+		std::vector<int>{0, 0, -1, -7, 1, -2, 4, 61},
+		std::vector<int>{0, 0, -1, -7, -1, 9, 2, 55},
+		std::vector<int>{0, 0, -1, -4, 1, 18, 14, 76},
+		std::vector<int>{0, 0, -1, -14, -12, 7, 7, 105},
+		std::vector<int>{0, 0, -1, -15, -16, -8, 28, 92},
+		std::vector<int>{0, 0, -1, -23, -21, -0, 14, 66},
+		std::vector<int>{0, 0, -1, -16, -12, 1, 18, 54},
+		std::vector<int>{0, 0, -1, -8, -12, 4, 22, 79},
+		std::vector<int>{0, 0, -1, -18, -12, 8, 22, 93},
+		std::vector<int>{0, 0, -1, -15, -7, 19, 23, 91},
+		std::vector<int>{0, 0, -1, -24, -6, -11, 16, 84},
+		std::vector<int>{0, 0, -1, -47, -34, -30, 83, 114},
+		std::vector<int>{0, 0, -1, -30, -40, 12, 87, 171},
+		std::vector<int>{0, 0, -1, -46, 42, 39, 114, 175},
+		std::vector<int>{0, 0, -1, -16, 21, 42, 76, 122},
+		std::vector<int>{0, 0, -1, -0, 16, 9, 100, 113},
+		std::vector<int>{0, 0, -1, -48, -50, 21, 140, 122},
+		std::vector<int>{0, 0, -1, -18, -52, -28, 14, 64},
+
+	}},
+	std::array<std::vector<int>, PSQTBucketCount>{{
+		std::vector<int>{0, 0, -1, -17, -1, 12, 42, 109},
+		std::vector<int>{0, 0, -1, -12, -9, 11, 28, 105},
+		std::vector<int>{0, 0, -1, -11, -12, 5, 27, 135},
+		std::vector<int>{0, 0, -1, -13, -5, 16, 25, 114},
+		std::vector<int>{0, 0, -1, -17, -16, 9, 32, 141},
+		std::vector<int>{0, 0, -1, -16, -4, 13, 25, 127},
+		std::vector<int>{0, 0, -1, -18, -6, 13, 51, 117},
+		std::vector<int>{0, 0, -1, -12, -7, 9, 38, 120},
+		std::vector<int>{0, 0, -1, -4, 2, 12, 31, 95},
+		std::vector<int>{0, 0, -1, -7, 2, 17, 15, 114},
+		std::vector<int>{0, 0, -1, -4, 3, 14, 19, 121},
+		std::vector<int>{0, 0, -1, -6, 0, 11, 24, 117},
+		std::vector<int>{0, 0, -1, -8, 1, 15, 22, 106},
+		std::vector<int>{0, 0, -1, -1, 3, 15, 32, 98},
+		std::vector<int>{0, 0, -1, 0, 1, 16, 26, 100},
+		std::vector<int>{0, 0, -1, 1, -3, 13, 27, 103},
+		std::vector<int>{0, 0, -1, 10, 19, 5, -5, 100},
+		std::vector<int>{0, 0, -1, 13, 9, 6, -19, 86},
+		std::vector<int>{0, 0, -1, 19, 3, 7, -13, 72},
+		std::vector<int>{0, 0, -1, 9, 4, 6, 11, 81},
+		std::vector<int>{0, 0, -1, -2, 3, 5, -4, 78},
+		std::vector<int>{0, 0, -1, 13, 14, -8, -15, 95},
+		std::vector<int>{0, 0, -1, 13, 16, 0, 16, 140},
+
+	}},
+	2);
 
 TunableArrayBucketed OpenFileKingPenalty(
 	chess::PieceType::PAWN,
