@@ -1402,7 +1402,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
             const auto rank = isWhite ? Rank[safePush] : 7 - Rank[safePush];
 
             packedBonus += PassedPawnPushBonus.packed(bucket, rank);
-            IncrementCoefficients(coefficients, PassedPawnPushBonus.index(bucket, rank), color);
+            IncrementCoefficients(coefficients, PassedPawnPushBonus.index(bucket, rank - PassedPawnPushBonus.start), color);
         }
     }
 
