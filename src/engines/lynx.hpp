@@ -30,6 +30,7 @@ const static size_t numParameters = psqtIndexCount +
                                     RookKingRingAttacksBonus.size +   // 5
                                     QueenKingRingAttacksBonus.size +  // 6
                                     PawnPushThreatBonus.size +        // 6
+                                    PassedPawnPushBonus.size +        // 6
 
                                     // Arrays
                                     TotalKingRingAttacksBonus.tunableSize + // 5, removing king
@@ -146,6 +147,7 @@ public:
         RookKingRingAttacksBonus.add(result);
         QueenKingRingAttacksBonus.add(result);
         PawnPushThreatBonus.add(result);
+        PassedPawnPushBonus.add(result);
 
         // Arrays
         TotalKingRingAttacksBonus.add(result);
@@ -362,6 +364,9 @@ public:
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(PassedPawnPushBonus);
+        PassedPawnPushBonus.to_csharp(parameters, ss, name);
+
         // Arrays
         name = NAME(TotalKingRingAttacksBonus);
         TotalKingRingAttacksBonus.to_csharp(parameters, ss, name);
@@ -546,6 +551,9 @@ public:
 
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(PassedPawnPushBonus);
+        PassedPawnPushBonus.to_cpp(parameters, ss, name);
 
         // Arrays
         name = NAME(TotalKingRingAttacksBonus);
@@ -1373,11 +1381,25 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     const auto doublePushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(pushes & thirdRank, color);
     pushes |= doublePushes;
 
-    const auto pushThreats = PawnAttacks(pushes & safe, color) & nonPawnEnemies;
+    auto safePushes = pushes & safe;
+    const auto pushThreats = PawnAttacks(safePushes, color) & nonPawnEnemies;
     const auto pushThreatsCount = chess::builtin::popcount(pushThreats);
 
     packedBonus += PawnPushThreatBonus.packed * pushThreatsCount;
     IncrementCoefficients(coefficients, PawnPushThreatBonus.index, color, pushThreatsCount);
+
+    while (safePushes != 0)
+    {
+        const auto safePush = chess::builtin::lsb(safePushes).index();
+        ResetLS1B(safePushes);
+
+        const auto passedPawnMask = color == chess::Color::WHITE ? WhitePassedPawnMasks[safePush] : BlackPassedPawnMasks[safePush];
+        if ((passedPawnMask & theirPawns) == 0)
+        {
+            packedBonus += PassedPawnPushBonus.packed;
+            IncrementCoefficients(coefficients, PassedPawnPushBonus.index, color);
+        }
+    }
 
     return packedBonus;
 }
