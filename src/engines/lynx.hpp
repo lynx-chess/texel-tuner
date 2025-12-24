@@ -30,9 +30,9 @@ const static size_t numParameters = psqtIndexCount +
                                     RookKingRingAttacksBonus.size +   // 5
                                     QueenKingRingAttacksBonus.size +  // 6
                                     PawnPushThreatBonus.size +        // 6
-                                    PassedPawnPushBonus.size +        // 6
 
                                     // Arrays
+                                    PassedPawnPushBonus.tunableSize +       // 6
                                     TotalKingRingAttacksBonus.tunableSize + // 5, removing king
                                     PieceProtectedByPawnBonus.tunableSize + // 5, removing king
                                     IsolatedPawnPenalty.tunableSize +       // 8, files
@@ -147,9 +147,9 @@ public:
         RookKingRingAttacksBonus.add(result);
         QueenKingRingAttacksBonus.add(result);
         PawnPushThreatBonus.add(result);
-        PassedPawnPushBonus.add(result);
 
         // Arrays
+        PassedPawnPushBonus.add(result);
         TotalKingRingAttacksBonus.add(result);
         PieceProtectedByPawnBonus.add(result);
         IsolatedPawnPenalty.add(result);
@@ -204,6 +204,7 @@ public:
         assert(OpenFileRookEnemyBonus.bucketTunableSize == 8);
         assert(SemiOpenFileRookEnemyBonus.bucketTunableSize == 8);
 
+        assert(PassedPawnPushBonus.tunableSize == 6);
         assert(TotalKingRingAttacksBonus.tunableSize == 14);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
@@ -364,10 +365,10 @@ public:
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_csharp(parameters, ss, name);
 
+        // Arrays
         name = NAME(PassedPawnPushBonus);
         PassedPawnPushBonus.to_csharp(parameters, ss, name);
 
-        // Arrays
         name = NAME(TotalKingRingAttacksBonus);
         TotalKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
@@ -552,10 +553,10 @@ public:
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_cpp(parameters, ss, name);
 
+        // Arrays
         name = NAME(PassedPawnPushBonus);
         PassedPawnPushBonus.to_cpp(parameters, ss, name);
 
-        // Arrays
         name = NAME(TotalKingRingAttacksBonus);
         TotalKingRingAttacksBonus.to_cpp(parameters, ss, name);
         ss << "\n";
@@ -1393,11 +1394,15 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
         const auto safePush = chess::builtin::lsb(safePushes).index();
         ResetLS1B(safePushes);
 
-        const auto passedPawnMask = color == chess::Color::WHITE ? WhitePassedPawnMasks[safePush] : BlackPassedPawnMasks[safePush];
+        const auto isWhite = color == chess::Color::WHITE;
+        const auto passedPawnMask = isWhite ? WhitePassedPawnMasks[safePush] : BlackPassedPawnMasks[safePush];
+
         if ((passedPawnMask & theirPawns) == 0)
         {
-            packedBonus += PassedPawnPushBonus.packed;
-            IncrementCoefficients(coefficients, PassedPawnPushBonus.index, color);
+            const auto rank = isWhite ? Rank[safePush] : 7 - Rank[safePush];
+
+            packedBonus += PassedPawnPushBonus.packed[rank];
+            IncrementCoefficients(coefficients, PassedPawnPushBonus.index - PassedPawnPushBonus.start + rank, color);
         }
     }
 
