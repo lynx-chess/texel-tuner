@@ -1389,6 +1389,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     packedBonus += PawnPushThreatBonus.packed * pushThreatsCount;
     IncrementCoefficients(coefficients, PawnPushThreatBonus.index, color, pushThreatsCount);
 
+    // Passed pawn push
     while (safePushes != 0)
     {
         const auto safePush = chess::builtin::lsb(safePushes).index();
