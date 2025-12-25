@@ -32,6 +32,7 @@ const static size_t numParameters = psqtIndexCount +
                                     PawnPushThreatBonus.size +        // 6
 
                                     // Arrays
+                                    PassedPawnPushBonus.tunableSize +       // 6
                                     TotalKingRingAttacksBonus.tunableSize + // 5, removing king
                                     PieceProtectedByPawnBonus.tunableSize + // 5, removing king
                                     IsolatedPawnPenalty.tunableSize +       // 8, files
@@ -148,6 +149,7 @@ public:
         PawnPushThreatBonus.add(result);
 
         // Arrays
+        PassedPawnPushBonus.add(result);
         TotalKingRingAttacksBonus.add(result);
         PieceProtectedByPawnBonus.add(result);
         IsolatedPawnPenalty.add(result);
@@ -202,6 +204,7 @@ public:
         assert(OpenFileRookEnemyBonus.bucketTunableSize == 8);
         assert(SemiOpenFileRookEnemyBonus.bucketTunableSize == 8);
 
+        assert(PassedPawnPushBonus.tunableSize == 6);
         assert(TotalKingRingAttacksBonus.tunableSize == 14);
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
@@ -363,6 +366,9 @@ public:
         PawnPushThreatBonus.to_csharp(parameters, ss, name);
 
         // Arrays
+        name = NAME(PassedPawnPushBonus);
+        PassedPawnPushBonus.to_csharp(parameters, ss, name);
+
         name = NAME(TotalKingRingAttacksBonus);
         TotalKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
@@ -548,6 +554,9 @@ public:
         PawnPushThreatBonus.to_cpp(parameters, ss, name);
 
         // Arrays
+        name = NAME(PassedPawnPushBonus);
+        PassedPawnPushBonus.to_cpp(parameters, ss, name);
+
         name = NAME(TotalKingRingAttacksBonus);
         TotalKingRingAttacksBonus.to_cpp(parameters, ss, name);
         ss << "\n";
@@ -1373,11 +1382,29 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     const auto doublePushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(pushes & thirdRank, color);
     pushes |= doublePushes;
 
-    const auto pushThreats = PawnAttacks(pushes & safe, color) & nonPawnEnemies;
+    auto safePushes = pushes & safe;
+    const auto pushThreats = PawnAttacks(safePushes, color) & nonPawnEnemies;
     const auto pushThreatsCount = chess::builtin::popcount(pushThreats);
 
     packedBonus += PawnPushThreatBonus.packed * pushThreatsCount;
     IncrementCoefficients(coefficients, PawnPushThreatBonus.index, color, pushThreatsCount);
+
+    while (safePushes != 0)
+    {
+        const auto safePush = chess::builtin::lsb(safePushes).index();
+        ResetLS1B(safePushes);
+
+        const auto isWhite = color == chess::Color::WHITE;
+        const auto passedPawnMask = isWhite ? WhitePassedPawnMasks[safePush] : BlackPassedPawnMasks[safePush];
+
+        if ((passedPawnMask & theirPawns) == 0)
+        {
+            const auto rank = isWhite ? Rank[safePush] : 7 - Rank[safePush];
+
+            packedBonus += PassedPawnPushBonus.packed[rank];
+            IncrementCoefficients(coefficients, PassedPawnPushBonus.index - PassedPawnPushBonus.start + rank, color);
+        }
+    }
 
     return packedBonus;
 }
