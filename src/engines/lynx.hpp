@@ -1371,7 +1371,8 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
     const auto nonPawnEnemies = __builtin_bswap64(board.them(color).getBits()) & ~theirPawns;
 
-    const auto safe = ~attacksBySide[static_cast<int>(~color)];
+    const auto safe = ~attacksBySide[static_cast<int>(~color)] |
+                      (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[color]);
     // TODO: if we take into account all the piece attacks for defendedSquares
     //| (evaluationContext.AttacksBySide[(int)Side] & ~evaluationContext.Attacks[oppositeSidePawnIndex]);
 
