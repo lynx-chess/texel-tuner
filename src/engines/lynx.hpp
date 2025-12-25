@@ -1226,7 +1226,7 @@ std::array<u64, 2> CalculateSideAttacks(const std::array<u64, 12> &attacks)
     return sideAttacks;
 }
 
-int Threats(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients, const std::array<u64, 12> &attacks)
+int Threats(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients, const std::array<u64, 12> &attacks, const std::array<u64, 2> &attacksBySide)
 {
     int packedBonus = 0;
 
@@ -1371,7 +1371,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
     const auto nonPawnEnemies = __builtin_bswap64(board.them(color).getBits()) & ~theirPawns;
 
-    const auto safe = ~defendedSquares;
+    const auto safe = ~attacksBySide[static_cast<int>(~color)];
     // TODO: if we take into account all the piece attacks for defendedSquares
     //| (evaluationContext.AttacksBySide[(int)Side] & ~evaluationContext.Attacks[oppositeSidePawnIndex]);
 
@@ -1760,8 +1760,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
 
     // Threats
-    packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks);
-    packedScore -= Threats(board, chess::Color::BLACK, coefficients, attacks);
+    packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks, attacksBySide);
+    packedScore -= Threats(board, chess::Color::BLACK, coefficients, attacks, attacksBySide);
 
     // Checks
     packedScore += Checks(board, chess::Color::WHITE, coefficients, attacks, attacksBySide);
