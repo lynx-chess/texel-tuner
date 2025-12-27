@@ -1235,7 +1235,7 @@ std::array<u64, 2> CalculateSideAttacks(const std::array<u64, 12> &attacks)
     return sideAttacks;
 }
 
-int Threats(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients, const std::array<u64, 12> &attacks, int bucket, int oppositeSideBucket)
+int Threats(const chess::Board &board, const chess::Color &color, coefficients_t &coefficients, const std::array<u64, 12> &attacks, const std::array<u64, 2> &attacksBySide, int bucket, int oppositeSideBucket)
 {
     int packedBonus = 0;
 
@@ -1380,9 +1380,8 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
 
     const auto nonPawnEnemies = __builtin_bswap64(board.them(color).getBits()) & ~theirPawns;
 
-    const auto safe = ~defendedSquares;
-    // TODO: if we take into account all the piece attacks for defendedSquares
-    //| (evaluationContext.AttacksBySide[(int)Side] & ~evaluationContext.Attacks[oppositeSidePawnIndex]);
+    const auto safeSquares = ~attacksBySide[static_cast<int>(~color)] |
+                      (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[color]);
 
     auto pushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(ourPawns, color);
 
@@ -1391,7 +1390,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     const auto doublePushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(pushes & thirdRank, color);
     pushes |= doublePushes;
 
-    auto safePushes = pushes & safe;
+    auto safePushes = pushes & safeSquares;
     const auto pushThreats = PawnAttacks(safePushes, color) & nonPawnEnemies;
     const auto pushThreatsCount = chess::builtin::popcount(pushThreats);
 
@@ -1771,8 +1770,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
 
     // Threats
-    packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks, whiteBucket, blackBucket);
-    packedScore -= Threats(board, chess::Color::BLACK, coefficients, attacks, blackBucket, whiteBucket);
+    packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks, attacksBySide, whiteBucket, blackBucket);
+    packedScore -= Threats(board, chess::Color::BLACK, coefficients, attacks, attacksBySide, blackBucket, whiteBucket);
 
     // Checks
     packedScore += Checks(board, chess::Color::WHITE, coefficients, attacks, attacksBySide);
