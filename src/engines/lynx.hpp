@@ -24,12 +24,17 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopCorneredAndBlockedPenalty.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
                                     PieceAttackedByPawnPenalty.size +
-                                    PawnKingRingAttacksBonus.size +   // 3
-                                    KnightKingRingAttacksBonus.size + // 3
-                                    BishopKingRingAttacksBonus.size + // 3
-                                    RookKingRingAttacksBonus.size +   // 5
-                                    QueenKingRingAttacksBonus.size +  // 6
-                                    PawnPushThreatBonus.size +        // 6
+                                    PawnKingRingAttacksBonus.size +        // 3
+                                    KnightKingRingAttacksBonus.size +      // 3
+                                    BishopKingRingAttacksBonus.size +      // 3
+                                    RookKingRingAttacksBonus.size +        // 5
+                                    QueenKingRingAttacksBonus.size +       // 6
+                                    PawnOuterKingRingAttacksBonus.size +   // 3
+                                    KnightOuterKingRingAttacksBonus.size + // 3
+                                    BishopOuterKingRingAttacksBonus.size + // 3
+                                    RookOuterKingRingAttacksBonus.size +   // 5
+                                    QueenOuterKingRingAttacksBonus.size +  // 6
+                                    PawnPushThreatBonus.size +             // 6
 
                                     // Arrays
                                     PassedPawnPushBonus.tunableSize +       // 6
@@ -146,6 +151,11 @@ public:
         BishopKingRingAttacksBonus.add(result);
         RookKingRingAttacksBonus.add(result);
         QueenKingRingAttacksBonus.add(result);
+        PawnOuterKingRingAttacksBonus.add(result);
+        KnightOuterKingRingAttacksBonus.add(result);
+        BishopOuterKingRingAttacksBonus.add(result);
+        RookOuterKingRingAttacksBonus.add(result);
+        QueenOuterKingRingAttacksBonus.add(result);
         PawnPushThreatBonus.add(result);
 
         // Arrays
@@ -362,6 +372,21 @@ public:
         name = NAME(QueenKingRingAttacksBonus);
         QueenKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(PawnOuterKingRingAttacksBonus);
+        PawnOuterKingRingAttacksBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(KnightOuterKingRingAttacksBonus);
+        KnightOuterKingRingAttacksBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(BishopOuterKingRingAttacksBonus);
+        BishopOuterKingRingAttacksBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(RookOuterKingRingAttacksBonus);
+        RookOuterKingRingAttacksBonus.to_csharp(parameters, ss, name);
+
+        name = NAME(QueenOuterKingRingAttacksBonus);
+        QueenOuterKingRingAttacksBonus.to_csharp(parameters, ss, name);
+
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_csharp(parameters, ss, name);
 
@@ -549,6 +574,21 @@ public:
 
         name = NAME(QueenKingRingAttacksBonus);
         QueenKingRingAttacksBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(PawnOuterKingRingAttacksBonus);
+        PawnOuterKingRingAttacksBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(KnightOuterKingRingAttacksBonus);
+        KnightOuterKingRingAttacksBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(BishopOuterKingRingAttacksBonus);
+        BishopOuterKingRingAttacksBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(RookOuterKingRingAttacksBonus);
+        RookOuterKingRingAttacksBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(QueenOuterKingRingAttacksBonus);
+        QueenOuterKingRingAttacksBonus.to_cpp(parameters, ss, name);
 
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_cpp(parameters, ss, name);
@@ -827,8 +867,14 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     const auto kingRingAttacksCount = chess::builtin::popcount(attacks & kingRing);
     packedBonus += RookKingRingAttacksBonus.packed * kingRingAttacksCount;
     IncrementCoefficients(coefficients, RookKingRingAttacksBonus.index, color, kingRingAttacksCount);
-
+    
     totalKingRingAttacks[color] += kingRingAttacksCount;
+
+    // Outer king ring attacks
+    const auto outerKingRing = OuterKingRing[oppositeSideKingSquare];
+    const auto outerKingRingAttacksCount = chess::builtin::popcount(attacks & outerKingRing);
+    packedBonus += RookOuterKingRingAttacksBonus.packed * outerKingRingAttacksCount;
+    IncrementCoefficients(coefficients, RookOuterKingRingAttacksBonus.index, color, outerKingRingAttacksCount);
 
     // Open file
     if (((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) & FileMasks[squareIndex]) == 0)
@@ -888,8 +934,14 @@ int KnightAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, i
     const auto kingRingAttacksCount = chess::builtin::popcount(attacks & kingRing);
     packedBonus += KnightKingRingAttacksBonus.packed * kingRingAttacksCount;
     IncrementCoefficients(coefficients, KnightKingRingAttacksBonus.index, color, kingRingAttacksCount);
-
+    
     totalKingRingAttacks[color] += kingRingAttacksCount;
+
+    // Outer king ring attacks
+    const auto outerKingRing = OuterKingRing[oppositeSideKingSquare];
+    const auto outerKingRingAttacksCount = chess::builtin::popcount(attacks & outerKingRing);
+    packedBonus += KnightOuterKingRingAttacksBonus.packed * outerKingRingAttacksCount;
+    IncrementCoefficients(coefficients, KnightOuterKingRingAttacksBonus.index, color, outerKingRingAttacksCount);
 
     return packedBonus;
 }
@@ -911,8 +963,14 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
     const auto kingRingAttacksCount = chess::builtin::popcount(attacks & kingRing);
     packedBonus += BishopKingRingAttacksBonus.packed * kingRingAttacksCount;
     IncrementCoefficients(coefficients, BishopKingRingAttacksBonus.index, color, kingRingAttacksCount);
-
+    
     totalKingRingAttacks[color] += kingRingAttacksCount;
+
+    // Outer king ring attacks
+    const auto outerKingRing = OuterKingRing[oppositeSideKingSquare];
+    const auto outerKingRingAttacksCount = chess::builtin::popcount(attacks & outerKingRing);
+    packedBonus += BishopOuterKingRingAttacksBonus.packed * outerKingRingAttacksCount;
+    IncrementCoefficients(coefficients, BishopOuterKingRingAttacksBonus.index, color, outerKingRingAttacksCount);
 
     // Bad bishop - same color pawns
     const auto sameColorPawnsCount = chess::builtin::popcount(sameSidePawns &
@@ -1040,6 +1098,12 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, in
     IncrementCoefficients(coefficients, QueenKingRingAttacksBonus.index, color, kingRingAttacksCount);
 
     totalKingRingAttacks[color] += kingRingAttacksCount;
+
+    // Outer king ring attacks
+    const auto outerKingRing = OuterKingRing[oppositeSideKingSquare];
+    const auto outerKingRingAttacksCount = chess::builtin::popcount(attacks & outerKingRing);
+    packedBonus += QueenOuterKingRingAttacksBonus.packed * outerKingRingAttacksCount;
+    IncrementCoefficients(coefficients, QueenOuterKingRingAttacksBonus.index, color, outerKingRingAttacksCount);
 
     return packedBonus;
 }
@@ -1372,7 +1436,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     const auto nonPawnEnemies = __builtin_bswap64(board.them(color).getBits()) & ~theirPawns;
 
     const auto safeSquares = ~attacksBySide[static_cast<int>(~color)] |
-                      (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[color]);
+                             (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[color]);
 
     auto pushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(ourPawns, color);
 
@@ -1705,19 +1769,32 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     // Pawn king ring attacks
     const auto whiteKingRing = KingRing[whiteKing];
     const auto blackKingRing = KingRing[blackKing];
-
+    
     const auto whitePawnKingRingAttacks = chess::builtin::popcount(whitePawnAttacks & blackKingRing);
     const auto blackPawnKingRingAttacks = chess::builtin::popcount(blackPawnAttacks & whiteKingRing);
 
     totalKingRingAttacks[static_cast<int>(chess::Color::WHITE)] += whitePawnKingRingAttacks;
     totalKingRingAttacks[static_cast<int>(chess::Color::BLACK)] += blackPawnKingRingAttacks;
-
+    
     packedScore += PawnKingRingAttacksBonus.packed;
     IncrementCoefficients(coefficients, PawnKingRingAttacksBonus.index, chess::Color::WHITE, whitePawnKingRingAttacks);
-
+    
     packedScore -= PawnKingRingAttacksBonus.packed;
     IncrementCoefficients(coefficients, PawnKingRingAttacksBonus.index, chess::Color::BLACK, blackPawnKingRingAttacks);
+    
+    // Pawn outer king ring attacks
+    const auto whiteOuterKingRing = OuterKingRing[whiteKing];
+    const auto blackOuterKingRing = OuterKingRing[blackKing];
+    
+    const auto whitePawnOuterKingRingAttacks = chess::builtin::popcount(whitePawnAttacks & blackOuterKingRing);
+    const auto blackPawnOuterKingRingAttacks = chess::builtin::popcount(blackPawnAttacks & whiteOuterKingRing);
 
+    packedScore += PawnOuterKingRingAttacksBonus.packed;
+    IncrementCoefficients(coefficients, PawnOuterKingRingAttacksBonus.index, chess::Color::WHITE, whitePawnOuterKingRingAttacks);
+
+    packedScore -= PawnOuterKingRingAttacksBonus.packed;
+    IncrementCoefficients(coefficients, PawnOuterKingRingAttacksBonus.index, chess::Color::BLACK, blackPawnOuterKingRingAttacks);
+    
     // Total king ring attacks
     const auto totalKingRingWhiteAttacks = std::min(13, totalKingRingAttacks[static_cast<int>(chess::Color::WHITE)]);
     packedScore += TotalKingRingAttacksBonus.packed[totalKingRingWhiteAttacks];
