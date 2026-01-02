@@ -6284,6 +6284,10 @@ TunableSingle KnightKingRingAttacksBonus(27, -10);
 TunableSingle BishopKingRingAttacksBonus(23, -4);
 TunableSingle RookKingRingAttacksBonus(11, -2);
 TunableSingle QueenKingRingAttacksBonus(14, 0);
+TunableSingle KnightKingRingWeightedAttacksBonus(44, -2);
+TunableSingle BishopKingRingWeightedAttacksBonus(19, -3);
+TunableSingle RookKingRingWeightedAttacksBonus(6, 1);
+TunableSingle QueenKingRingWeightedAttacksBonus(7, 19);
 TunableSingle PawnPushThreatBonus(22, 19);
 TunableArray PassedPawnPushBonus(
 	chess::PieceType::PAWN,
