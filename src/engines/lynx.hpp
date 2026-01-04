@@ -24,16 +24,13 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopCorneredAndBlockedPenalty.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
                                     PieceAttackedByPawnPenalty.size +
-                                    PawnKingRingAttacksBonus.size +           // 3
-                                    KnightKingRingAttacksBonus.size +         // 3
-                                    BishopKingRingAttacksBonus.size +         // 3
-                                    RookKingRingAttacksBonus.size +           // 5
-                                    QueenKingRingAttacksBonus.size +          // 6
-                                    KnightKingRingWeightedAttacksBonus.size + // 3
-                                    BishopKingRingWeightedAttacksBonus.size + // 3
-                                    RookKingRingWeightedAttacksBonus.size +   // 5
-                                    QueenKingRingWeightedAttacksBonus.size +  // 6
-                                    PawnPushThreatBonus.size +                // 6
+                                    PawnKingRingAttacksBonus.size +     // 3
+                                    KnightKingRingAttacksBonus.size +   // 3
+                                    BishopKingRingAttacksBonus.size +   // 3
+                                    RookKingRingAttacksBonus.size +     // 5
+                                    QueenKingRingAttacksBonus.size +    // 6
+                                    WeightedKingRingAttacksBonus.size + // 6
+                                    PawnPushThreatBonus.size +          // 6
 
                                     // Arrays
                                     PassedPawnPushBonus.tunableSize +       // 6
@@ -150,10 +147,7 @@ public:
         BishopKingRingAttacksBonus.add(result);
         RookKingRingAttacksBonus.add(result);
         QueenKingRingAttacksBonus.add(result);
-        KnightKingRingWeightedAttacksBonus.add(result);
-        BishopKingRingWeightedAttacksBonus.add(result);
-        RookKingRingWeightedAttacksBonus.add(result);
-        QueenKingRingWeightedAttacksBonus.add(result);
+        WeightedKingRingAttacksBonus.add(result);
         PawnPushThreatBonus.add(result);
 
         // Arrays
@@ -370,17 +364,8 @@ public:
         name = NAME(QueenKingRingAttacksBonus);
         QueenKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
-        name = NAME(KnightKingRingWeightedAttacksBonus);
-        KnightKingRingWeightedAttacksBonus.to_csharp(parameters, ss, name);
-
-        name = NAME(BishopKingRingWeightedAttacksBonus);
-        BishopKingRingWeightedAttacksBonus.to_csharp(parameters, ss, name);
-
-        name = NAME(RookKingRingWeightedAttacksBonus);
-        RookKingRingWeightedAttacksBonus.to_csharp(parameters, ss, name);
-
-        name = NAME(QueenKingRingWeightedAttacksBonus);
-        QueenKingRingWeightedAttacksBonus.to_csharp(parameters, ss, name);
+        name = NAME(WeightedKingRingAttacksBonus);
+        WeightedKingRingAttacksBonus.to_csharp(parameters, ss, name);
 
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_csharp(parameters, ss, name);
@@ -570,17 +555,8 @@ public:
         name = NAME(QueenKingRingAttacksBonus);
         QueenKingRingAttacksBonus.to_cpp(parameters, ss, name);
 
-        name = NAME(KnightKingRingWeightedAttacksBonus);
-        KnightKingRingWeightedAttacksBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(BishopKingRingWeightedAttacksBonus);
-        BishopKingRingWeightedAttacksBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(RookKingRingWeightedAttacksBonus);
-        RookKingRingWeightedAttacksBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(QueenKingRingWeightedAttacksBonus);
-        QueenKingRingWeightedAttacksBonus.to_cpp(parameters, ss, name);
+        name = NAME(WeightedKingRingAttacksBonus);
+        WeightedKingRingAttacksBonus.to_cpp(parameters, ss, name);
 
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_cpp(parameters, ss, name);
@@ -862,8 +838,7 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
 
     totalKingRingAttacks[color] += kingRingAttacksCount;
 
-    kingRingAttacksWeightedAccumulator[color] += RookKingRingWeightedAttacksBonus.packed * kingRingAttacksCount;
-    IncrementCoefficients(coefficients, RookKingRingWeightedAttacksBonus.index, color, kingRingAttacksCount);
+    kingRingAttacksWeightedAccumulator[color] += RookKingRingAttacksBonus.packed * kingRingAttacksCount;
 
     // Open file
     if (((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) & FileMasks[squareIndex]) == 0)
@@ -926,8 +901,7 @@ int KnightAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, i
 
     totalKingRingAttacks[color] += kingRingAttacksCount;
 
-    kingRingAttacksWeightedAccumulator[color] += KnightKingRingWeightedAttacksBonus.packed * kingRingAttacksCount;
-    IncrementCoefficients(coefficients, KnightKingRingWeightedAttacksBonus.index, color, kingRingAttacksCount);
+    kingRingAttacksWeightedAccumulator[color] += KnightKingRingAttacksBonus.packed * kingRingAttacksCount;
 
     return packedBonus;
 }
@@ -952,8 +926,7 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
 
     totalKingRingAttacks[color] += kingRingAttacksCount;
 
-    kingRingAttacksWeightedAccumulator[color] += BishopKingRingWeightedAttacksBonus.packed * kingRingAttacksCount;
-    IncrementCoefficients(coefficients, BishopKingRingWeightedAttacksBonus.index, color, kingRingAttacksCount);
+    kingRingAttacksWeightedAccumulator[color] += BishopKingRingAttacksBonus.packed * kingRingAttacksCount;
 
     // Bad bishop - same color pawns
     const auto sameColorPawnsCount = chess::builtin::popcount(sameSidePawns &
@@ -1082,8 +1055,7 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, in
 
     totalKingRingAttacks[color] += kingRingAttacksCount;
 
-    kingRingAttacksWeightedAccumulator[color] += QueenKingRingWeightedAttacksBonus.packed * kingRingAttacksCount;
-    IncrementCoefficients(coefficients, QueenKingRingWeightedAttacksBonus.index, color, kingRingAttacksCount);
+    kingRingAttacksWeightedAccumulator[color] += QueenKingRingAttacksBonus.packed * kingRingAttacksCount;
 
     return packedBonus;
 }
@@ -1773,15 +1745,25 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     IncrementCoefficients(coefficients, TotalKingRingAttacksBonus.index + totalKingRingBlackAttacks - TotalKingRingAttacksBonus.start, chess::Color::BLACK);
 
     // Weighted king ring attacks
-    const auto whiteWeightedKingRingWhiteAttacks =totalWeightedKingRingAttacks[static_cast<int>(chess::Color::WHITE)];
+    const auto whiteWeightedKingRingWhiteAttacks = totalWeightedKingRingAttacks[static_cast<int>(chess::Color::WHITE)];
+    const auto blackWeightedKingRingWhiteAttacks = totalWeightedKingRingAttacks[static_cast<int>(chess::Color::BLACK)];
+    // packedScore += WeightedKingRingAttacksBonus.packed * whiteWeightedKingRingWhiteAttacks;
     const auto whiteMG = UnpackMG(whiteWeightedKingRingWhiteAttacks);
     const auto whiteEG = UnpackEG(whiteWeightedKingRingWhiteAttacks);
-    
-    const auto blackWeightedKingRingWhiteAttacks =totalWeightedKingRingAttacks[static_cast<int>(chess::Color::BLACK)];
     const auto blackMG = UnpackMG(blackWeightedKingRingWhiteAttacks);
     const auto blackEG = UnpackEG(blackWeightedKingRingWhiteAttacks);
-    // std::cout << "S(" << blackMG - whiteMG << ", " << blackEG - whiteEG << ")" << std::endl;
-    packedScore += S(blackMG - whiteMG, blackEG - whiteEG);
+    const auto mg = whiteMG - blackMG;
+    const auto eg = whiteEG - blackEG;
+
+    const auto packed = S(mg, eg);
+
+    IncrementCoefficients(coefficients, WeightedKingRingAttacksBonus.index, chess::Color::WHITE, packed);
+    short uno = 1;
+    const auto weightMG = std::max(uno, UnpackMG(WeightedKingRingAttacksBonus.packed));
+    const auto weightEG = std::max(uno, UnpackEG(WeightedKingRingAttacksBonus.packed));
+
+    // std::cout << "S(" << mg << ", " << eg << ")" << std::endl;
+    packedScore -= S(mg / weightMG, eg / weightEG);
 
     // Bishop pair bonus
     if (chess::builtin::popcount(whiteBishops) >= 2)
