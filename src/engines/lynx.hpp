@@ -30,6 +30,7 @@ const static size_t numParameters = psqtIndexCount +
                                     RookKingRingAttacksBonus.size +   // 5
                                     QueenKingRingAttacksBonus.size +  // 6
                                     PawnPushThreatBonus.size +        // 6
+                                    TrappedRookPenalty.size +         // 6
 
                                     // Arrays
                                     PassedPawnPushBonus.tunableSize +       // 6
@@ -147,6 +148,7 @@ public:
         RookKingRingAttacksBonus.add(result);
         QueenKingRingAttacksBonus.add(result);
         PawnPushThreatBonus.add(result);
+        TrappedRookPenalty.add(result);
 
         // Arrays
         PassedPawnPushBonus.add(result);
@@ -365,6 +367,9 @@ public:
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(TrappedRookPenalty);
+        TrappedRookPenalty.to_csharp(parameters, ss, name);
+
         // Arrays
         name = NAME(PassedPawnPushBonus);
         PassedPawnPushBonus.to_csharp(parameters, ss, name);
@@ -552,6 +557,9 @@ public:
 
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(TrappedRookPenalty);
+        TrappedRookPenalty.to_cpp(parameters, ss, name);
 
         // Arrays
         name = NAME(PassedPawnPushBonus);
@@ -810,7 +818,7 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     return packedBonus;
 }
 
-int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket, const u64 opponentPawnAttacks, int oppositeSideKingSquare, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients, std::array<int, 2> &totalKingRingAttacks)
+int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket, const u64 opponentPawnAttacks, int sameSideKingSquare, int oppositeSideKingSquare, const chess::Board &board, const chess::Color &color, coefficients_t &coefficients, std::array<int, 2> &totalKingRingAttacks)
 {
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
     const auto attacks = chess::attacks::rook(static_cast<chess::Square>(squareIndex), occupancy).getBits();
@@ -841,18 +849,38 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
         packedBonus += OpenFileRookEnemyBonus.packed(oppositeSideBucket, file);
         IncrementCoefficients(coefficients, OpenFileRookEnemyBonus.index(oppositeSideBucket, file), color);
     }
-    else
+    // Semi-open file
+    else if ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color) & FileMasks[squareIndex]) == 0)
     {
-        // Semi-open file
-        if ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color) & FileMasks[squareIndex]) == 0)
+        const auto file = File[squareIndex];
+
+        packedBonus += SemiOpenFileRookBonus.packed(bucket, file);
+        IncrementCoefficients(coefficients, SemiOpenFileRookBonus.index(bucket, file), color);
+
+        packedBonus += SemiOpenFileRookEnemyBonus.packed(oppositeSideBucket, file);
+        IncrementCoefficients(coefficients, SemiOpenFileRookEnemyBonus.index(oppositeSideBucket, file), color);
+    }
+    else if (mobilityCount <= 4)
+    {
+        auto rank = Rank[squareIndex];
+        if (color == chess::Color::BLACK)
         {
-            const auto file = File[squareIndex];
+            rank = 7 - rank;
+        }
 
-            packedBonus += SemiOpenFileRookBonus.packed(bucket, file);
-            IncrementCoefficients(coefficients, SemiOpenFileRookBonus.index(bucket, file), color);
+        if (rank <= 2)
+        {
+            const int EFile = 4;
 
-            packedBonus += SemiOpenFileRookEnemyBonus.packed(oppositeSideBucket, file);
-            IncrementCoefficients(coefficients, SemiOpenFileRookEnemyBonus.index(oppositeSideBucket, file), color);
+            const auto rookFile = File[squareIndex];
+            const auto kingFile = File[sameSideKingSquare];
+
+            // TODO: fix for queenside rook before castling
+            if (kingFile != rookFile && (kingFile < rookFile) == (kingFile >= EFile))
+            {
+                packedBonus += TrappedRookPenalty.packed;
+                IncrementCoefficients(coefficients, TrappedRookPenalty.index, color);
+            }
         }
     }
 
@@ -1372,7 +1400,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     const auto nonPawnEnemies = __builtin_bswap64(board.them(color).getBits()) & ~theirPawns;
 
     const auto safeSquares = ~attacksBySide[static_cast<int>(~color)] |
-                      (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[color]);
+                             (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[color]);
 
     auto pushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(ourPawns, color);
 
@@ -1460,7 +1488,7 @@ int AdditionalPieceEvaluation(int pieceSquareIndex, int pieceIndex, int bucket, 
 
     case 3:
     case 9:
-        return RookAdditionalEvaluation(pieceSquareIndex, bucket, oppositeSideBucket, opponentPawnAttacks, oppositeSideKingSquare, board, color, coefficients, totalKingRingAttacks);
+        return RookAdditionalEvaluation(pieceSquareIndex, bucket, oppositeSideBucket, opponentPawnAttacks, sameSideKingSquare, oppositeSideKingSquare, board, color, coefficients, totalKingRingAttacks);
 
     case 2:
     case 8:

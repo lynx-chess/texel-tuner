@@ -6285,6 +6285,7 @@ TunableSingle BishopKingRingAttacksBonus(23, -5);
 TunableSingle RookKingRingAttacksBonus(11, -2);
 TunableSingle QueenKingRingAttacksBonus(14, 0);
 TunableSingle PawnPushThreatBonus(22, 19);
+TunableSingle TrappedRookPenalty(22, 19);
 TunableArray PassedPawnPushBonus(
 	chess::PieceType::PAWN,
 	std::vector<int>{0, 0, 3, -1, 8, 9, 3, -7},
