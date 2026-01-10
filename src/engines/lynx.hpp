@@ -860,7 +860,7 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
         packedBonus += SemiOpenFileRookEnemyBonus.packed(oppositeSideBucket, file);
         IncrementCoefficients(coefficients, SemiOpenFileRookEnemyBonus.index(oppositeSideBucket, file), color);
     }
-    else if (mobilityCount <= 4)
+    else if (mobilityCount <= 3)
     {
         auto rank = Rank[squareIndex];
         if (color == chess::Color::BLACK)
@@ -868,7 +868,7 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
             rank = 7 - rank;
         }
 
-        if (rank <= 2)
+        if (rank <= 1)
         {
             const int EFile = 4;
 
