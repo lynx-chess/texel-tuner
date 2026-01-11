@@ -30,7 +30,6 @@ const static size_t numParameters = psqtIndexCount +
                                     RookKingRingAttacksBonus.size +   // 5
                                     QueenKingRingAttacksBonus.size +  // 6
                                     PawnPushThreatBonus.size +        // 6
-                                    TrappedRookPenalty.size +         // 6
                                     BuriedRookPenalty.size +          // 6
 
                                     // Arrays
@@ -149,7 +148,6 @@ public:
         RookKingRingAttacksBonus.add(result);
         QueenKingRingAttacksBonus.add(result);
         PawnPushThreatBonus.add(result);
-        TrappedRookPenalty.add(result);
         BuriedRookPenalty.add(result);
 
         // Arrays
@@ -369,9 +367,6 @@ public:
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_csharp(parameters, ss, name);
 
-        name = NAME(TrappedRookPenalty);
-        TrappedRookPenalty.to_csharp(parameters, ss, name);
-
         name = NAME(BuriedRookPenalty);
         BuriedRookPenalty.to_csharp(parameters, ss, name);
 
@@ -562,9 +557,6 @@ public:
 
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_cpp(parameters, ss, name);
-
-        name = NAME(TrappedRookPenalty);
-        TrappedRookPenalty.to_cpp(parameters, ss, name);
 
         name = NAME(BuriedRookPenalty);
         BuriedRookPenalty.to_cpp(parameters, ss, name);
@@ -893,11 +885,6 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
                     packedBonus += BuriedRookPenalty.packed;
                     IncrementCoefficients(coefficients, BuriedRookPenalty.index, color);
                 }
-                else
-                {
-                    packedBonus += TrappedRookPenalty.packed;
-                    IncrementCoefficients(coefficients, TrappedRookPenalty.index, color);
-                }
             }
             // Kingside rook
             else if (kingFile <= EFile)
@@ -906,11 +893,6 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
                 {
                     packedBonus += BuriedRookPenalty.packed;
                     IncrementCoefficients(coefficients, BuriedRookPenalty.index, color);
-                }
-                else
-                {
-                    packedBonus += TrappedRookPenalty.packed;
-                    IncrementCoefficients(coefficients, TrappedRookPenalty.index, color);
                 }
             }
         }
