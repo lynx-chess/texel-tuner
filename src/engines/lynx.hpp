@@ -31,6 +31,7 @@ const static size_t numParameters = psqtIndexCount +
                                     QueenKingRingAttacksBonus.size +  // 6
                                     PawnPushThreatBonus.size +        // 6
                                     TrappedRookPenalty.size +         // 6
+                                    BuriedRookPenalty.size +          // 6
 
                                     // Arrays
                                     PassedPawnPushBonus.tunableSize +       // 6
@@ -149,6 +150,7 @@ public:
         QueenKingRingAttacksBonus.add(result);
         PawnPushThreatBonus.add(result);
         TrappedRookPenalty.add(result);
+        BuriedRookPenalty.add(result);
 
         // Arrays
         PassedPawnPushBonus.add(result);
@@ -370,6 +372,9 @@ public:
         name = NAME(TrappedRookPenalty);
         TrappedRookPenalty.to_csharp(parameters, ss, name);
 
+        name = NAME(BuriedRookPenalty);
+        BuriedRookPenalty.to_csharp(parameters, ss, name);
+
         // Arrays
         name = NAME(PassedPawnPushBonus);
         PassedPawnPushBonus.to_csharp(parameters, ss, name);
@@ -560,6 +565,9 @@ public:
 
         name = NAME(TrappedRookPenalty);
         TrappedRookPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(BuriedRookPenalty);
+        BuriedRookPenalty.to_cpp(parameters, ss, name);
 
         // Arrays
         name = NAME(PassedPawnPushBonus);
@@ -870,16 +878,38 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
 
         if (rank <= 1)
         {
-            const int EFile = 4;
-
             const auto rookFile = File[squareIndex];
             const auto kingFile = File[sameSideKingSquare];
 
-            // TODO: fix for queenside rook before castling
-            if (kingFile != rookFile && (kingFile < rookFile) == (kingFile >= EFile))
+            const auto castlingRights = board.castlingRights();
+
+            // Queenside rook
+            if (kingFile < rookFile)
             {
-                packedBonus += TrappedRookPenalty.packed;
-                IncrementCoefficients(coefficients, TrappedRookPenalty.index, color);
+                if (!castlingRights.has(color, chess::Board::CastlingRights::Side::QUEEN_SIDE))
+                {
+                    packedBonus += BuriedRookPenalty.packed;
+                    IncrementCoefficients(coefficients, BuriedRookPenalty.index, color);
+                }
+                else
+                {
+                    packedBonus += TrappedRookPenalty.packed;
+                    IncrementCoefficients(coefficients, TrappedRookPenalty.index, color);
+                }
+            }
+            // Kingside rook
+            else
+            {
+                if (!castlingRights.has(color, chess::Board::CastlingRights::Side::KING_SIDE))
+                {
+                    packedBonus += BuriedRookPenalty.packed;
+                    IncrementCoefficients(coefficients, BuriedRookPenalty.index, color);
+                }
+                else
+                {
+                    packedBonus += TrappedRookPenalty.packed;
+                    IncrementCoefficients(coefficients, TrappedRookPenalty.index, color);
+                }
             }
         }
     }
