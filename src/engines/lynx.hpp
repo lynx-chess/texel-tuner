@@ -878,13 +878,15 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
 
         if (rank <= 1)
         {
+            constexpr int EFile = 4;
+
             const auto rookFile = File[squareIndex];
             const auto kingFile = File[sameSideKingSquare];
 
             const auto castlingRights = board.castlingRights();
 
             // Queenside rook
-            if (kingFile < rookFile)
+            if (kingFile < rookFile && kingFile >= EFile)
             {
                 if (!castlingRights.has(color, chess::Board::CastlingRights::Side::QUEEN_SIDE))
                 {
@@ -898,7 +900,7 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
                 }
             }
             // Kingside rook
-            else
+            else if (kingFile <= EFile)
             {
                 if (!castlingRights.has(color, chess::Board::CastlingRights::Side::KING_SIDE))
                 {
