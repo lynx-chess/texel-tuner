@@ -7,6 +7,6 @@
 ../../datasets/cw_v2.1_filtered.txt,0,500000
 ../../datasets/cw_v4.1_5knpm_shuffled.txt,0,500000
 ../../datasets/cw_v4.1_8knpm_shuffled.txt,0,500000
-../../datasets/cw_dfrc_v2.txt,0,2000000
+../../datasets/cw_dfrc_v2.txt,0,6880144
 ../../datasets/sirius-datagen-40ppg.txt,0,2000000
 ../../datasets/sirius-datagen-10ppg-dfrc.txt,0,569911
