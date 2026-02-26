@@ -193,7 +193,7 @@ public:
         OpenFileRookEnemyBonus.add(result);
         SemiOpenFileRookEnemyBonus.add(result);
 
-        assert(PassedPawnBonus.bucketTunableSize == 6);
+        assert(PassedPawnBonus.bucketTunableSize == 8);
         assert(PassedPawnEnemyBonus.bucketTunableSize == 6);
         assert(PassedPawnNoEnemiesAheadBonus.bucketTunableSize == 6);
         assert(PassedPawnNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
@@ -741,6 +741,7 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     auto oppositeSidePieces = blackPieces;
     auto passedPawnMask = WhitePassedPawnMasks[squareIndex];
     auto rank = Rank[squareIndex];
+    const auto file = File[squareIndex];
     auto pushSquare = squareIndex - 8;
 
     if (color == chess::Color::BLACK)
@@ -773,8 +774,8 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     // Passed pawn
     if ((oppositeSidePawns & passedPawnMask) == 0)
     {
-        packedBonus += PassedPawnBonus.packed(bucket, rank);
-        IncrementCoefficients(coefficients, PassedPawnBonus.index(bucket, rank - PassedPawnBonus.start), color); // There's no coefficient for rank 0
+        packedBonus += PassedPawnBonus.packed(bucket, file);
+        IncrementCoefficients(coefficients, PassedPawnBonus.index(bucket, file - PassedPawnBonus.start), color);
 
         packedBonus += PassedPawnEnemyBonus.packed(oppositeSideBucket, rank);
         IncrementCoefficients(coefficients, PassedPawnEnemyBonus.index(oppositeSideBucket, rank - PassedPawnEnemyBonus.start), color); // There's no coefficient for rank 0
