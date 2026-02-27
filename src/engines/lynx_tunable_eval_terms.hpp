@@ -6278,6 +6278,8 @@ TunableSingle BishopPairBonus(30, 70);
 TunableSingle BishopCorneredPenalty(-26, -41);
 TunableSingle BishopCorneredAndBlockedPenalty(-89, -120);
 TunableSingle BishopInUnblockedLongDiagonalBonus(17, 12);
+TunableSingle OpenFileKingSlidersSameFilePenalty(17, 12);
+TunableSingle SemiOpenFileKingSlidersSameFilePenalty(17, 12);
 TunableSingle PieceAttackedByPawnPenalty(-56, -40);
 TunableSingle PawnKingRingAttacksBonus(25, -3);
 TunableSingle KnightKingRingAttacksBonus(30, -11);

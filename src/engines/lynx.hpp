@@ -23,6 +23,8 @@ const static size_t numParameters = psqtIndexCount +
                                     BishopCorneredPenalty.size +
                                     BishopCorneredAndBlockedPenalty.size +
                                     BishopInUnblockedLongDiagonalBonus.size +
+                                    OpenFileKingSlidersSameFilePenalty.size +
+                                    SemiOpenFileKingSlidersSameFilePenalty.size +
                                     PieceAttackedByPawnPenalty.size +
                                     PawnKingRingAttacksBonus.size +   // 3
                                     KnightKingRingAttacksBonus.size + // 3
@@ -140,6 +142,8 @@ public:
         BishopCorneredPenalty.add(result);
         BishopCorneredAndBlockedPenalty.add(result);
         BishopInUnblockedLongDiagonalBonus.add(result);
+        OpenFileKingSlidersSameFilePenalty.add(result);
+        SemiOpenFileKingSlidersSameFilePenalty.add(result);
         PieceAttackedByPawnPenalty.add(result);
         PawnKingRingAttacksBonus.add(result);
         KnightKingRingAttacksBonus.add(result);
@@ -344,6 +348,12 @@ public:
         name = NAME(BishopInUnblockedLongDiagonalBonus);
         BishopInUnblockedLongDiagonalBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(OpenFileKingSlidersSameFilePenalty);
+        OpenFileKingSlidersSameFilePenalty.to_csharp(parameters, ss, name);
+
+        name = NAME(SemiOpenFileKingSlidersSameFilePenalty);
+        SemiOpenFileKingSlidersSameFilePenalty.to_csharp(parameters, ss, name);
+
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_csharp(parameters, ss, name);
 
@@ -531,6 +541,12 @@ public:
 
         name = NAME(BishopInUnblockedLongDiagonalBonus);
         BishopInUnblockedLongDiagonalBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(OpenFileKingSlidersSameFilePenalty);
+        OpenFileKingSlidersSameFilePenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(SemiOpenFileKingSlidersSameFilePenalty);
+        SemiOpenFileKingSlidersSameFilePenalty.to_cpp(parameters, ss, name);
 
         name = NAME(PieceAttackedByPawnPenalty);
         PieceAttackedByPawnPenalty.to_cpp(parameters, ss, name);
@@ -1059,23 +1075,39 @@ int KingAdditionalEvaluation(int squareIndex, int bucket, const u64 opponentPawn
     const auto kingSideOffset = kingSide == chess::Color::WHITE ? 0 : 6;
 
     // Opposite side rooks or queens on the board
-    if (pieceCount[9 - kingSideOffset] + pieceCount[10 - kingSideOffset] != 0)
+    const auto oppositeSideRooksOrQueens = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, ~kingSide) |
+                                           GetPieceSwappingEndianness(board, chess::PieceType::QUEEN, ~kingSide);
+    if (oppositeSideRooksOrQueens != 0)
     {
+        const auto fileMask = FileMasks[squareIndex];
+
         // King on open file
-        if (((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) & FileMasks[squareIndex]) == 0) // isOpenFile
+        if (((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) & fileMask) == 0) // isOpenFile
         {
             const auto file = File[squareIndex];
 
             packedBonus += OpenFileKingPenalty.packed(bucket, file);
             IncrementCoefficients(coefficients, OpenFileKingPenalty.index(bucket, file), kingSide);
+
+            if ((oppositeSideRooksOrQueens & fileMask) != 0)
+            {
+                packedBonus += OpenFileKingSlidersSameFilePenalty.packed;
+                IncrementCoefficients(coefficients, OpenFileKingSlidersSameFilePenalty.index, kingSide);
+            }
         }
         // King on semi-open file
-        else if ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide) & FileMasks[squareIndex]) == 0) // isSemiOpenFile
+        else if ((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, kingSide) & fileMask) == 0) // isSemiOpenFile
         {
             const auto file = File[squareIndex];
 
             packedBonus += SemiOpenFileKingPenalty.packed(bucket, file);
             IncrementCoefficients(coefficients, SemiOpenFileKingPenalty.index(bucket, file), kingSide);
+
+            if ((oppositeSideRooksOrQueens & fileMask) != 0)
+            {
+                packedBonus += SemiOpenFileKingSlidersSameFilePenalty.packed;
+                IncrementCoefficients(coefficients, SemiOpenFileKingSlidersSameFilePenalty.index, kingSide);
+            }
         }
     }
 
@@ -1372,7 +1404,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     const auto nonPawnEnemies = __builtin_bswap64(board.them(color).getBits()) & ~theirPawns;
 
     const auto safeSquares = ~attacksBySide[static_cast<int>(~color)] |
-                      (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[color]);
+                             (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[color]);
 
     auto pushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(ourPawns, color);
 
