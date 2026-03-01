@@ -193,8 +193,8 @@ public:
         OpenFileRookEnemyBonus.add(result);
         SemiOpenFileRookEnemyBonus.add(result);
 
-        assert(PassedPawnBonus.bucketTunableSize == 10);
-        assert(PassedPawnEnemyBonus.bucketTunableSize == 10);
+        assert(PassedPawnBonus.bucketTunableSize == 12);
+        assert(PassedPawnEnemyBonus.bucketTunableSize == 12);
         assert(PassedPawnNoEnemiesAheadBonus.bucketTunableSize == 6);
         assert(PassedPawnNoEnemiesAheadEnemyBonus.bucketTunableSize == 6);
         assert(OpenFileKingPenalty.bucketTunableSize == 8);
