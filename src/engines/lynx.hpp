@@ -1712,10 +1712,10 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     totalKingRingAttacks[static_cast<int>(chess::Color::WHITE)] += whitePawnKingRingAttacks;
     totalKingRingAttacks[static_cast<int>(chess::Color::BLACK)] += blackPawnKingRingAttacks;
 
-    packedScore += PawnKingRingAttacksBonus.packed;
+    packedScore += PawnKingRingAttacksBonus.packed * whitePawnKingRingAttacks;
     IncrementCoefficients(coefficients, PawnKingRingAttacksBonus.index, chess::Color::WHITE, whitePawnKingRingAttacks);
 
-    packedScore -= PawnKingRingAttacksBonus.packed;
+    packedScore -= PawnKingRingAttacksBonus.packed * blackPawnKingRingAttacks;
     IncrementCoefficients(coefficients, PawnKingRingAttacksBonus.index, chess::Color::BLACK, blackPawnKingRingAttacks);
 
     // Total king ring attacks
