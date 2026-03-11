@@ -828,7 +828,7 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     packedBonus += RookKingRingAttacksBonus.packed * kingRingAttacksCount;
     IncrementCoefficients(coefficients, RookKingRingAttacksBonus.index, color, kingRingAttacksCount);
 
-    totalKingRingAttacks[color] += kingRingAttacksCount;
+    totalKingRingAttacks[static_cast<int>(color)] += kingRingAttacksCount;
 
     // Open file
     if (((GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) | GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) & FileMasks[squareIndex]) == 0)
@@ -889,7 +889,7 @@ int KnightAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, i
     packedBonus += KnightKingRingAttacksBonus.packed * kingRingAttacksCount;
     IncrementCoefficients(coefficients, KnightKingRingAttacksBonus.index, color, kingRingAttacksCount);
 
-    totalKingRingAttacks[color] += kingRingAttacksCount;
+    totalKingRingAttacks[static_cast<int>(color)] += kingRingAttacksCount;
 
     return packedBonus;
 }
@@ -912,7 +912,7 @@ int BishopAdditionalEvaluation(int squareIndex, int pieceIndex, const u64 oppone
     packedBonus += BishopKingRingAttacksBonus.packed * kingRingAttacksCount;
     IncrementCoefficients(coefficients, BishopKingRingAttacksBonus.index, color, kingRingAttacksCount);
 
-    totalKingRingAttacks[color] += kingRingAttacksCount;
+    totalKingRingAttacks[static_cast<int>(color)] += kingRingAttacksCount;
 
     // Bad bishop - same color pawns
     const auto sameColorPawnsCount = chess::builtin::popcount(sameSidePawns &
@@ -1039,7 +1039,7 @@ int QueenAdditionalEvaluation(int squareIndex, const u64 opponentPawnAttacks, in
     packedBonus += QueenKingRingAttacksBonus.packed * kingRingAttacksCount;
     IncrementCoefficients(coefficients, QueenKingRingAttacksBonus.index, color, kingRingAttacksCount);
 
-    totalKingRingAttacks[color] += kingRingAttacksCount;
+    totalKingRingAttacks[static_cast<int>(color)] += kingRingAttacksCount;
 
     return packedBonus;
 }
@@ -1372,7 +1372,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     const auto nonPawnEnemies = __builtin_bswap64(board.them(color).getBits()) & ~theirPawns;
 
     const auto safeSquares = ~attacksBySide[static_cast<int>(~color)] |
-                      (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[color]);
+                      (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[static_cast<int>(color)]);
 
     auto pushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(ourPawns, color);
 
