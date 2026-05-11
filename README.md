@@ -21,6 +21,8 @@ Links to some training datasets:
 
 - [Ethereal data dump](https://www.talkchess.com/forum3/viewtopic.php?f=7&t=75350)
 
+- [Clockwork data](https://data.cwchess.org)
+
 ## Additions to the original tuner
 
 ### Build and run instructions
