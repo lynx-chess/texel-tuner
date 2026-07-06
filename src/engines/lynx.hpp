@@ -1,16 +1,24 @@
+#ifndef LYNX_H
+#define LYNX_H 1
+
+#define TAPERED 1
+
 #include "../base.h"
 #include "../config.h"
-#include "./lynx_constants.hpp"
-#include "./lynx_tunable.hpp"
-#include "lynx_tunable_eval_terms.hpp"
 #include "../external/chess.hpp"
 #include "../external/builtin.hpp"
+
+#include "./lynx_constants.hpp"
+#include "./lynx_tunable.hpp"
+#include "./lynx_tunable_eval_terms.hpp"
+
 #include <algorithm>
-#include <cassert>
 #include <array>
 #include <bit>
-#include <string>
+#include <cassert>
 #include <cmath>
+#include <string>
+#include <vector>
 
 using u64 = uint64_t;
 
@@ -79,6 +87,17 @@ class Lynx
 {
 
 public:
+
+    constexpr static tune_t preferred_k = 0;
+    constexpr static int32_t max_epoch = 5001;
+    constexpr static bool retune_from_zero = true;
+    constexpr static bool enable_qsearch = false;
+    constexpr static bool filter_in_check = false;
+    constexpr static tune_t initial_learning_rate = 1;
+    constexpr static int32_t learning_rate_drop_interval = 10000;
+    constexpr static tune_t learning_rate_drop_ratio = 1;
+    constexpr static bool adam_bias_correction = false;
+
     constexpr static bool includes_additional_score = false;
     // constexpr static bool includes_additional_score = true;
     constexpr static bool supports_external_chess_eval = true;
@@ -1916,3 +1935,5 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
         std::move(coefficients),
         (double)eval};
 }
+
+#endif // LYNX_H
