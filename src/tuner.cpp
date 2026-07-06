@@ -647,22 +647,22 @@ static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const 
 {
     const auto real_data_load_thread_count = print_eval ? 1 : data_load_thread_count;
     cout << "Parsing " << fens.size() << " positions..." << endl;
-    array<vector<Entry>, data_load_thread_count> thread_entries;
-    array<vector<CoefficientEntry>, data_load_thread_count> thread_coefficients;
+    array<vector<Entry>, real_data_load_thread_count> thread_entries;
+    array<vector<CoefficientEntry>, real_data_load_thread_count> thread_coefficients;
     const auto side_to_move_wdl = source.side_to_move_wdl;
 
     for (int thread_id = 0; thread_id < real_data_load_thread_count; thread_id++)
     {
         thread_pool.enqueue([thread_id, &thread_entries, &thread_coefficients, &fens, &parameters, side_to_move_wdl, time_start]()
         {
-            const auto start = static_cast<size_t>(thread_id) * fens.size() / data_load_thread_count;
-            const auto end = static_cast<size_t>(thread_id + 1) * fens.size() / data_load_thread_count;
+            const auto start = static_cast<size_t>(thread_id) * fens.size() / real_data_load_thread_count;
+            const auto end = static_cast<size_t>(thread_id + 1) * fens.size() / real_data_load_thread_count;
 
             auto& local_entries = thread_entries[thread_id];
             auto& local_coefficients = thread_coefficients[thread_id];
             local_entries.reserve(end - start);
 
-            constexpr auto print_interval = data_load_print_interval / data_load_thread_count;
+            constexpr auto print_interval = data_load_print_interval / real_data_load_thread_count;
             for (size_t i = start; i < end; i++)
             {
                 parse_fen(side_to_move_wdl, parameters, local_entries, local_coefficients, fens[i]);
@@ -670,7 +670,7 @@ static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const 
                 if (thread_id == 0 && count % print_interval == 0)
                 {
                     print_elapsed(time_start);
-                    std::cout << "Parsed ~" << count * data_load_thread_count << " positions..." << endl;
+                    std::cout << "Parsed ~" << count * real_data_load_thread_count << " positions..." << endl;
                 }
             }
         });
@@ -681,7 +681,7 @@ static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const 
     // Calculate total sizes for reservation
     size_t total_new_entries = 0;
     size_t total_new_coefficients = 0;
-    for (int thread_id = 0; thread_id < data_load_thread_count; thread_id++)
+    for (int thread_id = 0; thread_id < real_data_load_thread_count; thread_id++)
     {
         total_new_entries += thread_entries[thread_id].size();
         total_new_coefficients += thread_coefficients[thread_id].size();
@@ -690,7 +690,7 @@ static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const 
     all_coefficients.reserve(all_coefficients.size() + total_new_coefficients);
 
     // Merge thread results with coefficient offset adjustment
-    for (int thread_id = 0; thread_id < data_load_thread_count; thread_id++)
+    for (int thread_id = 0; thread_id < real_data_load_thread_count; thread_id++)
     {
         const auto coeff_offset_base = static_cast<uint32_t>(all_coefficients.size());
         all_coefficients.insert(all_coefficients.end(),
