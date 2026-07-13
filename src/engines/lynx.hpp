@@ -1918,6 +1918,15 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
                 {
                     eval >>= 1; // /2
                 }
+
+                const auto whiteKnights = GetPieceSwappingEndianness(board, chess::PieceType::KNIGHT, chess::Color::WHITE);
+                const auto blackKnights = GetPieceSwappingEndianness(board, chess::PieceType::KNIGHT, chess::Color::BLACK);
+
+                // Knight vs Knight endgames
+                if (whiteKnights > 0 && blackKnights > 0)
+                {
+                    eval >>= 1; // /2
+                }
             }
         }
     }
