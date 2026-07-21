@@ -87,7 +87,6 @@ class Lynx
 {
 
 public:
-
     constexpr static tune_t preferred_k = 0;
     constexpr static int32_t max_epoch = 5001;
     constexpr static bool retune_from_zero = true;
@@ -1391,7 +1390,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     const auto nonPawnEnemies = __builtin_bswap64(board.them(color).getBits()) & ~theirPawns;
 
     const auto safeSquares = ~attacksBySide[static_cast<int>(~color)] |
-                      (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[static_cast<int>(color)]);
+                             (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[static_cast<int>(color)]);
 
     auto pushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(ourPawns, color);
 
@@ -1799,6 +1798,10 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     if (gamePhase > maxPhase) // Early promotions
     {
         gamePhase = maxPhase;
+    }
+    else if (gamePhase <= 1)    // We apply phase 0 to eg with 1 minor piece
+    {
+        gamePhase = 0;
     }
 
     const int endGamePhase = maxPhase - gamePhase;
