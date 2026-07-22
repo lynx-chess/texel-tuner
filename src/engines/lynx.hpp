@@ -385,7 +385,7 @@ public:
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_csharp(parameters, ss, name);
 
-        name = NAME(PawnPushRookSeventhRankBonusThreatBonus);
+        name = NAME(RookSeventhRankBonus);
         RookSeventhRankBonus.to_csharp(parameters, ss, name);
 
         // Arrays
@@ -841,17 +841,6 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     const auto occupancy = __builtin_bswap64(board.occ().getBits());
     const auto attacks = chess::attacks::rook(static_cast<chess::Square>(squareIndex), occupancy).getBits();
     const auto sameSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
-
-    auto rank = Rank[squareIndex];
-    auto seventhRank = 1;
-    auto eightRank = 0;
-    if (color == chess::Color::BLACK)
-    {
-        rank = 7 - rank;
-        seventhRank = 6;
-        eightRank = 7;
-    }
-
     // Mobility
     const auto squaresToExcludeFromMobility = (~sameSidePawns) & (~opponentPawnAttacks);
     const auto mobilityCount = chess::builtin::popcount(attacks & squaresToExcludeFromMobility);
@@ -895,18 +884,14 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     // Connected rooks
     if (chess::builtin::popcount(attacks & GetPieceSwappingEndianness(board, chess::PieceType::ROOK, color)) >= 1)
     {
+        auto rank = Rank[squareIndex];
+        if (color == chess::Color::BLACK)
+        {
+            rank = 7 - rank;
+        }
+
         packedBonus += ConnectedRooksBonus.packed[rank];
         IncrementCoefficients(coefficients, ConnectedRooksBonus.index - ConnectedRooksBonus.start + rank, color);
-    }
-
-    // Rook on 7th rank - only if king is on 8th rank and the rook is attacking opponent pawns
-    auto oppositeKingRank = Rank[oppositeSideKingSquare];
-    auto oppositeSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, ~color);
-
-    if (rank == seventhRank && (oppositeKingRank == eightRank || (attacks & oppositeSidePawns & SeventhRankMasks[static_cast<int>(color)]) != 0))
-    {
-        packedBonus += RookSeventhRankBonus.packed;
-        IncrementCoefficients(coefficients, RookSeventhRankBonus.index, color);
     }
 
     return packedBonus;
@@ -1564,6 +1549,40 @@ bool IsBishopPawnDraw(const chess::Board &board, chess::Color winningSide)
     return DifferentColor(bishopSquare, promotionCornerSquare);
 }
 
+int RookOn7thRankBonus(const chess::Board &board, coefficients_t &coefficients, int whiteKing, int blackKing, const std::array<u64, 12> &attacks, const std::array<u64, 2> &attacksBySide)
+{
+    auto packedBonus = 0;
+
+    const auto whiteRooks = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, chess::Color::WHITE);
+    const int whiteEighthRank = 0;
+
+    const auto unAttackedWhiteRooksOn7thRank = whiteRooks & SeventhRankMasks[static_cast<int>(chess::Color::WHITE)] & (~attacksBySide[static_cast<int>(chess::Color::BLACK)]);
+
+    if (unAttackedWhiteRooksOn7thRank != 0
+        && (whiteEighthRank == Rank[blackKing]
+        || ((attacks[static_cast<int>(chess::PieceType::ROOK)] & GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) != 0)))
+    {
+        packedBonus += RookSeventhRankBonus.packed;
+        IncrementCoefficients(coefficients, RookSeventhRankBonus.index, chess::Color::WHITE);
+    }
+
+    const auto blackRooks = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, chess::Color::BLACK);
+    const int blackEighthRank = 7;
+
+    const auto unAttackedBlackRooksOn7thRank = blackRooks & SeventhRankMasks[static_cast<int>(chess::Color::BLACK)] & (~attacksBySide[static_cast<int>(chess::Color::WHITE)]);
+
+    if (unAttackedBlackRooksOn7thRank != 0
+        && (blackEighthRank == Rank[whiteKing]
+        || ((attacks[static_cast<int>(chess::PieceType::ROOK) + 6] & GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE)) != 0)))
+    {
+        packedBonus -= RookSeventhRankBonus.packed;
+        IncrementCoefficients(coefficients, RookSeventhRankBonus.index, chess::Color::BLACK);
+    }
+
+    return packedBonus;
+}
+
+
 EvalResult Lynx::get_external_eval_result(const chess::Board &board)
 {
     std::vector<std::int16_t> coefficients(numParameters, 0);
@@ -1741,6 +1760,9 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     // Bishop pair bonus
     const auto whiteBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::WHITE);
     const auto blackBishops = GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, chess::Color::BLACK);
+
+    // Rook on 7th rank bonus
+    packedScore += RookOn7thRankBonus(board, coefficients, whiteKing, blackKing, attacks, attacksBySide);
 
     // Pawn king ring attacks
     const auto whiteKingRing = KingRing[whiteKing];
