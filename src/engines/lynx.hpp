@@ -38,6 +38,7 @@ const static size_t numParameters = psqtIndexCount +
                                     RookKingRingAttacksBonus.size +   // 5
                                     QueenKingRingAttacksBonus.size +  // 6
                                     PawnPushThreatBonus.size +        // 6
+                                    RookSeventhRankBonus.size +       // 6
 
                                     // Arrays
                                     PassedPawnPushBonus.tunableSize +       // 6
@@ -87,7 +88,6 @@ class Lynx
 {
 
 public:
-
     constexpr static tune_t preferred_k = 0;
     constexpr static int32_t max_epoch = 5001;
     constexpr static bool retune_from_zero = true;
@@ -166,6 +166,7 @@ public:
         RookKingRingAttacksBonus.add(result);
         QueenKingRingAttacksBonus.add(result);
         PawnPushThreatBonus.add(result);
+        RookSeventhRankBonus.add(result);
 
         // Arrays
         PassedPawnPushBonus.add(result);
@@ -384,6 +385,9 @@ public:
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_csharp(parameters, ss, name);
 
+        name = NAME(PawnPushRookSeventhRankBonusThreatBonus);
+        RookSeventhRankBonus.to_csharp(parameters, ss, name);
+
         // Arrays
         name = NAME(PassedPawnPushBonus);
         PassedPawnPushBonus.to_csharp(parameters, ss, name);
@@ -571,6 +575,9 @@ public:
 
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_cpp(parameters, ss, name);
+
+        name = NAME(RookSeventhRankBonus);
+        RookSeventhRankBonus.to_cpp(parameters, ss, name);
 
         // Arrays
         name = NAME(PassedPawnPushBonus);
@@ -835,6 +842,16 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     const auto attacks = chess::attacks::rook(static_cast<chess::Square>(squareIndex), occupancy).getBits();
     const auto sameSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
 
+    auto rank = Rank[squareIndex];
+    auto seventhRank = 1;
+    auto eightRank = 0;
+    if (color == chess::Color::BLACK)
+    {
+        rank = 7 - rank;
+        seventhRank = 6;
+        eightRank = 7;
+    }
+
     // Mobility
     const auto squaresToExcludeFromMobility = (~sameSidePawns) & (~opponentPawnAttacks);
     const auto mobilityCount = chess::builtin::popcount(attacks & squaresToExcludeFromMobility);
@@ -878,14 +895,18 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     // Connected rooks
     if (chess::builtin::popcount(attacks & GetPieceSwappingEndianness(board, chess::PieceType::ROOK, color)) >= 1)
     {
-        auto rank = Rank[squareIndex];
-        if (color == chess::Color::BLACK)
-        {
-            rank = 7 - rank;
-        }
-
         packedBonus += ConnectedRooksBonus.packed[rank];
         IncrementCoefficients(coefficients, ConnectedRooksBonus.index - ConnectedRooksBonus.start + rank, color);
+    }
+
+    // Rook on 7th rank - only if king is on 8th rank and the rook is attacking opponent pawns
+    auto oppositeKingRank = Rank[oppositeSideKingSquare];
+    auto oppositeSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, ~color);
+
+    if (rank == seventhRank && (oppositeKingRank == eightRank || (attacks & oppositeSidePawns & SeventhRankMasks[static_cast<int>(color)]) != 0))
+    {
+        packedBonus += RookSeventhRankBonus.packed;
+        IncrementCoefficients(coefficients, RookSeventhRankBonus.index, color);
     }
 
     return packedBonus;
@@ -1391,7 +1412,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     const auto nonPawnEnemies = __builtin_bswap64(board.them(color).getBits()) & ~theirPawns;
 
     const auto safeSquares = ~attacksBySide[static_cast<int>(~color)] |
-                      (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[static_cast<int>(color)]);
+                             (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[static_cast<int>(color)]);
 
     auto pushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(ourPawns, color);
 
