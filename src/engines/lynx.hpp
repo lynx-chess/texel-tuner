@@ -904,7 +904,7 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
 
     if (rank == seventhRank &&
         (oppositeKingRank == eightRank ||
-         (attacks & oppositeSidePawns & SeventhRankMasks[static_cast<int>(color)]) != 0))
+         (oppositeSidePawns & SeventhRankMasks[static_cast<int>(color)]) != 0))
     {
         packedBonus += RookSeventhRankBonus.packed;
         IncrementCoefficients(coefficients, RookSeventhRankBonus.index, color);
