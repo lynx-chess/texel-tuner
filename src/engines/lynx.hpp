@@ -385,7 +385,7 @@ public:
         name = NAME(PawnPushThreatBonus);
         PawnPushThreatBonus.to_csharp(parameters, ss, name);
 
-        name = NAME(PawnPushRookSeventhRankBonusThreatBonus);
+        name = NAME(RookSeventhRankBonus);
         RookSeventhRankBonus.to_csharp(parameters, ss, name);
 
         // Arrays
@@ -843,13 +843,9 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     const auto sameSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, color);
 
     auto rank = Rank[squareIndex];
-    auto seventhRank = 1;
-    auto eightRank = 0;
     if (color == chess::Color::BLACK)
     {
         rank = 7 - rank;
-        seventhRank = 6;
-        eightRank = 7;
     }
 
     // Mobility
@@ -903,7 +899,12 @@ int RookAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
     auto oppositeKingRank = Rank[oppositeSideKingSquare];
     auto oppositeSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, ~color);
 
-    if (rank == seventhRank && (oppositeKingRank == eightRank || (attacks & oppositeSidePawns & SeventhRankMasks[static_cast<int>(color)]) != 0))
+    const auto seventhRank = 6;
+    const auto eightRank = 7;
+
+    if (rank == seventhRank &&
+        (oppositeKingRank == eightRank ||
+         (attacks & oppositeSidePawns & SeventhRankMasks[static_cast<int>(color)]) != 0))
     {
         packedBonus += RookSeventhRankBonus.packed;
         IncrementCoefficients(coefficients, RookSeventhRankBonus.index, color);
