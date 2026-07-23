@@ -1556,11 +1556,11 @@ int RookOn7thRankBonus(const chess::Board &board, coefficients_t &coefficients, 
     const auto whiteRooks = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, chess::Color::WHITE);
     const int whiteEighthRank = 0;
 
-    const auto unAttackedWhiteRooksOn7thRank = whiteRooks & SeventhRankMasks[static_cast<int>(chess::Color::WHITE)] & (~attacksBySide[static_cast<int>(chess::Color::BLACK)]);
+    const auto unAttackedWhiteRooksOn7thRank = whiteRooks & SeventhRankMasks[static_cast<int>(chess::Color::WHITE)] & (~attacksBySide[static_cast<int>(chess::Color::BLACK)] | attacksBySide[static_cast<int>(chess::Color::WHITE)]);
 
     if (unAttackedWhiteRooksOn7thRank != 0
-        && (whiteEighthRank == Rank[blackKing]
-        || ((attacks[static_cast<int>(chess::PieceType::ROOK)] & GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK)) != 0)))
+        && (whiteEighthRank == Rank[blackKing]))
+        // || ((attacks[static_cast<int>(chess::PieceType::ROOK)] & GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::BLACK) & SeventhRankMasks[static_cast<int>(chess::Color::WHITE)]) != 0)))
     {
         packedBonus += RookSeventhRankBonus.packed;
         IncrementCoefficients(coefficients, RookSeventhRankBonus.index, chess::Color::WHITE);
@@ -1569,11 +1569,11 @@ int RookOn7thRankBonus(const chess::Board &board, coefficients_t &coefficients, 
     const auto blackRooks = GetPieceSwappingEndianness(board, chess::PieceType::ROOK, chess::Color::BLACK);
     const int blackEighthRank = 7;
 
-    const auto unAttackedBlackRooksOn7thRank = blackRooks & SeventhRankMasks[static_cast<int>(chess::Color::BLACK)] & (~attacksBySide[static_cast<int>(chess::Color::WHITE)]);
+    const auto unAttackedBlackRooksOn7thRank = blackRooks & SeventhRankMasks[static_cast<int>(chess::Color::BLACK)] & (~attacksBySide[static_cast<int>(chess::Color::WHITE)] | attacksBySide[static_cast<int>(chess::Color::BLACK)]);
 
     if (unAttackedBlackRooksOn7thRank != 0
-        && (blackEighthRank == Rank[whiteKing]
-        || ((attacks[static_cast<int>(chess::PieceType::ROOK) + 6] & GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE)) != 0)))
+        && (blackEighthRank == Rank[whiteKing]))
+        // || ((attacks[static_cast<int>(chess::PieceType::ROOK) + 6] & GetPieceSwappingEndianness(board, chess::PieceType::PAWN, chess::Color::WHITE) & SeventhRankMasks[static_cast<int>(chess::Color::BLACK)]) != 0)))
     {
         packedBonus -= RookSeventhRankBonus.packed;
         IncrementCoefficients(coefficients, RookSeventhRankBonus.index, chess::Color::BLACK);
