@@ -1921,6 +1921,13 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
             }
         }
     }
+    else if ((gamePhase == 6)
+            && (totalPawnsCount != 0)
+            && (((eval > 0) && (board.pieces(chess::PieceType::QUEEN, chess::Color::WHITE).count() != 0) && (board.pieces(chess::PieceType::ROOK, chess::Color::BLACK).count() != 0) && (board.pieces(chess::PieceType::PAWN, chess::Color::BLACK).count() != 0))
+                || (((eval < 0) && (board.pieces(chess::PieceType::QUEEN, chess::Color::BLACK).count() != 0) && (board.pieces(chess::PieceType::ROOK, chess::Color::WHITE).count() != 0) && (board.pieces(chess::PieceType::PAWN, chess::Color::WHITE).count() != 0)))))
+        {
+            eval >>= 1; // /2
+        }
 
     // Endgame scaling with pawn count
     eval = (int)(eval * ((80 + (totalPawnsCount * 7)) / 128.0));
