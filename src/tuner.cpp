@@ -1,14 +1,15 @@
 #include "tuner.h"
-#include "base.h"
 #include "config.h"
 #include "threadpool.h"
 #include "external/chess.hpp"
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <thread>
@@ -17,6 +18,10 @@
 using namespace std;
 using namespace std::chrono;
 using namespace Tuner;
+
+#ifndef TAPERED
+static_assert(false, "Tuner requires TAPERED to be defined")
+#endif
 
 struct WdlMarker
 {
@@ -32,10 +37,10 @@ struct CoefficientEntry
 
 struct Entry
 {
-    vector<CoefficientEntry> coefficients;
+    uint32_t coeff_offset;
+    uint16_t coeff_count;
     tune_t wdl;
     bool white_to_move;
-    //tune_t initial_eval;
     tune_t additional_score;
 #if TAPERED
     int32_t phase;
@@ -52,7 +57,7 @@ static const array<WdlMarker, 4> markers
     WdlMarker{"0-1", 0}
 };
 
-static tune_t get_fen_wdl(const string& original_fen, const bool original_white_to_move, const bool white_to_move, const bool side_to_move_wdl)
+static tune_t get_fen_wdl(const string& original_fen, const bool original_white_to_move, const bool side_to_move_wdl)
 {
     tune_t wdl;
     bool marker_found = false;
@@ -106,7 +111,12 @@ static tune_t get_fen_wdl(const string& original_fen, const bool original_white_
 
 static bool get_fen_color_to_move(const string& fen)
 {
-    return fen.find('w') != std::string::npos;
+    auto space_pos = fen.find(' ');
+    if (space_pos != string::npos && space_pos + 1 < fen.size())
+    {
+        return fen[space_pos + 1] == 'w';
+    }
+    return true;
 }
 
 static void print_elapsed(high_resolution_clock::time_point start)
@@ -117,41 +127,47 @@ static void print_elapsed(high_resolution_clock::time_point start)
      cout << "[" << elapsed_seconds << "s]" << std::endl;
 }
 
-static void get_coefficient_entries(const coefficients_t& coefficients, vector<CoefficientEntry>& coefficient_entries, int32_t parameter_count)
+static void get_coefficient_entries(const coefficients_t& coefficients, vector<CoefficientEntry>& all_coefficients, Entry& entry, int32_t parameter_count)
 {
-    if(coefficients.size() != parameter_count)
+    if(static_cast<int32_t>(coefficients.size()) != parameter_count)
     {
         throw runtime_error("Parameter count mismatch");
     }
 
-    for (int16_t i = 0; i < coefficients.size(); i++)
+    entry.coeff_offset = static_cast<uint32_t>(all_coefficients.size());
+
+    for (int32_t i = 0; i < static_cast<int32_t>(coefficients.size()); i++)
     {
         if (coefficients[i] == 0)
         {
             continue;
         }
 
-        const auto coefficient_entry = CoefficientEntry{coefficients[i], i};
-        coefficient_entries.push_back(coefficient_entry);
+        all_coefficients.push_back(CoefficientEntry{coefficients[i], static_cast<int16_t>(i)});
     }
+
+    entry.coeff_count = static_cast<uint16_t>(all_coefficients.size() - entry.coeff_offset);
 }
 
-static tune_t linear_eval(const Entry& entry, const parameters_t& parameters)
+static tune_t linear_eval(const Entry& entry, const CoefficientEntry* all_coefficients, const parameters_t& parameters)
 {
     tune_t score = entry.additional_score;
+    const auto* coefficients = all_coefficients + entry.coeff_offset;
+    const auto count = entry.coeff_count;
 #if TAPERED 
     tune_t midgame = 0;
     tune_t endgame = 0;
-    for (const auto& coefficient : entry.coefficients)
+    for (uint16_t ci = 0; ci < count; ci++)
     {
+        const auto& coefficient = coefficients[ci];
         midgame += coefficient.value * parameters[coefficient.index][static_cast<int32_t>(PhaseStages::Midgame)];
-        endgame += coefficient.value * parameters[coefficient.index][static_cast<int32_t>(PhaseStages::Endgame)] * entry.endgame_scale;
+        endgame += coefficient.value * parameters[coefficient.index][static_cast<int32_t>(PhaseStages::Endgame)];
     }
-    score += (midgame * entry.phase + endgame * (24 - entry.phase)) / 24;
+    score += (midgame * entry.phase + endgame * entry.endgame_scale * (24 - entry.phase)) / 24;
 #else
-    for (const auto& coefficient : entry.coefficients)
+    for (uint16_t ci = 0; ci < count; ci++)
     {
-        score += coefficient.value * parameters[coefficient.index];
+        score += coefficients[ci].value * parameters[coefficients[ci].index];
     }
 #endif
 
@@ -248,7 +264,7 @@ static void print_statistics(const parameters_t& parameters, const vector<Entry>
     size_t max_parameters = 0;
     size_t total_parameters = 0;
 
-    for(auto& entry : entries)
+    for(const auto& entry : entries)
     {
         if(entry.wdl == 1)
         {
@@ -265,17 +281,18 @@ static void print_statistics(const parameters_t& parameters, const vector<Entry>
         total[entry.white_to_move]++;
         wdls[entry.white_to_move] += entry.wdl;
 
-        if(entry.coefficients.size() < min_parameters)
+        const size_t coeff_count = entry.coeff_count;
+        if(coeff_count < min_parameters)
         {
-            min_parameters = entry.coefficients.size();
+            min_parameters = coeff_count;
         }
 
-        if (entry.coefficients.size() > max_parameters)
+        if (coeff_count > max_parameters)
         {
-            max_parameters = entry.coefficients.size();
+            max_parameters = coeff_count;
         }
 
-        total_parameters += entry.coefficients.size();
+        total_parameters += coeff_count;
     }
 
     cout << "Dataset statistics:" << endl;
@@ -356,7 +373,7 @@ static int32_t mvv_lva(const chess::Board& board, const chess::Move move)
     return score;
 }
 
-static tune_t quiescence(chess::Board& board, const parameters_t& parameters, pv_table_t& pv_table, tune_t alpha, tune_t beta, const int32_t ply)
+static tune_t quiescence(chess::Board& board, const parameters_t& parameters, pv_table_t& pv_table, vector<CoefficientEntry>& scratch, tune_t alpha, tune_t beta, const int32_t ply)
 {
     pv_table[ply].length = 0;
 
@@ -371,17 +388,20 @@ static tune_t quiescence(chess::Board& board, const parameters_t& parameters, pv
         eval_result = TuneEval::get_fen_eval_result(fen);
     }
 
+    const auto scratch_save = scratch.size();
     Entry entry;
     entry.white_to_move = board.sideToMove() == chess::Color::WHITE;
 #if TAPERED
     entry.endgame_scale = eval_result.endgame_scale;
 #endif
-    get_coefficient_entries(eval_result.coefficients, entry.coefficients, static_cast<int32_t>(parameters.size()));
+    get_coefficient_entries(eval_result.coefficients, scratch, entry, static_cast<int32_t>(parameters.size()));
 #if TAPERED
     entry.phase = get_phase(board);
 #endif
     entry.additional_score = 0;
-    tune_t eval = linear_eval(entry, parameters);
+    tune_t eval = linear_eval(entry, scratch.data(), parameters);
+    scratch.resize(scratch_save);
+
     if(!entry.white_to_move)
     {
         eval = -eval;
@@ -410,7 +430,7 @@ static tune_t quiescence(chess::Board& board, const parameters_t& parameters, pv
         return alpha;
     }
 
-    tune_t best_score = -inf;
+    tune_t best_score = alpha;
     auto best_move = chess::Move(chess::Move::NO_MOVE);
     //for (const auto& move : movelist) {
     for(int32_t move_index = 0; move_index < moves.size(); move_index++)
@@ -432,7 +452,7 @@ static tune_t quiescence(chess::Board& board, const parameters_t& parameters, pv
 
         board.makeMove(move);
 
-        const auto child_score = -quiescence(board, parameters, pv_table, -beta, -alpha, ply + 1);
+        const auto child_score = -quiescence(board, parameters, pv_table, scratch, -beta, -alpha, ply + 1);
         if(child_score > best_score)
         {
             best_score = child_score;
@@ -480,10 +500,10 @@ string cleanup_fen(const string& initial_fen)
     return clean_fen;
 }
 
-chess::Board quiescence_root(const parameters_t& parameters, chess::Board board)
+chess::Board quiescence_root(const parameters_t& parameters, chess::Board board, vector<CoefficientEntry>& scratch)
 {
     pv_table_t pv_table {};
-    auto score = quiescence(board, parameters, pv_table, -inf, inf, 0);
+    auto score = quiescence(board, parameters, pv_table, scratch, -inf, inf, 0);
     if(board.sideToMove() == chess::Color::BLACK)
     {
         score = -score;
@@ -509,26 +529,27 @@ chess::Board quiescence_root(const parameters_t& parameters, chess::Board board)
     return board;
 }
 
-static void parse_fen(const bool side_to_move_wdl, const parameters_t& parameters, vector<Entry>& entries, const string& original_fen)
+static void parse_fen(const bool side_to_move_wdl, const parameters_t& parameters, vector<Entry>& entries, vector<CoefficientEntry>& all_coefficients, const string& original_fen)
 {
     if constexpr (print_data_entries)
     {
-        //cout << fen;
+        cout << original_fen;
     }
 
     //string fen;
     const auto clean_fen = cleanup_fen(original_fen);
     chess::Board board = chess::Board(clean_fen);
 
-    if constexpr (filter_in_check)
+    if constexpr (TuneEval::filter_in_check)
     {
         if (board.inCheck())
             return;
     }
 
-    if constexpr (enable_qsearch)
+    if constexpr (TuneEval::enable_qsearch)
     {
-        board = quiescence_root(parameters, board);
+        vector<CoefficientEntry> scratch;
+        board = quiescence_root(parameters, board, scratch);
     }
 
     EvalResult eval_result;
@@ -557,15 +578,15 @@ static void parse_fen(const bool side_to_move_wdl, const parameters_t& parameter
 #endif
     const bool original_white_to_move = get_fen_color_to_move(original_fen);
     //cout << (entry.white_to_move ? "w" : "b") << " ";
-    entry.wdl = get_fen_wdl(original_fen, original_white_to_move, entry.white_to_move, side_to_move_wdl);
-    get_coefficient_entries(eval_result.coefficients, entry.coefficients, static_cast<int32_t>(parameters.size()));
+    entry.wdl = get_fen_wdl(original_fen, original_white_to_move, side_to_move_wdl);
+    get_coefficient_entries(eval_result.coefficients, all_coefficients, entry, static_cast<int32_t>(parameters.size()));
 #if TAPERED
     entry.phase = get_phase(board);
 #endif
     entry.additional_score = 0;
     if constexpr (TuneEval::includes_additional_score)
     {
-        const tune_t score = linear_eval(entry, parameters);
+        const tune_t score = linear_eval(entry, all_coefficients.data(), parameters);
         if constexpr (print_data_entries)
         {
             cout << " Eval: " << score << endl;
@@ -592,15 +613,24 @@ static void read_fens(const DataSource& source, const high_resolution_clock::tim
         throw runtime_error("Failed to open data source");
     }
 
+    if (source.position_limit > 0)
+    {
+        fens.reserve(source.position_limit);
+    }
+
     while (!file.eof())
     {
-        if (source.position_limit > 0 && fens.size() >= source.position_limit)
+        if (source.position_limit > 0 && static_cast<int64_t>(fens.size()) >= source.position_limit)
         {
             break;
         }
 
         string original_fen;
         getline(file, original_fen);
+        if (!original_fen.empty() && original_fen.back() == '\r')
+        {
+            original_fen.pop_back();
+        }
         if (original_fen.empty())
         {
             break;
@@ -613,83 +643,73 @@ static void read_fens(const DataSource& source, const high_resolution_clock::tim
     std::cout << "Read " << fens.size() << " positions from " << source.path << endl;
 }
 
-static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const vector<string>& fens, const parameters_t& parameters, const high_resolution_clock::time_point time_start, vector<Entry>& entries)
+static void parse_fens(ThreadPool& thread_pool, const DataSource& source, const vector<string>& fens, const parameters_t& parameters, const high_resolution_clock::time_point time_start, vector<Entry>& entries, vector<CoefficientEntry>& all_coefficients)
 {
     const auto real_data_load_thread_count = print_eval ? 1 : data_load_thread_count;
     cout << "Parsing " << fens.size() << " positions..." << endl;
     array<vector<Entry>, real_data_load_thread_count> thread_entries;
+    array<vector<CoefficientEntry>, real_data_load_thread_count> thread_coefficients;
     const auto side_to_move_wdl = source.side_to_move_wdl;
-    constexpr int batch_size = 10000;
-    mutex mut;
-    queue<vector<string>> batches;
-    vector<string> current_batch;
-    for(const auto& fen : fens)
-    {
-        current_batch.push_back(fen);
-        if (current_batch.size() == batch_size)
-        {
-            batches.emplace(current_batch);
-            current_batch.clear();
-        }
-    }
-    if(!current_batch.empty())
-    {
-        batches.emplace(current_batch);
-    }
 
     for (int thread_id = 0; thread_id < real_data_load_thread_count; thread_id++)
     {
-        thread_pool.enqueue([thread_id, &thread_entries, &mut, side_to_move_wdl, parameters, &batches, time_start]()
+        thread_pool.enqueue([thread_id, &thread_entries, &thread_coefficients, &fens, &parameters, side_to_move_wdl, time_start]()
         {
-            vector<Entry> entries;
+            const auto start = static_cast<size_t>(thread_id) * fens.size() / real_data_load_thread_count;
+            const auto end = static_cast<size_t>(thread_id + 1) * fens.size() / real_data_load_thread_count;
 
-            int position_count = 0;
-            while(true)
+            auto& local_entries = thread_entries[thread_id];
+            auto& local_coefficients = thread_coefficients[thread_id];
+            local_entries.reserve(end - start);
+
+            constexpr auto print_interval = data_load_print_interval / real_data_load_thread_count;
+            for (size_t i = start; i < end; i++)
             {
-                vector<string> thread_batch;
+                parse_fen(side_to_move_wdl, parameters, local_entries, local_coefficients, fens[i]);
+                const auto count = static_cast<int>(i - start + 1);
+                if (thread_id == 0 && count % print_interval == 0)
                 {
-                    lock_guard lock(mut);
-                    if(batches.empty())
-                    {
-                        break;
-                    }
-                    thread_batch = batches.front();
-                    batches.pop();
-                }
-
-                constexpr auto thread_data_load_print_interval = data_load_print_interval / real_data_load_thread_count;
-                for(auto& fen : thread_batch)
-                {
-                    parse_fen(side_to_move_wdl, parameters, entries, fen);
-                    position_count++;
-                    if (thread_id == 0 && position_count % thread_data_load_print_interval == 0)
-                    {
-                        print_elapsed(time_start);
-                        std::cout << "Parsed ~" << position_count * real_data_load_thread_count << " positions..." << endl;
-                    }
+                    print_elapsed(time_start);
+                    std::cout << "Parsed ~" << count * real_data_load_thread_count << " positions..." << endl;
                 }
             }
-
-            thread_entries[thread_id] = entries;
         });
     }
 
     thread_pool.wait_for_completion();
 
+    // Calculate total sizes for reservation
+    size_t total_new_entries = 0;
+    size_t total_new_coefficients = 0;
     for (int thread_id = 0; thread_id < real_data_load_thread_count; thread_id++)
     {
-        for(const Entry& entry : thread_entries[thread_id])
+        total_new_entries += thread_entries[thread_id].size();
+        total_new_coefficients += thread_coefficients[thread_id].size();
+    }
+    entries.reserve(entries.size() + total_new_entries);
+    all_coefficients.reserve(all_coefficients.size() + total_new_coefficients);
+
+    // Merge thread results with coefficient offset adjustment
+    for (int thread_id = 0; thread_id < real_data_load_thread_count; thread_id++)
+    {
+        const auto coeff_offset_base = static_cast<uint32_t>(all_coefficients.size());
+        all_coefficients.insert(all_coefficients.end(),
+            thread_coefficients[thread_id].begin(),
+            thread_coefficients[thread_id].end());
+
+        for (auto& entry : thread_entries[thread_id])
         {
+            entry.coeff_offset += coeff_offset_base;
             entries.push_back(entry);
         }
     }
 }
 
-static void load_fens(ThreadPool& thread_pool, const DataSource& source, const parameters_t& parameters, const high_resolution_clock::time_point start, vector<Entry>& entries)
+static void load_fens(ThreadPool& thread_pool, const DataSource& source, const parameters_t& parameters, const high_resolution_clock::time_point start, vector<Entry>& entries, vector<CoefficientEntry>& all_coefficients)
 {
     vector<string> fens;
     read_fens(source, start, fens);
-    parse_fens(thread_pool, source, fens, parameters, start, entries);
+    parse_fens(thread_pool, source, fens, parameters, start, entries, all_coefficients);
 }
 
 static tune_t sigmoid(const tune_t K, const tune_t eval)
@@ -697,24 +717,23 @@ static tune_t sigmoid(const tune_t K, const tune_t eval)
     return static_cast<tune_t>(1) / (static_cast<tune_t>(1) + exp(-K * eval / static_cast<tune_t>(400)));
 }
 
-static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& entries, const parameters_t& parameters, tune_t K)
+static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& entries, const CoefficientEntry* all_coefficients, const parameters_t& parameters, tune_t K)
 {
-    array<tune_t, thread_count> thread_errors;
+    array<tune_t, thread_count> thread_errors{};
     for(int thread_id = 0; thread_id < thread_count; thread_id++)
     {
-        thread_pool.enqueue([thread_id, &thread_errors, &entries, &parameters, K]()
+        thread_pool.enqueue([thread_id, &thread_errors, &entries, all_coefficients, &parameters, K]()
         {
-            const auto entries_per_thread = entries.size() / thread_count;
-            const auto start = static_cast<int>(thread_id * entries_per_thread);
-            const auto end = static_cast<int>((thread_id + 1) * entries_per_thread - 1);
+            const auto start = static_cast<int64_t>(thread_id) * entries.size() / thread_count;
+            const auto end = static_cast<int64_t>(thread_id + 1) * entries.size() / thread_count;
             tune_t error = 0;
-            for (int i = start; i < end; i++)
+            for (int64_t i = start; i < end; i++)
             {
                 const auto& entry = entries[i];
-                const auto eval = linear_eval(entry, parameters);
+                const auto eval = linear_eval(entry, all_coefficients, parameters);
                 const auto sig = sigmoid(K, eval);
                 const auto diff = entry.wdl - sig;
-                const auto entry_error = pow(diff, 2);
+                const auto entry_error = diff * diff;
                 error += entry_error;
             }
             thread_errors[thread_id] = error;
@@ -733,7 +752,7 @@ static tune_t get_average_error(ThreadPool& thread_pool, const vector<Entry>& en
     return avg_error;
 }
 
-static tune_t find_optimal_k(ThreadPool& thread_pool, const vector<Entry>& entries, const parameters_t& parameters)
+static tune_t find_optimal_k(ThreadPool& thread_pool, const vector<Entry>& entries, const CoefficientEntry* all_coefficients, const parameters_t& parameters)
 {
     constexpr tune_t rate = 10;
     constexpr tune_t delta = 1e-5;
@@ -743,8 +762,8 @@ static tune_t find_optimal_k(ThreadPool& thread_pool, const vector<Entry>& entri
 
     while (fabs(deviation) > deviation_goal)
     {
-        const tune_t up = get_average_error(thread_pool, entries, parameters, K + delta);
-        const tune_t down = get_average_error(thread_pool, entries, parameters, K - delta);
+        const tune_t up = get_average_error(thread_pool, entries, all_coefficients, parameters, K + delta);
+        const tune_t down = get_average_error(thread_pool, entries, all_coefficients, parameters, K - delta);
         deviation = (up - down) / (2 * delta);
         cout << "Current K: " << K << ", up: " << up << ", down: " << down << ", deviation: " << deviation << endl;
         K -= deviation * rate;
@@ -753,49 +772,70 @@ static tune_t find_optimal_k(ThreadPool& thread_pool, const vector<Entry>& entri
     return K;
 }
 
-static void update_single_gradient(parameters_t& gradient, const Entry& entry, const parameters_t& params, tune_t K) {
+static void eval_and_update_gradient(parameters_t& gradient, const Entry& entry, const CoefficientEntry* all_coefficients, const parameters_t& params, tune_t K) {
 
-    const tune_t eval = linear_eval(entry, params);
-    const tune_t sig = sigmoid(K, eval);
-    const tune_t res = (entry.wdl - sig) * sig * (1 - sig);
+    const auto* coefficients = all_coefficients + entry.coeff_offset;
+    const auto count = entry.coeff_count;
 
+    // First pass: compute linear eval
+    tune_t score = entry.additional_score;
 #if TAPERED
-    const auto mg_base = res * (entry.phase / static_cast<tune_t>(24));
-    const auto eg_base = res - mg_base;
+    tune_t midgame = 0;
+    tune_t endgame = 0;
+    for (uint16_t ci = 0; ci < count; ci++)
+    {
+        const auto& coefficient = coefficients[ci];
+        midgame += coefficient.value * params[coefficient.index][static_cast<int32_t>(PhaseStages::Midgame)];
+        endgame += coefficient.value * params[coefficient.index][static_cast<int32_t>(PhaseStages::Endgame)];
+    }
+    score += (midgame * entry.phase + endgame * entry.endgame_scale * (24 - entry.phase)) / 24;
+#else
+    for (uint16_t ci = 0; ci < count; ci++)
+    {
+        score += coefficients[ci].value * params[coefficients[ci].index];
+    }
 #endif
 
-    for (const auto& coefficient : entry.coefficients)
+    // Sigmoid + derivative
+    const tune_t sig = sigmoid(K, score);
+    const tune_t res = (entry.wdl - sig) * sig * (1 - sig);
+
+    // Second pass: accumulate gradient (coefficients still in L1)
+#if TAPERED
+    const auto mg_base = res * (entry.phase / static_cast<tune_t>(24));
+    const auto eg_base = (res - mg_base) * entry.endgame_scale;
+#endif
+
+    for (uint16_t ci = 0; ci < count; ci++)
     {
+        const auto& coefficient = coefficients[ci];
 #if TAPERED
         gradient[coefficient.index][static_cast<int32_t>(PhaseStages::Midgame)] += mg_base * coefficient.value;
-        gradient[coefficient.index][static_cast<int32_t>(PhaseStages::Endgame)] += eg_base * coefficient.value * entry.endgame_scale;
+        gradient[coefficient.index][static_cast<int32_t>(PhaseStages::Endgame)] += eg_base * coefficient.value;
 #else
         gradient[coefficient.index] += res * coefficient.value;
 #endif
     }
 }
 
-static void compute_gradient(ThreadPool& thread_pool, parameters_t& gradient, const vector<Entry>& entries, const parameters_t& params, tune_t K)
+static void compute_gradient(ThreadPool& thread_pool, parameters_t& gradient, array<parameters_t, thread_count>& thread_gradients, const vector<Entry>& entries, const CoefficientEntry* all_coefficients, const parameters_t& params, tune_t K)
 {
-    array<parameters_t, thread_count> thread_gradients;
     for(int thread_id = 0; thread_id < thread_count; thread_id++)
     {
-        thread_pool.enqueue([thread_id, &thread_gradients, &entries, &params, K]()
+        thread_pool.enqueue([thread_id, &thread_gradients, &entries, all_coefficients, &params, K]()
         {
-            const auto entries_per_thread = entries.size() / thread_count;
-            const auto start = static_cast<int>(thread_id * entries_per_thread);
-            const auto end = static_cast<int>((thread_id + 1) * entries_per_thread - 1);
+            const auto start = static_cast<int64_t>(thread_id) * entries.size() / thread_count;
+            const auto end = static_cast<int64_t>(thread_id + 1) * entries.size() / thread_count;
+            auto& local_gradient = thread_gradients[thread_id];
 #if TAPERED
-            parameters_t gradient = parameters_t(params.size(), pair_t{});
+            std::fill(local_gradient.begin(), local_gradient.end(), pair_t{});
 #else
-            parameters_t gradient = parameters_t(params.size(), 0);
+            std::fill(local_gradient.begin(), local_gradient.end(), static_cast<tune_t>(0));
 #endif
-            for (int i = start; i < end; i++)
+            for (int64_t i = start; i < end; i++)
             {
-                const auto& entry = entries[i];
-                update_single_gradient(gradient, entry, params, K);
+                eval_and_update_gradient(local_gradient, entries[i], all_coefficients, params, K);
             }
-            thread_gradients[thread_id] = gradient;
         });
     }
 
@@ -815,6 +855,27 @@ static void compute_gradient(ThreadPool& thread_pool, parameters_t& gradient, co
     }
 }
 
+// Optional per-engine quantization clamp. An engine that stores eval terms in a
+// narrow integer type can define quantized_parameter_start / quantized_min /
+// quantized_max; the tuner then projects those parameters back into range after
+// every update so the remaining terms tune around the representable values.
+// Engines that do not define these members are left completely unclamped.
+template <class T> constexpr int32_t quantized_start()
+{
+    if constexpr (requires { T::quantized_parameter_start; }) return T::quantized_parameter_start;
+    else return std::numeric_limits<int32_t>::max();
+}
+template <class T> constexpr tune_t quantized_lo()
+{
+    if constexpr (requires { T::quantized_min; }) return static_cast<tune_t>(T::quantized_min);
+    else return -std::numeric_limits<tune_t>::infinity();
+}
+template <class T> constexpr tune_t quantized_hi()
+{
+    if constexpr (requires { T::quantized_max; }) return static_cast<tune_t>(T::quantized_max);
+    else return std::numeric_limits<tune_t>::infinity();
+}
+
 void Tuner::run(const std::vector<DataSource>& sources)
 {
     cout << "Starting tuning" << endl << endl;
@@ -827,6 +888,10 @@ void Tuner::run(const std::vector<DataSource>& sources)
     cout << "Getting initial parameters..." << endl;
     auto parameters = TuneEval::get_initial_parameters();
     cout << "Got " << parameters.size() << " parameters" << endl;
+    if (parameters.size() > std::numeric_limits<int16_t>::max())
+    {
+        throw runtime_error("Parameter count exceeds int16_t limit for CoefficientEntry::index");
+    }
 
     if constexpr (!print_eval)
     {
@@ -835,6 +900,7 @@ void Tuner::run(const std::vector<DataSource>& sources)
     }
 
     vector<Entry> entries;
+    vector<CoefficientEntry> all_coefficients;
 
     // Debug entry
     //const string debug_fen = "rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQK1NR w KQkq - 0 1; 1.0";
@@ -848,7 +914,7 @@ void Tuner::run(const std::vector<DataSource>& sources)
     vector<string> fens;
     for (const auto& source : sources)
     {
-        load_fens(thread_pool, source, parameters, start, entries);
+        load_fens(thread_pool, source, parameters, start, entries, all_coefficients);
     }
     cout << "Data loading complete" << endl << endl;
 
@@ -859,7 +925,7 @@ void Tuner::run(const std::vector<DataSource>& sources)
         return;
     }
 
-    if constexpr (retune_from_zero)
+    if constexpr (TuneEval::retune_from_zero)
     {
         for (auto& parameter : parameters)
         {
@@ -875,44 +941,68 @@ void Tuner::run(const std::vector<DataSource>& sources)
     cout << "Initial parameters:" << endl;
     TuneEval::print_parameters(parameters, true);
 
+    const CoefficientEntry* all_coeff_ptr = all_coefficients.data();
+
     tune_t K;
-    if constexpr (preferred_k <= 0)
+    if constexpr (TuneEval::preferred_k <= 0)
     {
         cout << "Finding optimal K..." << endl;
-        K = find_optimal_k(thread_pool, entries, parameters);
+        K = find_optimal_k(thread_pool, entries, all_coeff_ptr, parameters);
     }
     else
     {
-        cout << "Using predefined K = " << preferred_k <<  endl;
-        K = preferred_k;
+        cout << "Using predefined K = " << TuneEval::preferred_k <<  endl;
+        K = TuneEval::preferred_k;
     }
     cout << "K = " << K << endl;
 
-    const auto avg_error = get_average_error(thread_pool, entries, parameters, K);
+    const auto avg_error = get_average_error(thread_pool, entries, all_coeff_ptr, parameters, K);
     cout << "Initial error = " << avg_error << endl;
 
     const auto loop_start = high_resolution_clock::now();
-    tune_t learning_rate = initial_learning_rate;
-    int32_t max_tune_epoch = max_epoch;
+    tune_t learning_rate = TuneEval::initial_learning_rate;
+    int32_t max_tune_epoch = TuneEval::max_epoch;
+
+    // Pre-allocate all gradient storage once
 #if TAPERED
     parameters_t momentum(parameters.size(), pair_t{});
     parameters_t velocity(parameters.size(), pair_t{});
+    parameters_t gradient(parameters.size(), pair_t{});
+    array<parameters_t, thread_count> thread_gradients;
+    for (auto& tg : thread_gradients) tg = parameters_t(parameters.size(), pair_t{});
 #else
     parameters_t momentum(parameters.size(), 0);
     parameters_t velocity(parameters.size(), 0);
+    parameters_t gradient(parameters.size(), 0);
+    array<parameters_t, thread_count> thread_gradients;
+    for (auto& tg : thread_gradients) tg = parameters_t(parameters.size(), 0);
 #endif
+
+    constexpr tune_t beta1 = 0.9;
+    constexpr tune_t beta2 = 0.999;
+    tune_t beta1_power = 1.0;
+    tune_t beta2_power = 1.0;
+
     for (int32_t epoch = 1; epoch < max_tune_epoch; epoch++)
     {
+        // Zero gradient without reallocating
 #if TAPERED
-        parameters_t gradient(parameters.size(), pair_t{});
+        std::fill(gradient.begin(), gradient.end(), pair_t{});
 #else
-        parameters_t gradient(parameters.size(), 0);
+        std::fill(gradient.begin(), gradient.end(), static_cast<tune_t>(0));
 #endif
         
-        compute_gradient(thread_pool, gradient, entries, parameters, K);
+        compute_gradient(thread_pool, gradient, thread_gradients, entries, all_coeff_ptr, parameters, K);
 
-        constexpr tune_t beta1 = 0.9;
-        constexpr tune_t beta2 = 0.999;
+        beta1_power *= beta1;
+        beta2_power *= beta2;
+        tune_t bias_correction1 = 1;
+        tune_t bias_correction2 = 1;
+        if constexpr (TuneEval::adam_bias_correction)
+        {
+            bias_correction1 = 1 - beta1_power;
+            bias_correction2 = 1 - beta2_power;
+        }
 
         for (int parameter_index = 0; parameter_index < parameters.size(); parameter_index++) {
 #if TAPERED
@@ -920,14 +1010,27 @@ void Tuner::run(const std::vector<DataSource>& sources)
             {
                 const tune_t grad = -K / static_cast<tune_t>(400) * gradient[parameter_index][phase_stage] / static_cast<tune_t>(entries.size());
                 momentum[parameter_index][phase_stage] = beta1 * momentum[parameter_index][phase_stage] + (1 - beta1) * grad;
-                velocity[parameter_index][phase_stage] = beta2 * velocity[parameter_index][phase_stage] + (1 - beta2) * pow(grad, 2);
-                parameters[parameter_index][phase_stage] -= learning_rate * momentum[parameter_index][phase_stage] / (static_cast<tune_t>(1e-8) + sqrt(velocity[parameter_index][phase_stage]));
+                velocity[parameter_index][phase_stage] = beta2 * velocity[parameter_index][phase_stage] + (1 - beta2) * grad * grad;
+                const tune_t corrected_momentum = momentum[parameter_index][phase_stage] / bias_correction1;
+                const tune_t corrected_velocity = velocity[parameter_index][phase_stage] / bias_correction2;
+                parameters[parameter_index][phase_stage] -= learning_rate * corrected_momentum / (static_cast<tune_t>(1e-8) + sqrt(corrected_velocity));
+
+                // Projected gradient descent: keep int8-stored terms within the
+                // engine's representable range so the other parameters tune
+                // around the clamped value instead of an unstorable optimum.
+                if (parameter_index >= quantized_start<TuneEval>())
+                {
+                    parameters[parameter_index][phase_stage] = std::clamp(
+                        parameters[parameter_index][phase_stage], quantized_lo<TuneEval>(), quantized_hi<TuneEval>());
+                }
             }
 #else
             const tune_t grad = -K / 400.0 * gradient[parameter_index] / static_cast<tune_t>(entries.size());
             momentum[parameter_index] = beta1 * momentum[parameter_index] + (1 - beta1) * grad;
-            velocity[parameter_index] = beta2 * velocity[parameter_index] + (1 - beta2) * pow(grad, 2);
-            parameters[parameter_index] -= learning_rate * momentum[parameter_index] / (1e-8 + sqrt(velocity[parameter_index]));
+            velocity[parameter_index] = beta2 * velocity[parameter_index] + (1 - beta2) * grad * grad;
+            const tune_t corrected_momentum = momentum[parameter_index] / bias_correction1;
+            const tune_t corrected_velocity = velocity[parameter_index] / bias_correction2;
+            parameters[parameter_index] -= learning_rate * corrected_momentum / (1e-8 + sqrt(corrected_velocity));
 #endif
             
         }
@@ -936,7 +1039,7 @@ void Tuner::run(const std::vector<DataSource>& sources)
         {
             const auto elapsed_ms = duration_cast<milliseconds>(high_resolution_clock::now() - loop_start).count();
             const auto epochs_per_second = epoch * 1000.0 / elapsed_ms;
-            const tune_t error = get_average_error(thread_pool, entries, parameters, K);
+            const tune_t error = get_average_error(thread_pool, entries, all_coeff_ptr, parameters, K);
             print_elapsed(start);
             cout << "🔽 Epoch " << epoch << " (" << epochs_per_second << " eps), error " << error << ", LR " << learning_rate << "\n"
                  << endl;
@@ -957,9 +1060,9 @@ void Tuner::run(const std::vector<DataSource>& sources)
             }
         }
 
-        if(epoch % learning_rate_drop_interval == 0)
+        if(epoch % TuneEval::learning_rate_drop_interval == 0)
         {
-            learning_rate *= learning_rate_drop_ratio;
+            learning_rate *= TuneEval::learning_rate_drop_ratio;
         }
     }
 
