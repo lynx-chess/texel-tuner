@@ -1,5 +1,5 @@
 # Path, WDL from side playing, position limit
-../../datasets/lichess-big3-resolved.book,0,7000000
+../../datasets/lichess-big3-resolved.book,0,3500000
 ../../datasets/sirius-datagen-40ppg.txt,0,2000000
 ../../datasets/stash_35_16knpm_shuffled.book,0,777777
 ../../datasets/gedas_filtered_sf_d9.epd,1,777777
