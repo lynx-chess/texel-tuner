@@ -1,6 +1,6 @@
 # Path, WDL from side playing, position limit
-/mnt/d/lynx_selfgen_data/_lynx-v1/lynx-1.0.epd,0,3500000
-/mnt/d/lynx_selfgen_data/_lynx-dfrc-v1/lynx-dfrc-1.0.epd,0,4570000
+/mnt/d/lynx_selfgen_data/_lynx-v1/lynx-1.0.epd,0,4000000
+/mnt/d/lynx_selfgen_data/_lynx-dfrc-v1/lynx-dfrc-1.0.epd,0,4000000
 ../../datasets/lichess-big3-resolved.book,0,7000000
 ../../datasets/sirius-datagen-40ppg.txt,0,2000000
 ../../datasets/stash_35_16knpm_shuffled.book,0,777777
