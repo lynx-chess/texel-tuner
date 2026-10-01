@@ -44,7 +44,7 @@ const static size_t numParameters = psqtIndexCount +
                                     TotalKingRingAttacksBonus.tunableSize + // 5, removing king
                                     PieceProtectedByPawnBonus.tunableSize + // 5, removing king
                                     IsolatedPawnPenalty.tunableSize +       // 8, files
-                                    DoubledPawnPenalty.tunableSize +       // 8, files
+                                    DoubledPawnPenalty.tunableSize +        // 8, files
                                     PawnPhalanxBonus.tunableSize +          // 6
                                     ConnectedRooksBonus.tunableSize +
                                     PawnIslandsBonus.tunableSize +
@@ -88,7 +88,6 @@ class Lynx
 {
 
 public:
-
     constexpr static tune_t preferred_k = 0;
     constexpr static int32_t max_epoch = 5001;
     constexpr static bool retune_from_zero = true;
@@ -789,6 +788,12 @@ int PawnAdditionalEvaluation(int squareIndex, int bucket, int oppositeSideBucket
         const auto file = File[squareIndex];
         packedBonus += IsolatedPawnPenalty.packed[file];
         IncrementCoefficients(coefficients, IsolatedPawnPenalty.index - IsolatedPawnPenalty.start + file, color);
+
+        if ((FileMasks[squareIndex] & ~(1UL << squareIndex) & sameSidePawns) != 0)
+        {
+            packedBonus += DoubledPawnPenalty.packed[file];
+            IncrementCoefficients(coefficients, DoubledPawnPenalty.index - DoubledPawnPenalty.start + file, color);
+        }
     }
     // Backwards pawn
     else if (!GetBit(attacks[pieceIndex], squareIndex) &&
@@ -1432,7 +1437,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     const auto nonPawnEnemies = __builtin_bswap64(board.them(color).getBits()) & ~theirPawns;
 
     const auto safeSquares = ~attacksBySide[static_cast<int>(~color)] |
-                      (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[static_cast<int>(color)]);
+                             (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[static_cast<int>(color)]);
 
     auto pushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(ourPawns, color);
 
@@ -1817,8 +1822,6 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     packedScore += PawnIslandsBonus.packed[whitePawnIslands] - PawnIslandsBonus.packed[blackPawnIslands];
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + whitePawnIslands - PawnIslandsBonus.start, chess::Color::WHITE);
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
-
-    packedScore += DoubledPawns(coefficients, whitePawns, blackPawns);
 
     // Threats
     packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks, attacksBySide);
