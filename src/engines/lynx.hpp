@@ -44,7 +44,7 @@ const static size_t numParameters = psqtIndexCount +
                                     TotalKingRingAttacksBonus.tunableSize + // 5, removing king
                                     PieceProtectedByPawnBonus.tunableSize + // 5, removing king
                                     IsolatedPawnPenalty.tunableSize +       // 8, files
-                                    DoubledPawnPenalty.tunableSize +       // 8, files
+                                    DoubledPawnPenalty.tunableSize +        // 8, files
                                     PawnPhalanxBonus.tunableSize +          // 6
                                     ConnectedRooksBonus.tunableSize +
                                     PawnIslandsBonus.tunableSize +
@@ -88,7 +88,6 @@ class Lynx
 {
 
 public:
-
     constexpr static tune_t preferred_k = 0;
     constexpr static int32_t max_epoch = 5001;
     constexpr static bool retune_from_zero = true;
@@ -230,7 +229,7 @@ public:
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(IsolatedPawnPenalty.tunableSize == 8);
-        assert(DoubledPawnPenalty.tunableSize == 8);
+        assert(DoubledPawnPenalty.tunableSize == 4);
         assert(PawnPhalanxBonus.tunableSize == 6);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
@@ -1172,7 +1171,12 @@ int DoubledPawns(coefficients_t &coefficients, const u64 whitePawns, const u64 b
         const auto pieceSquareIndex = chess::builtin::lsb(doubledWhitePawns).index();
         ResetLS1B(doubledWhitePawns);
 
-        const auto file = File[pieceSquareIndex];
+        auto file = File[pieceSquareIndex];
+        if (file > 3)
+        {
+            file = 7 - file;
+        }
+
         packedBonus += DoubledPawnPenalty.packed[file];
         IncrementCoefficients(coefficients, DoubledPawnPenalty.index - DoubledPawnPenalty.start + file, chess::Color::WHITE);
     }
@@ -1184,7 +1188,12 @@ int DoubledPawns(coefficients_t &coefficients, const u64 whitePawns, const u64 b
         const auto pieceSquareIndex = chess::builtin::lsb(doubledBlackPawns).index();
         ResetLS1B(doubledBlackPawns);
 
-        const auto file = File[pieceSquareIndex];
+        auto file = File[pieceSquareIndex];
+        if (file > 3)
+        {
+            file = 7 - file;
+        }
+
         packedBonus -= DoubledPawnPenalty.packed[file];
         IncrementCoefficients(coefficients, DoubledPawnPenalty.index - DoubledPawnPenalty.start + file, chess::Color::BLACK);
     }
@@ -1432,7 +1441,7 @@ int Threats(const chess::Board &board, const chess::Color &color, coefficients_t
     const auto nonPawnEnemies = __builtin_bswap64(board.them(color).getBits()) & ~theirPawns;
 
     const auto safeSquares = ~attacksBySide[static_cast<int>(~color)] |
-                      (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[static_cast<int>(color)]);
+                             (~attacks[static_cast<int>(chess::PieceType::PAWN) + oppositeSideoffset] & attacksBySide[static_cast<int>(color)]);
 
     auto pushes = ~__builtin_bswap64(board.occ().getBits()) & PawnPush(ourPawns, color);
 
