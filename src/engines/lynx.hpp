@@ -24,7 +24,6 @@ using u64 = uint64_t;
 
 constexpr int enemyKingBaseIndex = psqtIndexCount / 2;
 const static size_t numParameters = psqtIndexCount +
-                                    // DoubledPawnPenalty.size
                                     KingShieldBonus.size +
                                     KingShieldNonAttackedBonus.size +
                                     BishopPairBonus.size +
@@ -82,7 +81,8 @@ const static size_t numParameters = psqtIndexCount +
                                     SemiOpenFileRookBonus.size +
                                     OpenFileRookEnemyBonus.size +
                                     SemiOpenFileRookEnemyBonus.size +
-                                    DoubledPawnPenalty.size;
+                                    DoubledPawnPenalty.size +
+                                    DoubledPawnEnemyPenalty.size;
 
 class Lynx
 {
@@ -212,6 +212,7 @@ public:
         OpenFileRookEnemyBonus.add(result);
         SemiOpenFileRookEnemyBonus.add(result);
         DoubledPawnPenalty.add(result);
+        DoubledPawnEnemyPenalty.add(result);
 
         assert(PassedPawnBonus.bucketTunableSize == 6);
         assert(PassedPawnEnemyBonus.bucketTunableSize == 6);
@@ -224,6 +225,7 @@ public:
         assert(OpenFileRookEnemyBonus.bucketTunableSize == 8);
         assert(SemiOpenFileRookEnemyBonus.bucketTunableSize == 8);
         assert(DoubledPawnPenalty.bucketTunableSize == 8);
+        assert(DoubledPawnEnemyPenalty.bucketTunableSize == 8);
 
         assert(PassedPawnPushBonus.tunableSize == 6);
         assert(TotalKingRingAttacksBonus.tunableSize == 14);
@@ -508,6 +510,9 @@ public:
         name = NAME(DoubledPawnPenalty);
         DoubledPawnPenalty.to_csharp(parameters, ss, name);
 
+        name = NAME(DoubledPawnEnemyPenalty);
+        DoubledPawnEnemyPenalty.to_csharp(parameters, ss, name);
+
         if (isFinal)
         {
             std::cout << ss.str() << std::endl;
@@ -705,6 +710,9 @@ public:
 
         name = NAME(DoubledPawnPenalty);
         DoubledPawnPenalty.to_cpp(parameters, ss, name);
+
+        name = NAME(DoubledPawnEnemyPenalty);
+        DoubledPawnEnemyPenalty.to_cpp(parameters, ss, name);
 
         if (isFinal)
         {
@@ -1159,8 +1167,12 @@ int DoubledPawns(coefficients_t &coefficients, const u64 whitePawns, const u64 b
         ResetLS1B(doubledWhitePawns);
 
         const auto file = File[pieceSquareIndex];
+        
         packedBonus += DoubledPawnPenalty.packed(whiteBucket, file);
         IncrementCoefficients(coefficients, DoubledPawnPenalty.index(whiteBucket, file), chess::Color::WHITE);
+
+        packedBonus += DoubledPawnEnemyPenalty.packed(blackBucket, file);
+        IncrementCoefficients(coefficients, DoubledPawnEnemyPenalty.index(blackBucket, file), chess::Color::WHITE);
     }
 
     auto doubledBlackPawns = blackPawns & ShiftUp(blackPawns);
@@ -1171,8 +1183,12 @@ int DoubledPawns(coefficients_t &coefficients, const u64 whitePawns, const u64 b
         ResetLS1B(doubledBlackPawns);
 
         const auto file = File[pieceSquareIndex];
+        
         packedBonus -= DoubledPawnPenalty.packed(blackBucket, file);
         IncrementCoefficients(coefficients, DoubledPawnPenalty.index(blackBucket, file), chess::Color::BLACK);
+
+        packedBonus -= DoubledPawnEnemyPenalty.packed(whiteBucket, file);
+        IncrementCoefficients(coefficients, DoubledPawnEnemyPenalty.index(whiteBucket, file), chess::Color::BLACK);
     }
 
     return packedBonus;
