@@ -44,6 +44,7 @@ const static size_t numParameters = psqtIndexCount +
                                     TotalKingRingAttacksBonus.tunableSize + // 5, removing king
                                     PieceProtectedByPawnBonus.tunableSize + // 5, removing king
                                     IsolatedPawnPenalty.tunableSize +       // 8, files
+                                    DoubledPawnPenalty.tunableSize +       // 8, files
                                     PawnPhalanxBonus.tunableSize +          // 6
                                     ConnectedRooksBonus.tunableSize +
                                     PawnIslandsBonus.tunableSize +
@@ -172,6 +173,7 @@ public:
         TotalKingRingAttacksBonus.add(result);
         PieceProtectedByPawnBonus.add(result);
         IsolatedPawnPenalty.add(result);
+        DoubledPawnPenalty.add(result);
         PawnPhalanxBonus.add(result);
         OpenFileKingPenalty.add(result);
         SemiOpenFileKingPenalty.add(result);
@@ -228,6 +230,7 @@ public:
         assert(PieceProtectedByPawnBonus.tunableSize == 5);
         assert(ConnectedRooksBonus.tunableSize == 8);
         assert(IsolatedPawnPenalty.tunableSize == 8);
+        assert(DoubledPawnPenalty.tunableSize == 8);
         assert(PawnPhalanxBonus.tunableSize == 6);
         assert(FriendlyKingDistanceToPassedPawnBonus.tunableSize == 7);
         assert(EnemyKingDistanceToPassedPawnPenalty.tunableSize == 7);
@@ -396,6 +399,9 @@ public:
 
         name = NAME(IsolatedPawnPenalty);
         IsolatedPawnPenalty.to_csharp(parameters, ss, name);
+
+        name = NAME(DoubledPawnPenalty);
+        DoubledPawnPenalty.to_csharp(parameters, ss, name);
 
         name = NAME(PawnPhalanxBonus);
         PawnPhalanxBonus.to_csharp(parameters, ss, name);
@@ -586,6 +592,10 @@ public:
 
         name = NAME(IsolatedPawnPenalty);
         IsolatedPawnPenalty.to_cpp(parameters, ss, name);
+        ss << "\n";
+
+        name = NAME(DoubledPawnPenalty);
+        DoubledPawnPenalty.to_cpp(parameters, ss, name);
         ss << "\n";
 
         name = NAME(PawnPhalanxBonus);
@@ -1149,6 +1159,37 @@ int PawnIslands(const u64 bitboard)
     }
 
     return islandCount;
+}
+
+int DoubledPawns(coefficients_t &coefficients, const u64 whitePawns, const u64 blackPawns)
+{
+    int packedBonus = 0;
+
+    auto doubledWhitePawns = whitePawns & ShiftUp(whitePawns);
+
+    while (doubledWhitePawns != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(doubledWhitePawns).index();
+        ResetLS1B(doubledWhitePawns);
+
+        const auto file = File[pieceSquareIndex];
+        packedBonus += DoubledPawnPenalty.packed[file];
+        IncrementCoefficients(coefficients, DoubledPawnPenalty.index - DoubledPawnPenalty.start + file, chess::Color::WHITE);
+    }
+
+    auto doubledBlackPawns = blackPawns & ShiftUp(blackPawns);
+
+    while (doubledBlackPawns != 0)
+    {
+        const auto pieceSquareIndex = chess::builtin::lsb(doubledBlackPawns).index();
+        ResetLS1B(doubledBlackPawns);
+
+        const auto file = File[pieceSquareIndex];
+        packedBonus -= DoubledPawnPenalty.packed[file];
+        IncrementCoefficients(coefficients, DoubledPawnPenalty.index - DoubledPawnPenalty.start + file, chess::Color::BLACK);
+    }
+
+    return packedBonus;
 }
 
 std::array<u64, 12> CalculateAttacks(const chess::Board &board)
@@ -1776,6 +1817,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     packedScore += PawnIslandsBonus.packed[whitePawnIslands] - PawnIslandsBonus.packed[blackPawnIslands];
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + whitePawnIslands - PawnIslandsBonus.start, chess::Color::WHITE);
     IncrementCoefficients(coefficients, PawnIslandsBonus.index + blackPawnIslands - PawnIslandsBonus.start, chess::Color::BLACK);
+
+    packedScore += DoubledPawns(coefficients, whitePawns, blackPawns);
 
     // Threats
     packedScore += Threats(board, chess::Color::WHITE, coefficients, attacks, attacksBySide);
