@@ -1966,7 +1966,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     }
 
     // Endgame scaling with pawn count
-    eval = (int)(eval * ((80 + (totalPawnsCount * 7)) / 128.0));
+    const tune_t pawnCountScale = (80 + (totalPawnsCount * 7)) / 128.0;
+    eval = (int)(eval * pawnCountScale);
 
     // 50 moves rule distance scaling
     eval = ScaleEvalWith50MovesDrawDistance(eval, 0);
@@ -1976,7 +1977,9 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     // Always white's perspective
     return EvalResult{
         std::move(coefficients),
-        (double)eval};
+        (double)eval,
+        1,
+        pawnCountScale};
 }
 
 #endif // LYNX_H
