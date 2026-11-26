@@ -1547,12 +1547,10 @@ int AdditionalPieceEvaluation(int pieceSquareIndex, int pieceIndex, int bucket, 
     return eval * (200 - movesWithoutCaptureOrPawnMove) / 200;
 }
 
-bool IsBishopPawnDraw(const chess::Board &board, chess::Color winningSide)
+bool IsBishopPawnDraw(const chess::Board &board, chess::Color winningSide, const ulong winningSidePawns)
 {
-    const auto pawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide);
-
-    const bool hasAFilePawn = (pawns & AFile) != 0;
-    const bool hasHFilePawn = (pawns & HFile) != 0;
+    const bool hasAFilePawn = (winningSidePawns & AFile) != 0;
+    const bool hasHFilePawn = (winningSidePawns & HFile) != 0;
 
     if (hasAFilePawn && hasHFilePawn)
     {
@@ -1853,6 +1851,10 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     const int totalPawnsCount = board.pieces(chess::PieceType::PAWN, chess::Color::WHITE).count() +
                                 board.pieces(chess::PieceType::PAWN, chess::Color::BLACK).count();
 
+    const auto winningSide = eval >= 0 ? chess::Color::WHITE : chess::Color::BLACK;
+    const auto winningSideOffset = PieceOffset(static_cast<int>(winningSide));
+    const auto winningSidePawns = GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide);
+
     if (gamePhase <= 5)
     {
         // Pawnless endgames with few pieces
@@ -1887,8 +1889,6 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
             }
             case 3:
             {
-                const auto winningSideOffset = PieceOffset(eval >= 0);
-
                 if (pieceCount[1 + winningSideOffset] == 2) // NN vs N, NN vs B
                 {
                     return EvalResult{
@@ -1926,14 +1926,12 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
         }
         else
         {
-            const auto winningSide = eval >= 0 ? chess::Color::WHITE : chess::Color::BLACK;
-
             if (gamePhase == 1)
             {
                 if (GetPieceSwappingEndianness(board, chess::PieceType::BISHOP, winningSide) != 0 &&
                     (GetPieceSwappingEndianness(board, chess::PieceType::PAWN, winningSide) & NotAorH) == 0)
                 {
-                    if (IsBishopPawnDraw(board, winningSide))
+                    if (IsBishopPawnDraw(board, winningSide, winningSidePawns))
                     {
                         return EvalResult{
                             std::move(coefficients),
@@ -1966,7 +1964,7 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     }
 
     // Endgame scaling with pawn count
-    eval = (int)(eval * ((80 + (totalPawnsCount * 7)) / 128.0));
+    eval = (int)(eval * ((80 + (chess::builtin::popcount(winningSidePawns) * 7)) / 128.0));
 
     // 50 moves rule distance scaling
     eval = ScaleEvalWith50MovesDrawDistance(eval, 0);
