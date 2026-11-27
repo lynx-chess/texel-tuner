@@ -44,7 +44,6 @@ struct Entry
     tune_t additional_score;
 #if TAPERED
     int32_t phase;
-    float eval_scale = 1;
     tune_t endgame_scale;
 #endif
 };
@@ -164,7 +163,7 @@ static tune_t linear_eval(const Entry& entry, const CoefficientEntry* all_coeffi
         midgame += coefficient.value * parameters[coefficient.index][static_cast<int32_t>(PhaseStages::Midgame)];
         endgame += coefficient.value * parameters[coefficient.index][static_cast<int32_t>(PhaseStages::Endgame)];
     }
-    score += entry.eval_scale * (midgame * entry.phase + endgame * entry.endgame_scale * (24 - entry.phase)) / 24;
+    score += (midgame * entry.phase + endgame * entry.endgame_scale * (24 - entry.phase)) / 24;
 #else
     for (uint16_t ci = 0; ci < count; ci++)
     {
@@ -394,7 +393,6 @@ static tune_t quiescence(chess::Board& board, const parameters_t& parameters, pv
     entry.white_to_move = board.sideToMove() == chess::Color::WHITE;
 #if TAPERED
     entry.endgame_scale = eval_result.endgame_scale;
-    entry.eval_scale = static_cast<float>(eval_result.eval_scale);
 #endif
     get_coefficient_entries(eval_result.coefficients, scratch, entry, static_cast<int32_t>(parameters.size()));
 #if TAPERED
@@ -577,7 +575,6 @@ static void parse_fen(const bool side_to_move_wdl, const parameters_t& parameter
     entry.white_to_move = board.sideToMove() == chess::Color::WHITE;
 #if TAPERED
     entry.endgame_scale = eval_result.endgame_scale;
-    entry.eval_scale = static_cast<float>(eval_result.eval_scale);
 #endif
     const bool original_white_to_move = get_fen_color_to_move(original_fen);
     //cout << (entry.white_to_move ? "w" : "b") << " ";
@@ -791,7 +788,7 @@ static void eval_and_update_gradient(parameters_t& gradient, const Entry& entry,
         midgame += coefficient.value * params[coefficient.index][static_cast<int32_t>(PhaseStages::Midgame)];
         endgame += coefficient.value * params[coefficient.index][static_cast<int32_t>(PhaseStages::Endgame)];
     }
-    score += entry.eval_scale * (midgame * entry.phase + endgame * entry.endgame_scale * (24 - entry.phase)) / 24;
+    score += (midgame * entry.phase + endgame * entry.endgame_scale * (24 - entry.phase)) / 24;
 #else
     for (uint16_t ci = 0; ci < count; ci++)
     {
@@ -805,9 +802,8 @@ static void eval_and_update_gradient(parameters_t& gradient, const Entry& entry,
 
     // Second pass: accumulate gradient (coefficients still in L1)
 #if TAPERED
-    const auto scaled_res = res * entry.eval_scale;
-    const auto mg_base = scaled_res * (entry.phase / static_cast<tune_t>(24));
-    const auto eg_base = (scaled_res - mg_base) * entry.endgame_scale;
+    const auto mg_base = res * (entry.phase / static_cast<tune_t>(24));
+    const auto eg_base = (res - mg_base) * entry.endgame_scale;
 #endif
 
     for (uint16_t ci = 0; ci < count; ci++)

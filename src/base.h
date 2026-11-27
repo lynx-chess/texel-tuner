@@ -21,7 +21,6 @@ struct EvalResult
     coefficients_t coefficients;
     tune_t score;
     tune_t endgame_scale = 1;
-    tune_t eval_scale = 1;
 };
 
 #if TAPERED
