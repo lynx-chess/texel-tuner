@@ -137,6 +137,8 @@ public:
             {
                 for (int square = start; square < end; ++square)
                 {
+                    assert(result.size() == static_cast<size_t>(PSQTIndex(friendEnemy, piece, bucket, square)));
+
                     result.push_back({(double)MiddleGamePositionalTables(friendEnemy, bucket, piece, square) + (addPieceValue ? PieceValue[friendEnemy][bucket][piece] : 0),
                                       (double)EndGamePositionalTables(friendEnemy, bucket, piece, square) + (addPieceValue ? PieceValue[friendEnemy][bucket][piece + 5] : 0)});
                 }
@@ -733,6 +735,32 @@ public:
 };
 
 static inline parameters_t initialParameters = Lynx::get_initial_parameters();
+
+inline bool LinearPackedScoreMatches(const std::vector<std::int16_t> &coefficients, int32_t packedScore)
+{
+    tune_t mg = 0, eg = 0;
+    for (size_t i = 0; i < coefficients.size(); ++i)
+    {
+        if (coefficients[i] != 0)
+        {
+            mg += coefficients[i] * initialParameters[i][0];
+            eg += coefficients[i] * initialParameters[i][1];
+        }
+    }
+
+    // All the initial parameters are integers, so the sums are exact
+    if (mg == UnpackMG(packedScore) && eg == UnpackEG(packedScore))
+    {
+        return true;
+    }
+
+    std::ostringstream ss;
+    ss << "Linear model vs packed score mismatch: mg " << mg << " vs " << UnpackMG(packedScore)
+       << ", eg " << eg << " vs " << UnpackEG(packedScore) << "\n";
+    std::cerr << ss.str();
+
+    return false;
+}
 
 void IncrementCoefficients(coefficients_t &coefficients, int index, const chess::Color &color, int increment = 1)
 {
@@ -1829,6 +1857,10 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     // Checks
     packedScore += Checks(board, chess::Color::WHITE, coefficients, attacks, attacksBySide);
     packedScore -= Checks(board, chess::Color::BLACK, coefficients, attacks, attacksBySide);
+
+    // The tuner's linear model (coefficients . initial parameters) must reproduce the engine's packed score exactly.
+    // Catches get_initial_parameters() vs coefficient layout/value mismatches, and packed terms without coefficients
+    assert(LinearPackedScoreMatches(coefficients, packedScore));
 
     // Debugging eval
     // return EvalResult{
