@@ -92,7 +92,7 @@ public:
     constexpr static tune_t preferred_k = 0;
     constexpr static int32_t max_epoch = 5001;
     constexpr static bool retune_from_zero = true;
-    constexpr static bool enable_qsearch = false;
+    constexpr static bool enable_qsearch = true;
     constexpr static bool filter_in_check = false;
     constexpr static tune_t initial_learning_rate = 1;
     constexpr static int32_t learning_rate_drop_interval = 10000;
