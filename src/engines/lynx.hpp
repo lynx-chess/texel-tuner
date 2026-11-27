@@ -131,27 +131,29 @@ public:
             }
         }
 
-        auto add_piece_values = [&](int piece, int start, int end, int offset = 0)
+        auto add_piece_values = [&](int friendEnemy, int piece, int start, int end, bool addPieceValue)
         {
-            for (int friendEnemy = 0; friendEnemy < 2; ++friendEnemy)
+            for (int bucket = 0; bucket < PSQTBucketCount; ++bucket)
             {
-                for (int bucket = 0; bucket < PSQTBucketCount; ++bucket)
+                for (int square = start; square < end; ++square)
                 {
-                    for (int square = start; square < end; ++square)
-                    {
-                        result.push_back({(double)MiddleGamePositionalTables(friendEnemy, bucket, piece, square) + PieceValue[friendEnemy][bucket][piece + offset],
-                                          (double)EndGamePositionalTables(friendEnemy, bucket, piece, square) + PieceValue[friendEnemy][bucket][piece + 5 + offset]});
-                    }
+                    result.push_back({(double)MiddleGamePositionalTables(friendEnemy, bucket, piece, square) + (addPieceValue ? PieceValue[friendEnemy][bucket][piece] : 0),
+                                      (double)EndGamePositionalTables(friendEnemy, bucket, piece, square) + (addPieceValue ? PieceValue[friendEnemy][bucket][piece + 5] : 0)});
                 }
             }
         };
 
-        add_piece_values(0, 8, 56);             // Pawns
-        for (int piece = 1; piece < 5; ++piece) // N, B, R, Q
+        for (int friendEnemy = 0; friendEnemy < 2; ++friendEnemy)
         {
-            add_piece_values(piece, 0, 64);
+            add_piece_values(friendEnemy, 0, 8, 56, true);  // Pawns
+            for (int piece = 1; piece < 5; ++piece)         // N, B, R, Q
+            {
+                add_piece_values(friendEnemy, piece, 0, 64, true);
+            }
+            add_piece_values(friendEnemy, 5, 0, 64, false); // Kings: no PieceValue
         }
-        add_piece_values(5, 0, 64, 0); // Kings
+
+        assert(result.size() == psqtIndexCount);
 
         // DoubledPawnPenalty.add(result);
         KingShieldBonus.add(result);
