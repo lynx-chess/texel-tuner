@@ -1880,12 +1880,17 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
 
     const int endGamePhase = maxPhase - gamePhase;
 
-    const auto middleGameScore = UnpackMG(packedScore);
-    const auto endGameScore = UnpackEG(packedScore);
-    int eval = ((middleGameScore * gamePhase) + (endGameScore * endGamePhase)) / maxPhase;
-
     const int totalPawnsCount = board.pieces(chess::PieceType::PAWN, chess::Color::WHITE).count() +
                                 board.pieces(chess::PieceType::PAWN, chess::Color::BLACK).count();
+
+    // Endgame scaling with pawn count
+    const tune_t pawnCountScale = (80 + (totalPawnsCount * 7)) / 128.0;
+
+    const auto middleGameScore = UnpackMG(packedScore);
+    const auto endGameScore = (int)(UnpackEG(packedScore) * pawnCountScale);
+    
+    int eval = ((middleGameScore * gamePhase) + (endGameScore * endGamePhase)) / maxPhase;
+
 
     if (gamePhase <= 5)
     {
@@ -1999,9 +2004,6 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
         }
     }
 
-    // Endgame scaling with pawn count
-    eval = (int)(eval * ((80 + (totalPawnsCount * 7)) / 128.0));
-
     // 50 moves rule distance scaling
     eval = ScaleEvalWith50MovesDrawDistance(eval, 0);
 
@@ -2010,7 +2012,8 @@ EvalResult Lynx::get_external_eval_result(const chess::Board &board)
     // Always white's perspective
     return EvalResult{
         std::move(coefficients),
-        (double)eval};
+        (double)eval,
+        pawnCountScale};
 }
 
 #endif // LYNX_H
